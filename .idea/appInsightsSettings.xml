@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.saferoute" />
+                  <option name="mobileSdkAppId" value="1:139600904291:android:c89240010f97aa80803856" />
+                  <option name="projectId" value="safe-route-ca0d0" />
+                  <option name="projectNumber" value="139600904291" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
