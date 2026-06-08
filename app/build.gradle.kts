@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -38,28 +40,53 @@ android {
             viewBinding = true
         }
 }
-
 dependencies {
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.constraintlayout)
+    // 1. Core Android & UI (أساسيات الأندرويد والواجهات)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.legacy.support.v4)
+
+    // 2. Lifecycle & Architecture (الـ MVVM)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.lifecycle.runtime.ktx) // للـ lifecycleScope
+
+    // 3. Coroutines (البرمجة غير المتزامنة)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services) // لدعم Firebase
+
+    // 4. Dependency Injection (Dagger Hilt)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    // 5. Local Database (Room - لحفظ سجل السقوط محلياً)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // 6. Firebase & Google Auth (الباك إند والتنبيهات)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.messaging.ktx)
+
+    // Google Auth Credentials
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
-    implementation(libs.material)
+
+    // 7. Location & Maps (التتبع والخريطة)
+    implementation(libs.play.services.location)
+    implementation(libs.osmdroid.android)
+
+    // 8. Testing (الاختبارات)
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
-    implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.android.gms:play-services-location:21.2.0")
-    implementation("org.osmdroid:osmdroid-android:6.1.18")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    androidTestImplementation(libs.androidx.espresso.core)
 }
