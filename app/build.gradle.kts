@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
-    id("com.google.devtools.ksp")
-    id("com.google.dagger.hilt.android")
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -44,11 +44,18 @@ dependencies {
     // 1. Core Android & UI (أساسيات الأندرويد والواجهات)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.fragment)
+    implementation(libs.androidx.recyclerview)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.legacy.support.v4)
+
+
+    //navigation
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
 
     // 2. Lifecycle & Architecture (الـ MVVM)
     implementation(libs.androidx.lifecycle.livedata.ktx)
@@ -74,7 +81,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.messaging)
 
     // Google Auth Credentials
     implementation(libs.androidx.credentials)

@@ -7,6 +7,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.saferoute.R.id
 import com.example.saferoute.databinding.ActivityMainBinding
+import com.example.saferoute.ui.sensors.SensorFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -22,6 +23,12 @@ class MainActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(id.main, SensorFragment())
+                .commit()
         }
     }
 }

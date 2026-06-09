@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.sensors.SensorFragment">
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Hello" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="درع الحماية من السقوط"
+        android:textSize="24sp"
+        android:textStyle="bold" />
 
-</FrameLayout>
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/switchFallDetection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="تفعيل الخدمة في الخلفية "
+        android:textSize="18sp" />
+
+</LinearLayout>
