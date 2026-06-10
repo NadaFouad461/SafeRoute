@@ -9,9 +9,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.saferoute" />
-                  <option name="mobileSdkAppId" value="1:139600904291:android:c89240010f97aa80803856" />
-                  <option name="projectId" value="safe-route-ca0d0" />
-                  <option name="projectNumber" value="139600904291" />
+                  <option name="mobileSdkAppId" value="1:231837825090:android:ede3b49242deee37cf15db" />
+                  <option name="projectId" value="myproject-76176" />
+                  <option name="projectNumber" value="231837825090" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

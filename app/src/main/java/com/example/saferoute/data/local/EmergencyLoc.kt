@@ -15,5 +15,7 @@ data class EmergencyLog(
 
     val longitude: Double,
 
-    val timestamp: Long
+    val timestamp: Long,
+
+    val status: String = "ACTIVE"
 )

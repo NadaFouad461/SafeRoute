@@ -12,11 +12,6 @@
         android:textStyle="bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
-    <Button
-        android:id="@+id/btnTest"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Add Test SOS"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerLogs"

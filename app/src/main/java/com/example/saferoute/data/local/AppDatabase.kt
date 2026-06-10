@@ -9,7 +9,7 @@ import com.example.saferoute.data.EmergencyDao
 @Database(
     // merge EmergencyLog table with table  RoomGrid
     entities = [EmergencyLog::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,7 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "safe_route_db"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
 
                 INSTANCE = instance
                 instance

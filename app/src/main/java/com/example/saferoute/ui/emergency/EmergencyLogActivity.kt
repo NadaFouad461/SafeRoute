@@ -45,16 +45,5 @@ class EmergencyLogActivity : AppCompatActivity() {
             adapter.updateData(list)
         }
 
-
-        binding.btnTest.setOnClickListener {
-            viewModel.saveLog(
-                EmergencyLog(
-                    type = "SOS",
-                    latitude = 31.2001,
-                    longitude = 29.9187,
-                    timestamp = System.currentTimeMillis()
-                )
-            )
-        }
     }
 }
