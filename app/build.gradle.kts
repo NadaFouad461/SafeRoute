@@ -74,7 +74,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.firebase.firestore)
-    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.messaging)
+
 
     // Google Auth Credentials
     implementation(libs.androidx.credentials)
