@@ -1,5 +1,5 @@
 [versions]
-agp = "9.2.1"
+agp = "8.5.2"
 coreKtx = "1.13.1"
 firebaseBom = "34.14.0"
 hiltCompiler = "2.59.2"
