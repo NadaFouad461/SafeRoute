@@ -92,9 +92,6 @@ class FallDetectionService : Service() {
                             Intent.FLAG_ACTIVITY_SINGLE_TOP
                 }
                 startActivity(intent)
-
-                // ✅ وفي نفس الوقت ابعت الـ Notification كـ backup
-                // لو الجهاز منعش فتح الـ Activity هيلاقي الـ Notification
                 showFallAlertNotification()
             }
         }

@@ -33,9 +33,7 @@ class FallAlertActivity: AppCompatActivity() {
                         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
             )
         }
-        binding = ActivityFallAlertBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
+        
         startCountdown()
         setupButtons()
     }
@@ -60,7 +58,7 @@ class FallAlertActivity: AppCompatActivity() {
         // المستخدم بخير
         binding.btnImOkay.setOnClickListener {
             countDownTimer?.cancel()
-            finish() // أغلق الـ screen وارجع عادي
+            finish()
         }
     }
 
