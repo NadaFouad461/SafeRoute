@@ -57,19 +57,16 @@ class FallDetectionService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(NotificationManager::class.java)
 
-            // Channel 1 — الـ Foreground الثابت (أولوية منخفضة)
+
             val foregroundChannel = NotificationChannel(
-                FOREGROUND_CHANNEL_ID,
-                "مراقبة السقوط",
-                NotificationManager.IMPORTANCE_LOW
+                FOREGROUND_CHANNEL_ID, "مراقبة السقوط", NotificationManager.IMPORTANCE_LOW
             )
             notificationManager.createNotificationChannel(foregroundChannel)
 
-            // Channel 2 — تنبيه السقوط (أولوية عالية جداً)
             val alertChannel = NotificationChannel(
                 ALERT_CHANNEL_ID,
                 "تنبيه سقوط طارئ",
-                NotificationManager.IMPORTANCE_HIGH // ده اللي بيخليها تظهر فوق كل حاجة
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 enableVibration(true)
                 enableLights(true)
@@ -86,11 +83,11 @@ class FallDetectionService : Service() {
                 Log.d("FallDetection", "🚨 سقوط مكتشف!")
 
                 // ✅ افتح الـ Activity مباشرة
-                val intent = Intent(this@FallDetectionService, FallAlertActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                            Intent.FLAG_ACTIVITY_SINGLE_TOP
-                }
+                val intent =
+                    Intent(this@FallDetectionService, FallAlertActivity::class.java).apply {
+                        flags =
+                            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    }
                 startActivity(intent)
                 showFallAlertNotification()
             }
@@ -100,7 +97,6 @@ class FallDetectionService : Service() {
     // ═══ Notification تفتح الـ FallAlertActivity ═══
 
     private fun showFallAlertNotification() {
-        // Intent يفتح الـ FallAlertActivity
         val fullScreenIntent = Intent(this, FallAlertActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -113,16 +109,12 @@ class FallDetectionService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, ALERT_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle("⚠️ هل أنت بخير؟")
+            .setSmallIcon(android.R.drawable.ic_dialog_alert).setContentTitle("⚠️ هل أنت بخير؟")
             .setContentText("تم اكتشاف سقوط محتمل — اضغط للرد")
             .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM) // مهم جداً للـ Background
-            .setAutoCancel(true)
-            .setOngoing(false)
-            // ده اللي بيفتح الـ Activity فوق اللوك سكرين
-            .setFullScreenIntent(fullScreenPendingIntent, true)
-            .build()
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true).setOngoing(false)
+            .setFullScreenIntent(fullScreenPendingIntent, true).build()
 
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.notify(FALL_ALERT_NOTIFICATION_ID, notification)
@@ -134,9 +126,7 @@ class FallDetectionService : Service() {
         val notification = NotificationCompat.Builder(this, FOREGROUND_CHANNEL_ID)
             .setContentTitle("درع SafeRoute مفعل 🛡️")
             .setContentText("يتم الآن مراقبة حركتك لحمايتك...")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setOngoing(true)
-            .build()
+            .setSmallIcon(android.R.drawable.ic_dialog_info).setOngoing(true).build()
 
         startForeground(1, notification)
     }

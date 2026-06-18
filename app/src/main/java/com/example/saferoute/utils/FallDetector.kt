@@ -17,30 +17,27 @@ class FallDetector @Inject constructor(
 
     private val sensorManager: SensorManager =
         context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-    private val accelerometer: Sensor? =
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private val accelerometer: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
     private val _fallEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val fallEvent = _fallEvent.asSharedFlow()
 
-    // ✅ الـ Thresholds الصح
-    private val FALL_THRESHOLD = 3.5f      // gForce — اللحظة اللي بيسقط فيها
-    private val IMPACT_THRESHOLD = 1.5f    // gForce — بعد ما يستقر على الأرض
-    private val COOLDOWN_TIME_MS = 1_000L // 10 ثواني بين كل كشف وتاني
 
-    // Two-Phase Detection
+    private val FALL_THRESHOLD = 3.5f
+    private val IMPACT_THRESHOLD = 1.5f
+    private val COOLDOWN_TIME_MS = 1_000L
+
+
     private var fallDetectedTime: Long = 0
     private var waitingForImpact = false
-    private val IMPACT_WINDOW_MS = 1500L   // 1.5 ثانية عشان يستقر
+    private val IMPACT_WINDOW_MS = 1500L
 
     private var lastFallTime: Long = 0
 
     fun startEventListeners() {
         accelerometer?.let {
             sensorManager.registerListener(
-                this,
-                it,
-                SensorManager.SENSOR_DELAY_NORMAL
+                this, it, SensorManager.SENSOR_DELAY_NORMAL
             )
         }
     }
@@ -63,7 +60,7 @@ class FallDetector @Inject constructor(
 
         val now = System.currentTimeMillis()
 
-        // ✅ المرحلة الأولى — اكتشاف الـ Spike
+
         if (!waitingForImpact && gForce > FALL_THRESHOLD) {
             if (now - lastFallTime > COOLDOWN_TIME_MS) {
                 waitingForImpact = true
@@ -72,19 +69,19 @@ class FallDetector @Inject constructor(
             return
         }
 
-        // ✅ المرحلة الثانية — تأكيد السقوط بعد الاستقرار
+
         if (waitingForImpact) {
             val timeSinceFall = now - fallDetectedTime
 
-            // لو في الـ window وقيمة الـ gForce واطية = استقر على الأرض
+
             if (timeSinceFall in 300..IMPACT_WINDOW_MS.toInt() && gForce < IMPACT_THRESHOLD) {
                 waitingForImpact = false
                 lastFallTime = now
-                _fallEvent.tryEmit(Unit) // ✅ سقوط حقيقي مؤكد
+                _fallEvent.tryEmit(Unit)
                 return
             }
 
-            // لو الـ window خلصت ومش متأكدين = مش سقوط حقيقي
+
             if (timeSinceFall > IMPACT_WINDOW_MS) {
                 waitingForImpact = false
             }

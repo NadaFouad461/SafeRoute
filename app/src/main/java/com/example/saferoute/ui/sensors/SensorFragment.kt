@@ -3,7 +3,6 @@ package com.example.saferoute.ui.sensors
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -12,12 +11,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentSensorBinding
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.core.net.toUri
 
 
 @AndroidEntryPoint
@@ -48,20 +47,29 @@ class SensorFragment : Fragment(R.layout.fragment_sensor) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.switchFallDetection.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                checkNotificationPermissionAndStart()
-            } else {
-                viewModel.stopDetection()
+
+        viewModel.isDetectionActive.observe(viewLifecycleOwner) { isActive ->
+            binding.switchFallDetection.setOnCheckedChangeListener(null)
+            binding.switchFallDetection.isChecked = isActive
+            binding.switchFallDetection.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    checkNotificationPermissionAndStart()
+                } else {
+                    viewModel.stopDetection()
+                }
             }
         }
+
         checkOverlayPermission()
     }
 
     private fun checkNotificationPermissionAndStart() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                // لو ممعهوش صلاحية، اطفي الزرار مؤقتاً واطلبها منه
+            if (ContextCompat.checkSelfPermission(
+                    requireContext(), Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+
                 binding.switchFallDetection.isChecked = false
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 return
