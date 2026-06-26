@@ -1,13 +1,156 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".ui.map.MapFragment">
+    android:layout_height="match_parent">
+
 
     <org.osmdroid.views.MapView
         android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+
+    <ProgressBar
+        android:id="@+id/progressLocation"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="#534AB7" />
+
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/locationCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="40dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="#F2FFFFFF"
+        app:strokeColor="#14000000"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:gravity="center_vertical">
+
+
+            <View
+                android:id="@+id/gpsDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/circle_green" />
+
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LIVE LOCATION"
+                    android:textSize="10sp"
+                    android:textColor="#888888"
+                    android:letterSpacing="0.05"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="2dp">
+
+                    <TextView
+                        android:id="@+id/txtLat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lat: --"
+                        android:textSize="13sp"
+                        android:textColor="#1A1A1A"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="·"
+                        android:textSize="13sp"
+                        android:textColor="#AAAAAA"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:id="@+id/txtLon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lon: --"
+                        android:textSize="13sp"
+                        android:textColor="#1A1A1A"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/circle_purple_light"
+                android:src="@drawable/ic_navigation"
+                android:padding="6dp"
+                app:tint="#534AB7" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnMyLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="12dp"
+        android:layout_marginBottom="124dp"
+        android:contentDescription="My Location"
+        app:srcCompat="@drawable/ic_my_location"
+        app:backgroundTint="#FFFFFF"
+        app:tint="#534AB7"
+        app:fabSize="normal"
+        app:elevation="4dp" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDemo"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Start Demo"
+            android:textSize="14sp"
+            android:letterSpacing="0.01"
+            app:cornerRadius="16dp"
+            app:backgroundTint="#534AB7"
+            android:textColor="#FFFFFF"
+            app:icon="@drawable/ic_play"
+            app:iconGravity="textStart"
+            app:iconTint="#FFFFFF" />
+
+    </LinearLayout>
 
 </FrameLayout>
