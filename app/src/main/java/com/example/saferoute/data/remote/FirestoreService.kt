@@ -11,6 +11,7 @@ class FirestoreService {
     fun sendEmergency(log: EmergencyLog) {
 
         val data = hashMapOf(
+            "userId" to log.userId,
             "type" to log.type,
             "latitude" to log.latitude,
             "longitude" to log.longitude,

@@ -18,4 +18,6 @@ class EmergencyRepository(
     fun getAllLogs(): LiveData<List<EmergencyLog>> {
         return emergencyDao.getAllLogs()
     }
+    fun getLogsByUser(userId:String)=
+        emergencyDao.getLogsByUser(userId)
 }

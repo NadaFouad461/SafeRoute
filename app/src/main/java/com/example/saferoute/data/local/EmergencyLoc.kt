@@ -9,6 +9,8 @@ data class EmergencyLog(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
+    val userId: String,
+
     val type: String,
 
     val latitude: Double,

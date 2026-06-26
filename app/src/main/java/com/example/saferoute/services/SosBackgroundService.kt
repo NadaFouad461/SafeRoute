@@ -14,6 +14,7 @@ import com.example.saferoute.data.local.AppDatabase
 import com.example.saferoute.data.local.EmergencyLog
 import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.data.repository.EmergencyRepository
+import com.example.saferoute.utils.EmergencyType
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -86,11 +87,12 @@ class SosBackgroundService : Service() {
 
                         // حفظ البيانات من خلال الـ Repository ليتم تخزينها في Room و Firebase معاً
                         val log = EmergencyLog(
-                            type = "SOS_BACKGROUND",
+                            userId = "test_user",
+                            type = EmergencyType.SOS,
                             latitude = location.latitude,
                             longitude = location.longitude,
                             timestamp = System.currentTimeMillis(),
-                            status = "ACTIVE_BACKGROUND"
+                            status = "AUTO"
                         )
 
                         serviceScope.launch {

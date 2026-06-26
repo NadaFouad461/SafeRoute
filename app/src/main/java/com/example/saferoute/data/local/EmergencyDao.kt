@@ -18,4 +18,8 @@ interface EmergencyDao {
 
     @Query("DELETE FROM emergency_logs")
     suspend fun deleteAllLogs()
+    @Query("SELECT * FROM emergency_logs WHERE userId=:userId ORDER BY timestamp DESC")
+    fun getLogsByUser(
+        userId:String
+    ): LiveData<List<EmergencyLog>>
 }

@@ -8,6 +8,7 @@ import android.os.Build
 import android.telephony.SmsManager
 import android.util.Log
 import com.example.saferoute.data.local.EmergencyLog
+import com.example.saferoute.utils.EmergencyType
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -72,10 +73,12 @@ class SosRepository(
                 }
 
                 val log = EmergencyLog(
-                    type = "SOS",
+                    userId = "test_user",
+                    type = EmergencyType.SOS,
                     latitude = location.latitude,
                     longitude = location.longitude,
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    status = "MANUAL"
                 )
 
                 emergencyRepository.insertLog(log)
