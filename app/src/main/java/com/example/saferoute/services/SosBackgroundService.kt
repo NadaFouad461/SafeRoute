@@ -19,6 +19,8 @@ import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.example.saferoute.utils.PermissionManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,15 +30,15 @@ class SosBackgroundService : Service() {
     private val CHANNEL_ID = "SosServiceChannel"
     private lateinit var emergencyRepository: EmergencyRepository
     private val serviceScope = CoroutineScope(Dispatchers.IO)
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
 
-        // تهيئة الريبوزيتوري داخل الخدمة لضمان حفظ البيانات محلياً وسحابياً
-        val db = AppDatabase.getDatabase(applicationContext)
+        val appDb = AppDatabase.getDatabase(applicationContext)
         val firestoreService = FirestoreService()
-        emergencyRepository = EmergencyRepository(db.emergencyDao(), firestoreService)
+        emergencyRepository = EmergencyRepository(appDb.emergencyDao(), firestoreService)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -44,13 +46,24 @@ class SosBackgroundService : Service() {
         startForeground(1, notification)
 
         if (intent?.action == "TRIGGER_SOS_ACTION") {
-            val userId = intent.getStringExtra("USER_ID") ?: "unknown_user"
-            val emergencyNumbers = listOf("01000000000", "01200000000") // يفضل تمريرها عبر الـ Intent مستقبلاً
+            val userId = intent.getStringExtra("USER_ID") ?: FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
-            runEmergencySequence(userId, emergencyNumbers)
+            // جلب الأرقام فوراً من الـ Firestore الفرعي لتشغيل استغاثات الحساسات والـ Safe Walk الخلفي
+            fetchContactsAndTrigger(userId)
         }
 
         return START_STICKY
+    }
+
+    private fun fetchContactsAndTrigger(userId: String) {
+        db.collection("users").document(userId).collection("contacts")
+            .get()
+            .addOnSuccessListener { documents ->
+                val numbers = documents.mapNotNull { it.getString("phone") }
+                if (numbers.isNotEmpty()) {
+                    runEmergencySequence(userId, numbers)
+                }
+            }
     }
 
     @android.annotation.SuppressLint("MissingPermission")
@@ -58,36 +71,32 @@ class SosBackgroundService : Service() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         if (PermissionManager.hasAllPermissions(this)) {
-
             val locationRequest = CurrentLocationRequest.Builder()
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                 .build()
 
-            val cancellationToken = com.google.android.gms.tasks.CancellationTokenSource().token
-
-            fusedLocationClient.getCurrentLocation(locationRequest, cancellationToken)
+            fusedLocationClient.getCurrentLocation(locationRequest, null)
                 .addOnSuccessListener { location ->
                     if (location != null) {
                         val mapsUrl = "https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}"
-                        val message = "إلحقني! أنا في خطر، ده موقعي الحالي: $mapsUrl"
+                        val message = "استغاثة تلقائية من SafeRoute! أنا في خطر، موقعي الحالي: $mapsUrl"
 
                         try {
                             val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                 getSystemService(SmsManager::class.java)
                             } else {
+                                @Suppress("DEPRECATION")
                                 SmsManager.getDefault()
                             }
                             for (number in numbers) {
                                 smsManager.sendTextMessage(number, null, message, null, null)
                             }
-                            Log.d("SosService", "تم إرسال رسائل الاستغاثة من الخلفية بنجاح.")
                         } catch (e: Exception) {
-                            Log.e("SosService", "فشل إرسال الـ SMS: ${e.message}")
+                            Log.e("SosService", "فشل إرسال الـ SMS من الخلفية: ${e.message}")
                         }
 
-                        // حفظ البيانات من خلال الـ Repository ليتم تخزينها في Room و Firebase معاً
                         val log = EmergencyLog(
-                            userId = "test_user",
+                            userId = userId,
                             type = EmergencyType.SOS,
                             latitude = location.latitude,
                             longitude = location.longitude,
@@ -98,8 +107,6 @@ class SosBackgroundService : Service() {
                         serviceScope.launch {
                             emergencyRepository.insertLog(log)
                         }
-                    } else {
-                        Log.e("SosService", "تعذر جلب الموقع")
                     }
                 }
         }
@@ -107,7 +114,7 @@ class SosBackgroundService : Service() {
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("SafeRoute في الخدمة")
+            .setContentTitle("SafeRoute في الخدمة حماية الطوارئ نشطة")
             .setContentText("نظام مراقبة الأمان يعمل في الخلفية لحمايتك...")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -116,11 +123,7 @@ class SosBackgroundService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "SafeRoute Service Channel",
-                NotificationManager.IMPORTANCE_LOW
-            )
+            val serviceChannel = NotificationChannel(CHANNEL_ID, "SafeRoute Service Channel", NotificationManager.IMPORTANCE_LOW)
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(serviceChannel)
         }

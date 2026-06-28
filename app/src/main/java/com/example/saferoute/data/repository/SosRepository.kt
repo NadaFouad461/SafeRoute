@@ -27,64 +27,61 @@ class SosRepository(
 
         return try {
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-
             val locationRequest = CurrentLocationRequest.Builder()
                 .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
                 .build()
 
-            val location = fusedLocationClient
-                .getCurrentLocation(locationRequest, null)
-                .await()
+            val location = fusedLocationClient.getCurrentLocation(locationRequest, null).await()
 
             if (location != null) {
-                // تعديل رابط الخريطة هنا لتجنب الخطأ الإملائي
-                val mapsUrl = "https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}"
-                val message = "إلحقني! أنا في خطر، ده موقعي الحالي: $mapsUrl"
+                val mapsUrl = "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+                val message = "إلحقني! أنا في خطر، ده موقعي الحالي على الخريطة: $mapsUrl"
 
-
-                val phone = emergencyNumbers.first().removePrefix("+")
-
+                // 1️⃣ أولاً: إرسال SMS تلقائي لجميع الأرقام المتواجدة في القائمة
                 try {
-                    // 🟢 1. WhatsApp (Primary)
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse(
-                        "https://wa.me/$phone?text=${Uri.encode(message)}"
-                    )
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(intent)
+                    val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        context.getSystemService(SmsManager::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        SmsManager.getDefault()
+                    }
 
-                } catch (e: Exception) {
+                    for (number in emergencyNumbers) {
+                        smsManager.sendTextMessage(number, null, message, null, null)
+                        Log.d("SOS_SYSTEM", "SMS sent to: $number")
+                    }
+                } catch (smsError: Exception) {
+                    Log.e("SOS_SYSTEM", "SMS sending failed: ${smsError.message}")
+                }
 
-                    // 🔴 2. Fallback SMS
+                // 2️⃣ ثانياً: فتح الواتساب كخطوة إضافية تفاعلية لأول رقم في القائمة
+                if (emergencyNumbers.isNotEmpty()) {
+                    val primaryPhone = emergencyNumbers.first().removePrefix("+")
                     try {
-                        val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            context.getSystemService(SmsManager::class.java)
-                        } else {
-                            SmsManager.getDefault()
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = Uri.parse("https://wa.me/$primaryPhone?text=${Uri.encode(message)}")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
-
-                        emergencyNumbers.forEach { number ->
-                            smsManager.sendTextMessage(number, null, message, null, null)
-                        }
-
-                    } catch (smsError: Exception) {
-                        Log.e("SOS", "Both WhatsApp and SMS failed: ${smsError.message}")
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e("SOS_SYSTEM", "WhatsApp app not found on device.")
                     }
                 }
 
+                // حفظ اللوج محلياً وسحابياً
                 val log = EmergencyLog(
-                    userId = "test_user",
+                    userId = userId,
                     type = EmergencyType.SOS,
                     latitude = location.latitude,
                     longitude = location.longitude,
                     timestamp = System.currentTimeMillis(),
                     status = "MANUAL"
                 )
-
                 emergencyRepository.insertLog(log)
+
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("تعذر تحديد الموقع"))
+                Result.failure(Exception("تعذر الحصول على إحداثيات الموقع"))
             }
         } catch (e: Exception) {
             Result.failure(e)

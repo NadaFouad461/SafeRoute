@@ -11,13 +11,16 @@ class EmergencyRepository(
 ) {
 
     suspend fun insertLog(log: EmergencyLog) {
-        emergencyDao.insertLog(log)    // حفظ محلي في Room
-        firestoreService.sendEmergency(log) // رفع ومزامنة على السحاب في Firestore
+
+        emergencyDao.insertLog(log)
+
+        firestoreService.sendEmergency(log)
     }
 
-    fun getAllLogs(): LiveData<List<EmergencyLog>> {
-        return emergencyDao.getAllLogs()
+    fun getLogsByUser(
+        userId: String
+    ): LiveData<List<EmergencyLog>> {
+
+        return emergencyDao.getLogsByUser(userId)
     }
-    fun getLogsByUser(userId:String)=
-        emergencyDao.getLogsByUser(userId)
 }

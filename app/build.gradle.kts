@@ -64,6 +64,17 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+
+
+    implementation("androidx.navigation:navigation-fragment-ktx:2.9.3")
+    implementation("androidx.navigation:navigation-ui-ktx:2.9.3")
+        implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+
+        implementation("com.google.firebase:firebase-auth")
+        implementation("com.google.firebase:firebase-database")
+        implementation("com.google.firebase:firebase-firestore")
+        implementation("com.google.firebase:firebase-messaging")
+
     implementation("com.google.firebase:firebase-messaging:25.0.0")
     implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("org.osmdroid:osmdroid-android:6.1.18")
