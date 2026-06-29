@@ -7,9 +7,9 @@ import androidx.room.RoomDatabase
 import com.example.saferoute.data.EmergencyDao
 
 @Database(
-    // merge EmergencyLog table with table  RoomGrid
+
     entities = [EmergencyLog::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

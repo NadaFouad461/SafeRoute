@@ -65,10 +65,21 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
 
+    // المكتبة الأساسية للـ Material Design (منها الـ BottomNavigationView والـ Buttons)
+    implementation("com.google.android.material:material:1.11.0")
+    
+
+    // مكتبة الـ ViewPager2 لعمل سحب (Swipe) لشاشات الـ Onboarding
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
 
     implementation("androidx.navigation:navigation-fragment-ktx:2.9.3")
     implementation("androidx.navigation:navigation-ui-ktx:2.9.3")
         implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+    // مكتبة OpenStreetMap الأساسية للخرائط
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
+    // مكتبة جلب واستخدام الـ Location Services
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 
         implementation("com.google.firebase:firebase-auth")
         implementation("com.google.firebase:firebase-database")

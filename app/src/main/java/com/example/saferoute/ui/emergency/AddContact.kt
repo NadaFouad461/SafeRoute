@@ -1,87 +1,111 @@
-package com.saferoute.fragments
+package com.example.saferoute.ui.contact
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentAddContactBinding
+import com.google.android.material.chip.Chip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-
-class AddContactFragment : Fragment() {
+class AddContactFragment : Fragment(R.layout.fragment_add_contact) {
 
     private var _binding: FragmentAddContactBinding? = null
     private val binding get() = _binding!!
 
+
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentAddContactBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated( view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentAddContactBinding.bind(view)
 
-        // إعداد الـ Spinner الخاص بصلة القرابة كما في التصميم
-        val relationships = arrayOf("Family", "Friend", "Partner", "Work")
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, relationships)
-        binding.spinnerRelationship.adapter = adapter
 
-        // عند الضغط على زر الحفظ
-        binding.btnSaveContact.setOnClickListener {
-            saveContactToFirestore()
+        binding.backBtn.setOnClickListener {
+            findNavController().navigateUp()
+        }
+
+
+        binding.addContactBtn.setOnClickListener {
+            saveEmergencyContactToFirestore()
         }
     }
 
-    private fun saveContactToFirestore() {
-        val currentUserId = auth.currentUser?.uid
-        if (currentUserId == null) {
-            Toast.makeText(context, "User not authenticated!", Toast.LENGTH_SHORT).show()
+    private fun saveEmergencyContactToFirestore() {
+
+        val fullName = binding.contactNameEt.text.toString().trim()
+        val phoneNumber = binding.contactPhoneEt.text.toString().trim()
+        val isPriority = binding.prioritySwitch.isChecked
+
+        val selectedChipId = binding.relationshipChipGroup.checkedChipId
+        val relationship = if (selectedChipId != View.NO_ID) {
+            view?.findViewById<Chip>(selectedChipId)?.text.toString()
+        } else {
+            "Family"
+        }
+
+
+        if (fullName.isEmpty()) {
+            binding.contactNameEt.error = "Full name is required"
+            binding.contactNameEt.requestFocus()
             return
         }
 
-        val name = binding.etContactName.text.toString().trim()
-        val phone = binding.etContactPhone.text.toString().trim()
-        val relationship = binding.spinnerRelationship.selectedItem.toString()
-        val isPriority = binding.switchPriority.isChecked
-
-        if (name.isEmpty() || phone.isEmpty()) {
-            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+        if (phoneNumber.isEmpty()) {
+            binding.contactPhoneEt.error = "Phone number is required"
+            binding.contactPhoneEt.requestFocus()
             return
         }
 
-        // تجهيز بيانات جهة الاتصال
-        val contactData = hashMapOf(
-            "name" to name,
-            "phone" to phone,
+
+        val currentUserUid = auth.currentUser?.uid
+        if (currentUserUid == null) {
+            Toast.makeText(context, "User session expired. Please log in again.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+
+        binding.addContactBtn.isEnabled = false
+
+
+        val contactMap = hashMapOf(
+            "name" to fullName,
+            "phone" to phoneNumber,
             "relationship" to relationship,
             "isPriority" to isPriority,
-            "fcmToken" to "" // هيتم تحديثه لاحقاً لما نربط الـ Cloud Functions
+            "createdAt" to com.google.firebase.Timestamp.now()
         )
 
-        // الحفظ داخل الـ subcollection الخاصة بالمستخدم الحالي
+
         db.collection("users")
-            .document(currentUserId)
+            .document(currentUserUid)
             .collection("contacts")
-            .document() // Firestore هيعمل Auto-generated ID للـ contact تلقائياً
-            .set(contactData)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Contact added successfully! 🎉", Toast.LENGTH_SHORT).show()
-                // هنا ممكن ترجعي للشاشة السابقة (مثلاً الـ Dashboard أو قائمة الجهات)
-                parentFragmentManager.popBackStack()
+            .add(contactMap)
+            .addOnSuccessListener { documentReference ->
+                Toast.makeText(context, "Contact saved successfully! 🎉", Toast.LENGTH_LONG).show()
+
+
+                binding.addContactBtn.isEnabled = true
+                clearFields()
+
+
+                findNavController().navigateUp()
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Error saving contact: ${e.message}", Toast.LENGTH_LONG).show()
+            .addOnFailureListener { exception ->
+                binding.addContactBtn.isEnabled = true
+                Toast.makeText(context, "Failed to save contact: ${exception.localizedMessage}", Toast.LENGTH_LONG).show()
             }
+    }
+
+    private fun clearFields() {
+        binding.contactNameEt.text?.clear()
+        binding.contactPhoneEt.text?.clear()
+        binding.prioritySwitch.isChecked = false
+        binding.relationshipChipGroup.clearCheck()
     }
 
     override fun onDestroyView() {

@@ -1,53 +1,194 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@android:color/holo_blue_dark"
-    tools:context=".ui.auth.HomeFragment">
+    android:background="#F8FAFC">
 
-    <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:layout_marginBottom="65dp"
+        android:fillViewport="true">
 
-        <TextView
-            android:text="Welcome Home "
-            android:id="@+id/welcomeTv"
-            android:textSize="24sp"
-            android:textColor="@color/white"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:id="@+id/phoneTv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:layout_marginTop="8dp"
-            android:text="" />
-        <TextView
-            android:id="@+id/dadTv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:layout_marginTop="8dp"
-            android:text="" />
-        <TextView
-            android:id="@+id/momTv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:layout_marginTop="8dp"
-            android:text="" />
-        <Button
-            android:id="@+id/logoutBtn"
-            android:text="Logout"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp"
+            android:gravity="center_horizontal">
 
-    </LinearLayout>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/profileCard"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    app:cardCornerRadius="20dp"
+                    android:layout_alignParentEnd="true"
+                    app:strokeWidth="0dp">
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@android:drawable/ic_menu_gallery"
+                        android:scaleType="centerCrop"/>
+                </com.google.android.material.card.MaterialCardView>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_alignParentStart="true">
+                    <TextView
+                        android:id="@+id/welcomeTv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Good Evening, Sara"
+                        android:textColor="#1E293B"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✓ System fully operational"
+                        android:textColor="#10B981"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+            </RelativeLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="34dp"
+                android:background="#F1F5F9"
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:paddingHorizontal="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🧭 GPS: ON" android:textColor="#64748B" android:textSize="11sp" android:textStyle="bold" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔋 84%" android:textColor="#64748B" android:textSize="11sp" android:textStyle="bold" android:layout_marginEnd="16dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📶 LTE" android:textColor="#64748B" android:textSize="11sp" android:textStyle="bold"/>
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/sosBtnCard"
+                android:layout_width="180dp"
+                android:layout_height="180dp"
+                android:layout_marginTop="32dp"
+                app:cardCornerRadius="90dp"
+                app:cardBackgroundColor="#EF4444"
+                app:cardElevation="8dp"
+                app:strokeWidth="8dp"
+                app:strokeColor="#FEE2E2">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚡" android:textColor="#FFFFFF" android:textSize="28sp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SOS" android:textColor="#FFFFFF" android:textSize="32sp" android:textStyle="bold"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HOLD 3S" android:textColor="#FEE2E2" android:textSize="11sp" android:textStyle="bold" android:layout_marginTop="4dp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tap to trigger emergency alert to\nyour contacts immediately"
+                android:textColor="#64748B"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:layout_marginTop="16dp"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="28dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Quick Actions" android:textColor="#1E293B" android:textSize="16sp" android:textStyle="bold" android:layout_alignParentStart="true"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="View All" android:textColor="#74C3EE" android:textStyle="bold" android:textSize="13sp" android:layout_alignParentEnd="true"/>
+            </RelativeLayout>
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:rowCount="2"
+                android:layout_marginTop="12dp"
+                android:alignmentMode="alignMargins"
+                android:columnOrderPreserved="false">
+                <com.google.android.material.card.MaterialCardView android:id="@+id/actionSafeWalk" android:layout_width="0dp" android:layout_height="70dp" android:layout_columnWeight="1" android:layout_margin="6dp" app:cardCornerRadius="12dp" app:cardBackgroundColor="#FFFFFF" app:strokeWidth="1dp" app:strokeColor="#F1F5F9" app:cardElevation="0dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="👟 Safe Walk ›" android:textColor="#1E293B" android:layout_gravity="center" android:textStyle="bold"/></com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView android:id="@+id/actionFakeCall" android:layout_width="0dp" android:layout_height="70dp" android:layout_columnWeight="1" android:layout_margin="6dp" app:cardCornerRadius="12dp" app:cardBackgroundColor="#FFFFFF" app:strokeWidth="1dp" app:strokeColor="#F1F5F9" app:cardElevation="0dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📞 Fake Call ›" android:textColor="#1E293B" android:layout_gravity="center" android:textStyle="bold"/></com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView android:id="@+id/actionContacts" android:layout_width="0dp" android:layout_height="70dp" android:layout_columnWeight="1" android:layout_margin="6dp" app:cardCornerRadius="12dp" app:cardBackgroundColor="#FFFFFF" app:strokeWidth="1dp" app:strokeColor="#F1F5F9" app:cardElevation="0dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="👥 Contacts ›" android:textColor="#1E293B" android:layout_gravity="center" android:textStyle="bold"/></com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView android:id="@+id/actionLiveLocation" android:layout_width="0dp" android:layout_height="70dp" android:layout_columnWeight="1" android:layout_margin="6dp" app:cardCornerRadius="12dp" app:cardBackgroundColor="#FFFFFF" app:strokeWidth="1dp" app:strokeColor="#F1F5F9" app:cardElevation="0dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📍 Live Location ›" android:textColor="#1E293B" android:layout_gravity="center" android:textStyle="bold"/></com.google.android.material.card.MaterialCardView>
+            </GridLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeWidth="1dp"
+                app:strokeColor="#E2E8F0"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🛡️ SafeRoute Active" android:textColor="#1E293B" android:textStyle="bold" android:textSize="14sp" android:layout_alignParentStart="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SECURE" android:textColor="#64748B" android:background="#F1F5F9" android:paddingHorizontal="6dp" android:paddingVertical="2dp" android:textSize="10sp" android:textStyle="bold" android:layout_alignParentEnd="true"/>
+                    </RelativeLayout>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#F1F5F9" android:layout_marginTop="8dp" android:layout_marginBottom="8dp"/>
+                    <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Last Location Sync" android:textColor="#64748B" android:textSize="12sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2 mins ago" android:textColor="#1E293B" android:textStyle="bold" android:textSize="12sp" android:layout_alignParentEnd="true"/>
+                    </RelativeLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Recent Activity" android:textColor="#1E293B" android:textSize="16sp" android:textStyle="bold" android:layout_alignParentStart="true"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="History" android:textColor="#94A3B8" android:textSize="13sp" android:layout_alignParentEnd="true"/>
+            </RelativeLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recentActivityRv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#FFFFFF"
+        app:elevation="8dp"
+        app:menu="@menu/bottom_nav_menu" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabEmergency"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/stat_notify_error"
+        app:tint="#FFFFFF"
+        app:backgroundTint="#EF4444"
+        app:fabSize="normal"
+        app:layout_anchor="@id/bottomNavigationView"
+        app:layout_anchorGravity="center_horizontal|top"
+        android:layout_marginBottom="32dp"
+        app:borderWidth="0dp"
+        app:elevation="10dp"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

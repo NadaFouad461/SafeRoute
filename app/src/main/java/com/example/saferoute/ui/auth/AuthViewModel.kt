@@ -6,6 +6,21 @@ import com.example.saferoute.data.repository.AuthRepository
 class AuthViewModel: ViewModel() {
     private val authRepository = AuthRepository()
 
+
+    fun getCurrentUserId(): String? {
+        return authRepository.getCurrentUserId()
+    }
+
+
+    fun getUserProfile(userId: String, onResult: (Boolean, Map<String, Any>?, String?) -> Unit) {
+        authRepository.getUserProfile(userId, onResult)
+    }
+
+
+    fun updateProfile(name: String, email: String, onResult: (Boolean, String?) -> Unit) {
+        authRepository.updateProfile(name, email, onResult)
+    }
+
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         authRepository.login(email, password, onResult)
     }
