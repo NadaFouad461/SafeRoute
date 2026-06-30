@@ -1,8 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.google.gms.google.services)
-    alias(libs.plugins.kotlin.kapt)
 }
 
 android {
@@ -36,11 +34,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
-    buildFeatures {
+        buildFeatures {
             viewBinding = true
         }
 }
@@ -61,46 +55,11 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.googleid)
     implementation(libs.material)
-    implementation(libs.play.services.maps)
-    implementation(libs.androidx.ui.text)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
-
-    implementation("com.google.android.material:material:1.12.0")
-
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
-
-    // المكتبة الأساسية للـ Material Design (منها الـ BottomNavigationView والـ Buttons)
-    implementation("com.google.android.material:material:1.11.0")
-    
-
-    // مكتبة الـ ViewPager2 لعمل سحب (Swipe) لشاشات الـ Onboarding
-    implementation("androidx.viewpager2:viewpager2:1.1.0")
-
-    implementation("androidx.navigation:navigation-fragment-ktx:2.9.3")
-    implementation("androidx.navigation:navigation-ui-ktx:2.9.3")
-        implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
-    // مكتبة OpenStreetMap الأساسية للخرائط
-    implementation("org.osmdroid:osmdroid-android:6.1.18")
-
-    // مكتبة جلب واستخدام الـ Location Services
-    implementation("com.google.android.gms:play-services-location:21.2.0")
-
-        implementation("com.google.firebase:firebase-auth")
-        implementation("com.google.firebase:firebase-database")
-        implementation("com.google.firebase:firebase-firestore")
-        implementation("com.google.firebase:firebase-messaging")
-
-    implementation("com.google.firebase:firebase-messaging:25.0.0")
+    implementation("com.google.firebase:firebase-messaging-ktx")
     implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
-    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
-    implementation("com.google.firebase:firebase-firestore")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
-    implementation("androidx.room:room-runtime:2.7.2")
-    implementation("androidx.room:room-ktx:2.7.2")
-    kapt("androidx.room:room-compiler:2.7.2")
 }
