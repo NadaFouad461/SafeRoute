@@ -68,7 +68,7 @@ class SosFragment : Fragment() {
 
         setupHorizontalRecyclerView()
 
-        // 🚀 خطوة البداية: تحميل الكونتكتس وتشغيل العداد تلقائياً فوراً
+
         loadEmergencyContacts()
 
         binding.btnSos.setOnClickListener {
@@ -113,7 +113,7 @@ class SosFragment : Fragment() {
                 }
                 sosContactsAdapter.notifyDataSetChanged()
 
-                // ⏱️ تشغيل العداد تلقائياً بدون أي ضغط فور انتهاء جلب البيانات
+
                 checkPermissionsAndStart()
             }
             .addOnFailureListener {
@@ -150,19 +150,19 @@ class SosFragment : Fragment() {
 
                     binding.progressBar.visibility = View.VISIBLE
 
-                    // 1. تشغيل خدمات الـ Background (SMS + WhatsApp + الحفظ في الـ Room)
+
                     CoroutineScope(Dispatchers.IO).launch {
                         sosRepository.sendEmergencySos(requireContext().applicationContext, currentUserId)
 
                         withContext(Dispatchers.Main) {
-                            // 2. رفع كارت واحد موحد فقط للفايرستور متطابق مع كارت الـ Room
+
                             val currentContactsNames = emergencyContacts.map { it.name }
-                            val totalContactsCount = currentContactsNames.size // العدد الديناميكي
+                            val totalContactsCount = currentContactsNames.size
 
                             val emergencyData = hashMapOf(
                                 "userId" to currentUserId,
                                 "type" to "SOS",
-                                // 🔥 نرسلها بالصيغة اللي بيفكها الـ Adapter القديم بالملي
+
                                 "status" to "Dispatched|$totalContactsCount",
                                 "latitude" to 30.3829155,
                                 "longitude" to 30.5385578,
@@ -170,7 +170,7 @@ class SosFragment : Fragment() {
                                 "timestamp" to com.google.firebase.Timestamp.now()
                             )
 
-                            db.collection("emergency_logs") // الحساب على نفس الكولكشن الأساسي
+                            db.collection("emergency_logs")
                                 .add(emergencyData)
                                 .addOnSuccessListener {
                                     if (_binding != null && isAdded) {

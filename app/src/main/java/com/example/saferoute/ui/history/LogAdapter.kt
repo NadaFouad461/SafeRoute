@@ -42,12 +42,12 @@ class LogAdapter : ListAdapter<EmergencyLog, LogAdapter.LogViewHolder>(LogDiffCa
             val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
             binding.tvLogTime.text = sdf.format(Date(log.timestamp))
 
-            // 🎯 تفكيك الـ status وقراءة العدد الديناميكي المحدث في الفايرستور
+
             val statusParts = log.status.split("|")
             val actualStatus = statusParts.getOrNull(0) ?: "Dispatched"
             val contactsCount = statusParts.getOrNull(1) ?: "3"
 
-            // ربط مباشر بـ tvContactsAlerted المكتوب في الـ XML بتاعك
+
             binding.tvContactsAlerted.text = "$contactsCount Contacts alerted"
 
             when (log.type.uppercase()) {

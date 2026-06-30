@@ -27,34 +27,34 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
 
-        // 1. إعداد قائمة الأنشطة الأخيرة
+
         setupRecentActivityRecyclerView()
 
-        // 2. جلب بيانات المستخدم والترحيب به
+
         fetchUserDataAndGreet()
 
-        // 3. مستمع الضغط لزر جهات الاتصال
+
         binding.actionContacts.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
         }
 
-        // 4. زر الـ FAB الطارئ الفوري
+
         binding.fabEmergency.setOnClickListener {
             handleSosTrigger()
         }
 
-        // 5️⃣ تعديل: إضافة الضغط العادي (Click) على كارت الـ SOS لفتح الصفحة فوراً
+
         binding.sosBtnCard.setOnClickListener {
             handleSosTrigger()
         }
 
-        // 6. الضغط المطول على كارت الـ SOS (كوسيلة حماية إضافية)
+
         binding.sosBtnCard.setOnLongClickListener {
             handleSosTrigger()
             true
         }
 
-        // 7. شريط التنقل السفلي (Bottom Navigation)
+
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> true
@@ -83,7 +83,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-    // دالة موحدة للتعامل مع تشغيل الـ SOS لمنع تكرار الكود
+
     private fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
@@ -130,14 +130,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-    // 🔋 تعديل الدالة لتستقبل وتخزن نسبة البطارية الحقيقية في قاعدة البيانات
+
     private fun triggerDirectSOS(userId: String, userName: String, locationName: String, batteryLevel: Int) {
         val emergencyData = hashMapOf(
             "userId" to userId,
             "userName" to userName,
             "locationName" to locationName,
             "status" to "triggered",
-            "batteryLevel" to batteryLevel, // حفظ النسبة الحقيقية (مثلاً 60) بدلاً من الـ 100% الافتراضية
+            "batteryLevel" to batteryLevel,
             "timestamp" to com.google.firebase.Timestamp.now()
         )
 
@@ -146,7 +146,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (_binding != null && isAdded) {
                     Toast.makeText(context, "🚨 SOS Saved to Database!", Toast.LENGTH_SHORT).show()
 
-                    // تمرير نسبة البطارية لشاشة السوس لتعرضها فوراً لو رغبتِ
+
                     val bundle = Bundle().apply {
                         putInt("batteryLevel", batteryLevel)
                     }

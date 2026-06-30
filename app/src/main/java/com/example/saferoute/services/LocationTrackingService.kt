@@ -38,7 +38,7 @@ class LocationTrackingService(
             return
         }
 
-        // 🚀 إضافة ذكية: لقط آخر موقع مسجل فوراً في بداية التشغيل لكسر تعليق البروجرس بار
+
         val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         val initialLocation = lastGps ?: lastNet
@@ -46,7 +46,7 @@ class LocationTrackingService(
             onLocationUpdate(it.latitude, it.longitude)
         }
 
-        // تسجيل الـ Listener التقليدي للتحديثات المستمرة
+
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             locationManager.requestLocationUpdates(
                 LocationManager.GPS_PROVIDER,

@@ -47,7 +47,7 @@ class LogDetailsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. استقبال البيانات ديناميكياً من الـ Bundle الممرر من الأدابتر مباشرة
+
         logType = arguments?.getString("logType") ?: "SOS"
         logLatitude = arguments?.getDouble("lat") ?: 0.0
         logLongitude = arguments?.getDouble("lon") ?: 0.0
@@ -56,7 +56,7 @@ class LogDetailsFragment : Fragment() {
         val contactsCount = arguments?.getInt("contactsCount") ?: 3
         val locationName = arguments?.getString("locationName") ?: getAddressName(logLatitude, logLongitude)
 
-        // 2. عرض البيانات النصية ديناميكياً في الواجهة دون داتا ثابتة
+
         binding.tvDetailType.text = "$logType Report"
 
         val sdf = SimpleDateFormat("EEEE, hh:mm a", Locale.getDefault())
@@ -65,14 +65,14 @@ class LogDetailsFragment : Fragment() {
         binding.tvDetailLocation.text = "📍 Location: $locationName"
         binding.tvDetailBattery.text = "🔋 Battery level during event: $battery%"
 
-        // 3. ضبط الحالة بناءً على نوع البلاغ
+
         binding.tvDetailStatus.text = "Dispatched"
         binding.tvDetailStatus.setBackgroundResource(R.drawable.bg_dispatched_badge)
 
-        // 4. عرض جهات الاتصال ديناميكياً بناءً على العدد الفعلي
+
         displayGuardians(contactsCount)
 
-        // 5. تحديث وتوسيط الخريطة على إحداثيات البلاغ الحقيقي
+
         updateOSMMapLocation()
     }
 
@@ -133,7 +133,7 @@ class LogDetailsFragment : Fragment() {
     private fun displayGuardians(contactsCount: Int) {
         binding.guardiansContainer.removeAllViews()
 
-        // توليد واجهات ديناميكية لجهات الاتصال بناءً على العدد المحفوظ بالبوزيشن
+
         for (i in 1..contactsCount) {
             val tvGuardian = TextView(context).apply {
                 text = "👤 Emergency Contact $i  •  [SMS Sent Successfully]"

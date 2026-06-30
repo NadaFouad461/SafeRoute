@@ -16,7 +16,7 @@ class HistoryViewModel : ViewModel() {
     private val _logs = MutableLiveData<List<EmergencyLog>>()
     val logs: LiveData<List<EmergencyLog>> get() = _logs
 
-    // 🎯 دالة الاستماع الفوري للفايرستور لجلب البيانات الحقيقية والديناميكية
+
     fun listenToEmergencyLogs() {
         if (currentUserId.isEmpty()) return
 
@@ -30,19 +30,19 @@ class HistoryViewModel : ViewModel() {
 
                 val logsList = mutableListOf<EmergencyLog>()
                 for (doc in snapshots) {
-                    // جلب قائمة الأسماء الديناميكية من الفايرستور
+
                     val alertedContacts = doc.get("alertedContacts") as? List<String> ?: emptyList()
 
-                    // تحويل بيانات الفايرستور لكائن EmergencyLog يعرضه الـ Adapter
+
                     val log = EmergencyLog(
-                        id = doc.id.hashCode(), // تحويل الـ ID لـ Int متوافق مع Room
+                        id = doc.id.hashCode(),
                         userId = doc.getString("userId") ?: "",
                         type = doc.getString("type") ?: "SOS",
                         latitude = doc.getDouble("latitude") ?: 0.0,
                         longitude = doc.getDouble("longitude") ?: 0.0,
                         timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: System.currentTimeMillis(),
                         status = doc.getString("status") ?: "Dispatched",
-                        // 🔥 هنا السحر: بنخلي نسبة البطارية تشيل عدد جهات الاتصال ديناميكياً ليقرأها الـ Adapter بتاعكِ فوراً!
+
                         batteryLevel = alertedContacts.size
                     )
                     logsList.add(log)

@@ -48,7 +48,7 @@ class SosBackgroundService : Service() {
         if (intent?.action == "TRIGGER_SOS_ACTION") {
             val userId = intent.getStringExtra("USER_ID") ?: FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
 
-            // جلب الأرقام فوراً من الـ Firestore الفرعي لتشغيل استغاثات الحساسات والـ Safe Walk الخلفي
+
             fetchContactsAndTrigger(userId)
         }
 

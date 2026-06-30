@@ -77,7 +77,7 @@ class MapFragment : Fragment() {
 
         val map = binding.map
 
-        // 🛠️ تشغيل الـ Bottom Navigation الآمن والمعدل يدوياً لمنع أي تهنيج في التنقل
+
         setupBottomNavigation()
 
         updateEmergencyContactsCount()
@@ -216,13 +216,13 @@ class MapFragment : Fragment() {
         }
     }
 
-    // 🛠️ دالة الـ Bottom Navigation الاحترافية لمنع قفل التبويبات أو تعليقها أمام اللجنة
+
     private fun setupBottomNavigation() {
-        // تحديد التبويب الحالي للشاشة (الخريطة) بنجاح
+
         binding.bottomNavigationView.selectedItemId = R.id.nav_map
 
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
-            // منع إعادة تحميل صفحة الخريطة لو ضغطت عليها وهي مفتوحة بالفعل
+
             if (item.itemId == R.id.nav_map) {
                 return@setOnItemSelectedListener true
             }
