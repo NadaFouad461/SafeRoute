@@ -82,16 +82,17 @@
                 app:cardBackgroundColor="#EF4444"
                 app:cardElevation="8dp"
                 app:strokeWidth="8dp"
-                app:strokeColor="#FEE2E2">
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:gravity="center">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚡" android:textColor="#FFFFFF" android:textSize="28sp"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SOS" android:textColor="#FFFFFF" android:textSize="32sp" android:textStyle="bold"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HOLD 3S" android:textColor="#FEE2E2" android:textSize="11sp" android:textStyle="bold" android:layout_marginTop="4dp"/>
-                </LinearLayout>
+                app:strokeColor="#FEE2E2"
+                android:clickable="true"
+                android:focusable="true"> <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚡" android:textColor="#FFFFFF" android:textSize="28sp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SOS" android:textColor="#FFFFFF" android:textSize="32sp" android:textStyle="bold"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HOLD 3S" android:textColor="#FEE2E2" android:textSize="11sp" android:textStyle="bold" android:layout_marginTop="4dp"/>
+            </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView

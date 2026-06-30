@@ -1,6 +1,5 @@
 package com.example.saferoute.ui.sos
 
-import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.LayoutInflater
@@ -10,15 +9,22 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.saferoute.R
 import com.example.saferoute.data.local.AppDatabase
 import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.data.repository.EmergencyRepository
 import com.example.saferoute.data.repository.SosRepository
 import com.example.saferoute.databinding.FragmentSosBinding
-import com.example.saferoute.ui.emergency.EmergencyLogActivity
+import com.example.saferoute.models.ContactItem
 import com.example.saferoute.utils.PermissionManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SosFragment : Fragment() {
 
@@ -26,10 +32,13 @@ class SosFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var viewModel: SosViewModel
+    private lateinit var sosRepository: SosRepository
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
     private val db = FirebaseFirestore.getInstance()
 
-    private var emergencyContacts = mutableListOf<String>()
+    private var emergencyContacts = mutableListOf<ContactItem>()
+    private lateinit var sosContactsAdapter: SosContactsAdapter
+
     private var countDownTimer: CountDownTimer? = null
     private var isTimerRunning = false
 
@@ -53,74 +62,132 @@ class SosFragment : Fragment() {
         val dbRoom = AppDatabase.getDatabase(requireContext())
         val firestoreService = FirestoreService()
         val emergencyRepository = EmergencyRepository(dbRoom.emergencyDao(), firestoreService)
-        val sosRepository = SosRepository(emergencyRepository)
+        sosRepository = SosRepository(emergencyRepository)
 
         viewModel = ViewModelProvider(this, SosViewModelFactory(sosRepository))[SosViewModel::class.java]
 
-        // 1. تحميل كافة جهات الاتصال المسجلة في الـ subcollection
+        setupHorizontalRecyclerView()
+
+        // 🚀 خطوة البداية: تحميل الكونتكتس وتشغيل العداد تلقائياً فوراً
         loadEmergencyContacts()
 
-        // 2. تفعيل الـ Countdown عند الضغط على زر الـ SOS لحماية الـ Flow
         binding.btnSos.setOnClickListener {
-            if (PermissionManager.hasAllPermissions(requireContext())) {
-                startSosCountdown()
-            } else {
-                requestPermissionsLauncher.launch(PermissionManager.REQUIRED_PERMISSIONS)
+            if (!isTimerRunning) {
+                checkPermissionsAndStart()
             }
         }
 
-        // 3. زر إلغاء الاستغاثة قبل انتهاء العداد
         binding.btnCancelSos.setOnClickListener {
             cancelSosCountdown()
         }
 
         binding.btnOpenLogs.setOnClickListener {
-            startActivity(Intent(requireContext(), EmergencyLogActivity::class.java))
+            navigateToHistoryFragment()
         }
+    }
 
-        setupObservers()
+    private fun setupHorizontalRecyclerView() {
+        sosContactsAdapter = SosContactsAdapter(emergencyContacts)
+        binding.rvEmergencyContactsHorizontal.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.rvEmergencyContactsHorizontal.adapter = sosContactsAdapter
     }
 
     private fun loadEmergencyContacts() {
         emergencyContacts.clear()
         db.collection("users")
             .document(currentUserId)
-            .collection("contacts") // قراءة حية وديناميكية من المسار الجديد
+            .collection("contacts")
             .get()
             .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    val phone = document.getString("phone")
-                    if (!phone.isNullOrEmpty()) {
-                        emergencyContacts.add(phone)
-                    }
+                for (doc in documents) {
+                    val contact = ContactItem(
+                        id = doc.id,
+                        name = doc.getString("name") ?: "",
+                        phone = doc.getString("phone") ?: "",
+                        relationship = doc.getString("relationship") ?: "",
+                        isPriority = doc.getBoolean("isPriority") ?: false,
+                        fcmToken = doc.getString("fcmToken") ?: ""
+                    )
+                    emergencyContacts.add(contact)
                 }
+                sosContactsAdapter.notifyDataSetChanged()
+
+                // ⏱️ تشغيل العداد تلقائياً بدون أي ضغط فور انتهاء جلب البيانات
+                checkPermissionsAndStart()
             }
             .addOnFailureListener {
-                Toast.makeText(requireContext(), "فشل تحميل جهات الاتصال النشطة", Toast.LENGTH_SHORT).show()
+                checkPermissionsAndStart()
             }
+    }
+
+    private fun checkPermissionsAndStart() {
+        if (PermissionManager.hasAllPermissions(requireContext())) {
+            startSosCountdown()
+        } else {
+            requestPermissionsLauncher.launch(PermissionManager.REQUIRED_PERMISSIONS)
+        }
     }
 
     private fun startSosCountdown() {
         if (isTimerRunning) return
-
-        if (emergencyContacts.isEmpty()) {
-            Toast.makeText(requireContext(), "من فضلك أضف جهة اتصال طوارئ أولاً في حسابك!", Toast.LENGTH_LONG).show()
-            return
-        }
 
         isTimerRunning = true
         binding.btnCancelSos.visibility = View.VISIBLE
 
         countDownTimer = object : CountDownTimer(5000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                binding.tvCountdown.text = (millisUntilFinished / 1000).toString()
+                if (_binding != null) {
+                    val secondsLeft = (millisUntilFinished / 1000) + 1
+                    binding.tvCountdown.text = secondsLeft.toString()
+                }
             }
 
             override fun onFinish() {
-                binding.tvCountdown.text = "0"
-                isTimerRunning = false
-                // إطلاق الاستغاثة الفعلية
-                viewModel.triggerSos(requireContext(), currentUserId, emergencyContacts)
+                if (_binding != null) {
+                    binding.tvCountdown.text = "0"
+                    isTimerRunning = false
+
+                    binding.progressBar.visibility = View.VISIBLE
+
+                    // 1. تشغيل خدمات الـ Background (SMS + WhatsApp + الحفظ في الـ Room)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        sosRepository.sendEmergencySos(requireContext().applicationContext, currentUserId)
+
+                        withContext(Dispatchers.Main) {
+                            // 2. رفع كارت واحد موحد فقط للفايرستور متطابق مع كارت الـ Room
+                            val currentContactsNames = emergencyContacts.map { it.name }
+                            val totalContactsCount = currentContactsNames.size // العدد الديناميكي
+
+                            val emergencyData = hashMapOf(
+                                "userId" to currentUserId,
+                                "type" to "SOS",
+                                // 🔥 نرسلها بالصيغة اللي بيفكها الـ Adapter القديم بالملي
+                                "status" to "Dispatched|$totalContactsCount",
+                                "latitude" to 30.3829155,
+                                "longitude" to 30.5385578,
+                                "alertedContacts" to currentContactsNames,
+                                "timestamp" to com.google.firebase.Timestamp.now()
+                            )
+
+                            db.collection("emergency_logs") // الحساب على نفس الكولكشن الأساسي
+                                .add(emergencyData)
+                                .addOnSuccessListener {
+                                    if (_binding != null && isAdded) {
+                                        binding.progressBar.visibility = View.GONE
+                                        Toast.makeText(requireContext(), "تم إرسال الاستغاثة بنجاح! 🎉", Toast.LENGTH_LONG).show()
+                                        navigateToHistoryFragment()
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    if (_binding != null && isAdded) {
+                                        binding.progressBar.visibility = View.GONE
+                                        navigateToHistoryFragment()
+                                    }
+                                }
+                        }
+                    }
+                }
             }
         }.start()
     }
@@ -131,26 +198,20 @@ class SosFragment : Fragment() {
             isTimerRunning = false
             binding.tvCountdown.text = "5"
             Toast.makeText(requireContext(), "تم إلغاء إرسال الاستغاثة بنجاح 🛑", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+        } else {
+            findNavController().navigateUp()
         }
     }
 
-    private fun setupObservers() {
-        viewModel.sosStatus.observe(viewLifecycleOwner) { state ->
-            when (state) {
-                is SosState.Loading -> {
-                    binding.progressBar.visibility = View.VISIBLE
-                    binding.btnSos.isEnabled = false
-                }
-                is SosState.Success -> {
-                    binding.progressBar.visibility = View.GONE
-                    binding.btnSos.isEnabled = true
-                    Toast.makeText(requireContext(), "تم إرسال الاستغاثة لكافة الحماة بنجاح! 🎉", Toast.LENGTH_LONG).show()
-                }
-                is SosState.Error -> {
-                    binding.progressBar.visibility = View.GONE
-                    binding.btnSos.isEnabled = true
-                    Toast.makeText(requireContext(), state.message, Toast.LENGTH_LONG).show()
-                }
+    private fun navigateToHistoryFragment() {
+        try {
+            findNavController().navigate(R.id.nav_history)
+        } catch (e: Exception) {
+            try {
+                findNavController().navigate(R.id.historyFragment)
+            } catch (ex: Exception) {
+                Toast.makeText(requireContext(), "جاري فتح سجلات الاستغاثة...", Toast.LENGTH_SHORT).show()
             }
         }
     }

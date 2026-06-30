@@ -12,78 +12,162 @@ import com.example.saferoute.utils.EmergencyType
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 class SosRepository(
     private val emergencyRepository: EmergencyRepository
 ) {
 
+    private val db = FirebaseFirestore.getInstance()
+
+    suspend fun getEmergencyContacts(
+        userId: String
+    ): List<String> {
+
+        val result =
+            db.collection("users")
+                .document(userId)
+                .collection("contacts")
+                .get()
+                .await()
+
+        return result.documents.mapNotNull {
+            it.getString("phone")
+        }
+    }
+
     @SuppressLint("MissingPermission")
     suspend fun sendEmergencySos(
         context: Context,
-        userId: String,
-        emergencyNumbers: List<String>
+        userId: String
     ): Result<Unit> {
 
         return try {
-            val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-            val locationRequest = CurrentLocationRequest.Builder()
-                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .build()
 
-            val location = fusedLocationClient.getCurrentLocation(locationRequest, null).await()
+            val emergencyNumbers =
+                getEmergencyContacts(userId)
+
+            if (emergencyNumbers.isEmpty()) {
+
+                return Result.failure(
+                    Exception("لا يوجد جهات اتصال للطوارئ")
+                )
+            }
+
+            val fusedLocationClient =
+                LocationServices.getFusedLocationProviderClient(context)
+
+            val locationRequest =
+                CurrentLocationRequest.Builder()
+                    .setPriority(
+                        Priority.PRIORITY_HIGH_ACCURACY
+                    )
+                    .build()
+
+            val location =
+                fusedLocationClient
+                    .getCurrentLocation(
+                        locationRequest,
+                        null
+                    )
+                    .await()
 
             if (location != null) {
-                val mapsUrl = "https://maps.google.com/?q=${location.latitude},${location.longitude}"
-                val message = "إلحقني! أنا في خطر، ده موقعي الحالي على الخريطة: $mapsUrl"
 
-                // 1️⃣ أولاً: إرسال SMS تلقائي لجميع الأرقام المتواجدة في القائمة
+                val mapsUrl =
+                    "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+
+                val message =
+                    "🚨 أنا في خطر، موقعي الحالي: $mapsUrl"
+
                 try {
-                    val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        context.getSystemService(SmsManager::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        SmsManager.getDefault()
-                    }
+
+                    val smsManager =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+                            context.getSystemService(
+                                SmsManager::class.java
+                            )
+
+                        } else {
+
+                            @Suppress("DEPRECATION")
+                            SmsManager.getDefault()
+                        }
 
                     for (number in emergencyNumbers) {
-                        smsManager.sendTextMessage(number, null, message, null, null)
-                        Log.d("SOS_SYSTEM", "SMS sent to: $number")
+
+                        smsManager.sendTextMessage(
+                            number,
+                            null,
+                            message,
+                            null,
+                            null
+                        )
                     }
-                } catch (smsError: Exception) {
-                    Log.e("SOS_SYSTEM", "SMS sending failed: ${smsError.message}")
+
+                } catch (e: Exception) {
+
+                    Log.e(
+                        "SOS_SYSTEM",
+                        e.message ?: ""
+                    )
                 }
 
-                // 2️⃣ ثانياً: فتح الواتساب كخطوة إضافية تفاعلية لأول رقم في القائمة
                 if (emergencyNumbers.isNotEmpty()) {
-                    val primaryPhone = emergencyNumbers.first().removePrefix("+")
+
                     try {
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse("https://wa.me/$primaryPhone?text=${Uri.encode(message)}")
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        }
+
+                        val phone =
+                            emergencyNumbers.first()
+
+                        val intent =
+                            Intent(Intent.ACTION_VIEW)
+
+                        intent.data =
+                            Uri.parse(
+                                "https://wa.me/$phone?text=${Uri.encode(message)}"
+                            )
+
+                        intent.addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK
+                        )
+
                         context.startActivity(intent)
+
                     } catch (e: Exception) {
-                        Log.e("SOS_SYSTEM", "WhatsApp app not found on device.")
+
+                        Log.e(
+                            "WHATSAPP",
+                            e.message ?: ""
+                        )
                     }
                 }
 
-                // حفظ اللوج محلياً وسحابياً
-                val log = EmergencyLog(
-                    userId = userId,
-                    type = EmergencyType.SOS,
-                    latitude = location.latitude,
-                    longitude = location.longitude,
-                    timestamp = System.currentTimeMillis(),
-                    status = "MANUAL"
-                )
+                val log =
+                    EmergencyLog(
+                        userId = userId,
+                        type = EmergencyType.SOS,
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        timestamp = System.currentTimeMillis(),
+                        status = "MANUAL"
+                    )
+
                 emergencyRepository.insertLog(log)
 
                 Result.success(Unit)
+
             } else {
-                Result.failure(Exception("تعذر الحصول على إحداثيات الموقع"))
+
+                Result.failure(
+                    Exception("تعذر الحصول على الموقع")
+                )
             }
+
         } catch (e: Exception) {
+
             Result.failure(e)
         }
     }

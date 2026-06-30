@@ -97,6 +97,27 @@
             android:textStyle="bold"
             android:layout_marginTop="32dp"
             android:letterSpacing="0.05"/>
+
+        <TextView
+            android:id="@+id/tvSendingTo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sending SOS To:"
+            android:textColor="#1E293B"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_gravity="center"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvEmergencyContactsHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp"
+            android:paddingHorizontal="16dp"
+            android:clipToPadding="false"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     </LinearLayout>
 
     <LinearLayout

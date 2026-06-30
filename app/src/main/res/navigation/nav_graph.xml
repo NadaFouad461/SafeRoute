@@ -41,9 +41,6 @@
             android:id="@+id/action_homeFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
         <action
-            android:id="@+id/action_homeFragment_to_addContactFragment"
-            app:destination="@id/addContactFragment" />
-        <action
             android:id="@+id/action_homeFragment_to_mapFragment"
             app:destination="@id/mapFragment" />
         <action
@@ -52,6 +49,12 @@
         <action
             android:id="@+id/action_homeFragment_to_historyFragment"
             app:destination="@id/historyFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_contactsListFragment"
+            app:destination="@id/contactsListFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_sosFragment"
+            app:destination="@id/sosFragment" />
     </fragment>
     <fragment
         android:id="@+id/forgetFragment"
@@ -106,6 +109,9 @@
         <action
             android:id="@+id/action_mapFragment_to_contactsListFragment"
             app:destination="@id/contactsListFragment" />
+        <action
+            android:id="@+id/action_mapFragment_to_profileFragment2"
+            app:destination="@id/profileFragment2" />
 
     </fragment>
     <fragment
@@ -126,6 +132,34 @@
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.example.saferoute.ui.history.HistoryFragment"
-        android:label="HistoryFragment" />
+        android:label="HistoryFragment" >
+        <action
+            android:id="@+id/action_historyFragment_to_mapFragment"
+            app:destination="@id/mapFragment" />
+        <action
+            android:id="@+id/action_historyFragment_to_contactsListFragment"
+            app:destination="@id/contactsListFragment" />
+        <action
+            android:id="@+id/action_historyFragment_to_profileFragment2"
+            app:destination="@id/profileFragment2" />
+        <action
+            android:id="@+id/action_historyFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_historyFragment_to_logDetailsFragment"
+            app:destination="@id/logDetailsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/emergencyNotificationFragment"
+        android:name="com.example.saferoute.ui.emergency.EmergencyNotificationFragment"
+        android:label="EmergencyNotificationFragment" />
+    <fragment
+        android:id="@+id/sosFragment"
+        android:name="com.example.saferoute.ui.sos.SosFragment"
+        android:label="SosFragment" />
+    <fragment
+        android:id="@+id/logDetailsFragment"
+        android:name="com.example.saferoute.ui.history.LogDetailsFragment"
+        android:label="LogDetailsFragment" />
 
 </navigation>

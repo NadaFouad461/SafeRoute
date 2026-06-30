@@ -10,17 +10,14 @@ class EmergencyRepository(
     private val firestoreService: FirestoreService
 ) {
 
+    // حفظ محلي نظيف وبدون تكرار في السيرفر
     suspend fun insertLog(log: EmergencyLog) {
-
         emergencyDao.insertLog(log)
-
-        firestoreService.sendEmergency(log)
     }
 
     fun getLogsByUser(
         userId: String
     ): LiveData<List<EmergencyLog>> {
-
         return emergencyDao.getLogsByUser(userId)
     }
 }
