@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.example.saferoute.data.repository.LocationRepository
 import org.osmdroid.util.GeoPoint
 
+
 class MapViewModel : ViewModel() {
 
     private val _currentLocation = MutableLiveData<GeoPoint>()
