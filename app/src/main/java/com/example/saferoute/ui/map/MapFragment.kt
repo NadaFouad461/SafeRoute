@@ -52,6 +52,15 @@ class MapFragment : Fragment() {
     private var isDemoMode = false
     private val handler = Handler(Looper.getMainLooper())
 
+    // Danger zones are loaded once and kept in memory; markers are tracked
+    // explicitly so they can be removed reliably (no Drawable equality checks).
+    private data class DangerZone(val point: GeoPoint, val description: String)
+
+    private val dangerZones = mutableListOf<DangerZone>()
+    private val dangerZoneMarkers = mutableListOf<Marker>()
+    private var dangerZonesListener: ValueEventListener? = null
+    private val dangerZonesRef = FirebaseDatabase.getInstance().getReference("dangerZones")
+
 
 
     companion object {
@@ -143,7 +152,7 @@ class MapFragment : Fragment() {
         map.controller.setCenter(GeoPoint(26.8206, 30.8025))
 
         showLastKnownLocation()
-        loadDangerZones()
+        startListeningToDangerZones()
         binding.btnViewRisk.setOnClickListener {
 
             nearestDangerPoint?.let {
@@ -192,7 +201,7 @@ class MapFragment : Fragment() {
         trackingService = LocationTrackingService(requireContext()) { lat, lon ->
             val point = GeoPoint(lat, lon)
             currentPoint = point
-            loadDangerZones()
+            updateNearestDangerZone(point)
             binding.txtLat.text = "Lat: %.5f".format(lat)
             binding.txtLon.text = "Lon: %.5f".format(lon)
             viewModel.updateLocation(point)
@@ -308,81 +317,92 @@ class MapFragment : Fragment() {
     }
 
 
-    private fun loadDangerZones() {
+    /**
+     * Registers exactly ONE Firebase listener for the lifetime of the view.
+     * Previously this was called on every GPS update, which created a new
+     * listener each time (listener leak + duplicate marker work + possible
+     * crashes if a stale callback fired after the view was destroyed).
+     */
+    private fun startListeningToDangerZones() {
+        if (dangerZonesListener != null) return // already listening
 
-        FirebaseDatabase.getInstance()
-            .getReference("dangerZones")
-            .addValueEventListener(object : ValueEventListener {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (_binding == null) return // view already destroyed, ignore stale callback
 
-                override fun onDataChange(snapshot: DataSnapshot) {
+                dangerZones.clear()
+                dangerZoneMarkers.forEach { binding.map.overlays.remove(it) }
+                dangerZoneMarkers.clear()
 
-                    binding.map.overlays.removeAll {
-                        it is Marker && it.icon ==
-                                ContextCompat.getDrawable(requireContext(), R.drawable.ic_danger_zone)
+                for (zone in snapshot.children) {
+                    val lat = zone.child("latitude").getValue(Double::class.java) ?: continue
+                    val lon = zone.child("longitude").getValue(Double::class.java) ?: continue
+                    val desc = zone.child("description").getValue(String::class.java)
+                        ?: "Danger Zone"
+
+                    val point = GeoPoint(lat, lon)
+                    dangerZones.add(DangerZone(point, desc))
+
+                    val marker = Marker(binding.map).apply {
+                        position = point
+                        title = desc
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                        icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_danger_zone)
                     }
-
-                    binding.highRiskCard.visibility = View.GONE
-
-                    val user = currentPoint
-
-                    for (zone in snapshot.children) {
-
-                        val lat = zone.child("latitude").getValue(Double::class.java) ?: continue
-                        val lon = zone.child("longitude").getValue(Double::class.java) ?: continue
-                        val desc = zone.child("description").getValue(String::class.java)
-                            ?: "Danger Zone"
-
-                        val point = GeoPoint(lat, lon)
-
-                        val marker = Marker(binding.map).apply {
-
-                            position = point
-                            title = desc
-                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                            icon = ContextCompat.getDrawable(
-                                requireContext(),
-                                R.drawable.ic_danger_zone
-                            )
-                        }
-
-                        binding.map.overlays.add(marker)
-
-                        if (user != null) {
-
-                            val result = FloatArray(1)
-
-                            android.location.Location.distanceBetween(
-                                user.latitude,
-                                user.longitude,
-                                lat,
-                                lon,
-                                result
-                            )
-
-                            val distance = result[0]
-
-                            if (distance <= 200f) {
-
-                                nearestDangerPoint = point
-                                nearestDangerDescription = desc
-
-                                binding.highRiskCard.visibility = View.VISIBLE
-
-                                binding.txtRiskDescription.text =
-                                    "$desc • ${distance.toInt()} m away"
-
-                            }
-
-                        }
-
-                    }
-
-                    binding.map.invalidate()
-
+                    dangerZoneMarkers.add(marker)
+                    binding.map.overlays.add(marker)
                 }
 
-                override fun onCancelled(error: DatabaseError) {}
-            })
+                binding.map.invalidate()
+                updateNearestDangerZone(currentPoint)
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        }
+
+        dangerZonesListener = listener
+        dangerZonesRef.addValueEventListener(listener)
+    }
+
+    /**
+     * Computes the nearest danger zone using the already-loaded [dangerZones]
+     * list, so it can be called on every GPS update without touching Firebase.
+     */
+    private fun updateNearestDangerZone(user: GeoPoint?) {
+        if (_binding == null) return
+
+        if (user == null || dangerZones.isEmpty()) {
+            binding.highRiskCard.visibility = View.GONE
+            nearestDangerPoint = null
+            return
+        }
+
+        var closestZone: DangerZone? = null
+        var closestDistance = Float.MAX_VALUE
+        val result = FloatArray(1)
+
+        for (zone in dangerZones) {
+            android.location.Location.distanceBetween(
+                user.latitude, user.longitude,
+                zone.point.latitude, zone.point.longitude,
+                result
+            )
+            if (result[0] < closestDistance) {
+                closestDistance = result[0]
+                closestZone = zone
+            }
+        }
+
+        if (closestZone != null && closestDistance <= 200f) {
+            nearestDangerPoint = closestZone.point
+            nearestDangerDescription = closestZone.description
+            binding.highRiskCard.visibility = View.VISIBLE
+            binding.txtRiskDescription.text =
+                "${closestZone.description} • ${closestDistance.toInt()} m away"
+        } else {
+            binding.highRiskCard.visibility = View.GONE
+            nearestDangerPoint = null
+        }
     }
 
     private fun checkAndRequestLocationPermission() {
@@ -502,6 +522,8 @@ class MapFragment : Fragment() {
         isDemoMode = false
         handler.removeCallbacksAndMessages(null)
         trackingService.stop()
+        dangerZonesListener?.let { dangerZonesRef.removeEventListener(it) }
+        dangerZonesListener = null
         _binding = null
     }
 }
