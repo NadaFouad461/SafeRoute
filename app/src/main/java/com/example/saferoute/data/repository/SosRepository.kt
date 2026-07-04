@@ -60,11 +60,11 @@ class SosRepository(
             if (location != null) {
                 val message = "🚨 emergency SOS! I am in danger. Please help me. My current location coordinates are: ${location.latitude} , ${location.longitude}"
 
-                // 🎯 1. جلب نسبة بطارية موبايلك الحقيقية والآنية
+
                 val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
                 val currentBattery = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
-                // 🎯 2. إعداد الداتا وتضمين الـ alertedContacts بشكل افتراضي لمنع الـ 0 contacts والـ Double Logs
+
                 val emergencyData = hashMapOf(
                     "userId" to userId,
                     "girlUserId" to userId,
@@ -74,10 +74,10 @@ class SosRepository(
                     "batteryLevel" to currentBattery, // البطارية الحقيقية لإنهاء مشكلة الـ 100%
                     "type" to "SOS",
                     "status" to "MANUAL",
-                    "alertedContacts" to selectedNumbers // 🔥 حفظ الأرقام فوراً لمنع الـ 0 Contacts Alerted في السيرفر
+                    "alertedContacts" to selectedNumbers
                 )
 
-                // رفع الداتا للسيرفر
+
                 val firestoreResult = db.collection("emergency_logs").add(emergencyData).await()
                 val firestoreDocId = firestoreResult.id
 
@@ -87,7 +87,7 @@ class SosRepository(
 
                 delay(100)
 
-                // 3. فتح الواتساب مع الـ Flags المحافظة على الـ Timer والشاشة الخلفية
+
                 var activeWhatsAppNumber = ""
                 try {
                     activeWhatsAppNumber = selectedNumbers.first()
@@ -101,10 +101,9 @@ class SosRepository(
                     Log.e("WHATSAPP", "WhatsApp Error: ${e.message}")
                 }
 
-                // 🛑 تم حذف كود الـ Room (emergencyRepository.insertLog) نهائياً
-                // لأن الـ HistoryViewModel بيقرا لايف من الفايرستور، وبكده مفيش بلاغ هيتكرر مرتين أبداً!
 
-                return firestoreDocId // رجعي الـ DocId الحقيقي
+
+                return firestoreDocId
 
             } else {
                 Log.e("SOS_SYSTEM", "فشل جلب الموقع الجغرافي (Location is null)")

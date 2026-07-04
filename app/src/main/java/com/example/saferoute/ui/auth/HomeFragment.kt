@@ -31,34 +31,34 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
 
-        // 1. إعداد قائمة الأنشطة الأخيرة
+
         setupRecentActivityRecyclerView()
 
-        // 2. جلب بيانات المستخدم والترحيب به + الاستماع للبلاغات الطارئة لوالدتك
+
         fetchUserDataAndGreet()
 
-        // 3. مستمع الضغط لزر جهات الاتصال
+
         binding.actionContacts.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
         }
 
-        // 4. زر الـ FAB الطارئ الفوري
+
         binding.fabEmergency.setOnClickListener {
             handleSosTrigger()
         }
 
-        // 5. إضافة الضغط العادي (Click) على كارت الـ SOS لفتح الصفحة فوراً
+
         binding.sosBtnCard.setOnClickListener {
             handleSosTrigger()
         }
 
-        // 6. الضغط المطول على كارت الـ SOS (كوسيلة حماية إضافية)
+
         binding.sosBtnCard.setOnLongClickListener {
             handleSosTrigger()
             true
         }
 
-        // 7. شريط التنقل السفلي (Bottom Navigation)
+
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> true
@@ -87,17 +87,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-    // دالة موحدة للتعامل مع تشغيل الـ SOS لمنع تكرار الكود
+
     private fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
             Toast.makeText(context, "🚨 Sending Instant Emergency Alert...", Toast.LENGTH_SHORT).show()
 
-            // 🔋 جلب نسبة البطارية الحقيقية من نظام الهاتف الآن ديناميكياً
+
             val batteryManager = requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
             val currentBatteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
-            // الإحداثيات الافتراضية للبلاغ (سيتم تحديثها بالخريطة لاحقاً)
+
             triggerDirectSOS(currentUid, currentUserName, currentBatteryLevel, 30.3346, 31.7504)
         } else {
             Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show()
@@ -127,7 +127,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         currentUserPhone = documentSnapshot.getString("phone") ?: ""
                         binding.welcomeTv.text = "Good Evening, $currentUserName"
 
-                        // 🚨 بمجرد جلب بيانات المستخدم بنجاح، نبدأ بالاستماع لأي بلاغ طوارئ موجه له (لوالدتك مثلاً)
+
                         startListeningForIncomingSos(currentUid)
                     }
                 }
@@ -139,7 +139,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
     }
 
-    // 🛠️ السحر هنا: دالة الاستماع الفوري للبلاغات الطارئة عند فتح التطبيق
+
     private fun startListeningForIncomingSos(currentUserId: String) {
         db.collection("emergency_logs")
             .whereEqualTo("status", "triggered")
@@ -158,8 +158,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                             if (girlUserId == currentUserId) continue
 
-                            // ❌ بدلاً من استدعاء الدالة، ضعي علامة التعليق هذه:
-                            // showEmergencyDialog(sosAlertId)
+
                         }
                     }
                 }
@@ -169,7 +168,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun showEmergencyDialog(sosAlertId: String) {
         if (_binding == null || !isAdded) return
 
-        // فحص محلي: لو ماما أغلقت هذا الإشعار مسبقاً لا يظهر لها في الهووم مجدداً
+
         val sharedPrefs = requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
         val isDismissedBefore = sharedPrefs.getBoolean("dismissed_$sosAlertId", false)
         if (isDismissedBefore) return
@@ -190,15 +189,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 }
             }
             .setNegativeButton("إغلاق") { dialog, _ ->
-                // 🎯 الحل السحري: حفظ حالة الإغلاق محلياً في جهاز ماما فقط
-                // لكي لا يظهر الـ Dialog مرة أخرى، وبنفس الوقت لا نغير الـ status في الفايرستور فلا يختفي من الهيستوري
+
                 sharedPrefs.edit().putBoolean("dismissed_$sosAlertId", true).apply()
                 dialog.dismiss()
             }
             .show()
     }
 
-    // 🔋 تم تعديل اسم الجدول هنا ليصبح "emergency_logs" ليتطابق تماماً مع الـ ViewModel
+
     private fun triggerDirectSOS(userId: String, userName: String, batteryLevel: Int, latitude: Double, longitude: Double) {
         val emergencyData = hashMapOf(
             "userId" to userId,
@@ -208,10 +206,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             "latitude" to latitude,
             "longitude" to longitude,
             "timestamp" to com.google.firebase.Timestamp.now(),
-            "alertedContacts" to listOf<String>() // يمكن ملؤها بأرقام الطوارئ لاحقاً
+            "alertedContacts" to listOf<String>()
         )
 
-        // تم التغيير إلى emergency_logs هنا لتوحيد الجداول الثلاثة في قاعدة بياناتك
         db.collection("emergency_logs").add(emergencyData)
             .addOnSuccessListener { documentReference ->
                 if (_binding != null && isAdded) {

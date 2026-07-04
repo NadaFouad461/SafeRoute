@@ -32,7 +32,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             adapter = logAdapter
         }
 
-        // 🎯 1. تفاصيل البلاغ (عند الضغط على الكارت)
+
         logAdapter.setOnItemClickListener { log ->
             val typeParts = log.type.split("|")
             val firestoreDocId = typeParts.getOrNull(1)
@@ -47,7 +47,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             }
         }
 
-// 🎯 2. تحديث الفايرستور (عند الضغط على زر "I am safe")
+
         logAdapter.setOnSafeClickListener { log ->
             val typeParts = log.type.split("|")
             val firestoreDocId = typeParts.getOrNull(1)
@@ -74,22 +74,21 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             }
         }
 
-        // 🎯 3. التصفية الزمنية الصارمة لمنع تكرار الكروت مع الحفاظ على التاريخ كاملاً لايف شغال
+
         viewModel.logs.observe(viewLifecycleOwner) { logsList ->
             if (logsList != null) {
                 val uniqueLogsMap = LinkedHashMap<String, com.example.saferoute.data.local.EmergencyLog>()
 
                 logsList.forEach { log ->
                     if (!log.userId.isNullOrEmpty()) {
-                        // مفتاح دمج ذكي وسحري: ندمج الكروت بناءً على الـ UID الخاص بالبنت ووقت البلاغ مقسوماً على دقيقة واحدة
-                        // وبكده لو في بلاغين ترفعوا في نفس الدقيقة لنفس البنت، هيتعرض كارت واحد بس وتتحل مشكلة التكرار
+
                         val timeKey = log.timestamp / 60000
                         val uniqueKey = "${log.userId}_$timeKey"
 
                         if (!uniqueLogsMap.containsKey(uniqueKey)) {
                             uniqueLogsMap[uniqueKey] = log
                         } else {
-                            // لو الكارت المكرر التاني حالته تم حلها (Resolved)، بنحدث الكارت المدمج عشان يقلب أخضر
+
                             if (log.status.contains("Resolved")) {
                                 uniqueLogsMap[uniqueKey] = log
                             }
@@ -97,7 +96,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     }
                 }
 
-                // التحقق من الإشعارات الخارجية وتجنب تكرار كارت الـ Incoming المفتوح من الخارج
+
                 val isFromSomeoneElse = arguments?.getBoolean("IS_FROM_SOMEONE_ELSE", false) ?: false
                 val incomingSosId = arguments?.getString("INCOMING_SOS_ID") ?: ""
                 val senderName = arguments?.getString("SENDER_NAME") ?: "ابنتكِ"
@@ -111,7 +110,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                         val externalLog = com.example.saferoute.data.local.EmergencyLog(
                             id = incomingSosId.hashCode(),
                             userId = incomingSosId,
-                            type = "SOS|$incomingSosId", // ندمج المعرف هنا أيضاً للتماشي مع بقية الأزرار
+                            type = "SOS|$incomingSosId",
                             latitude = arguments?.getDouble("LAT", 0.0) ?: 0.0,
                             longitude = arguments?.getDouble("LNG", 0.0) ?: 0.0,
                             timestamp = System.currentTimeMillis(),
@@ -122,7 +121,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     }
                 }
 
-                // تحويل القيمة النهائية لقائمة مرتبة تنازلياً وعرضها في الـ Adapter
+
                 val finalFilteredList = uniqueLogsMap.values.toList().sortedByDescending { it.timestamp }
 
                 logAdapter.submitList(finalFilteredList)

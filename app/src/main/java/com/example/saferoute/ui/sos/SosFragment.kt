@@ -44,7 +44,7 @@ class SosFragment : Fragment() {
     private var currentLatitude: Double = 30.0444
     private var currentLongitude: Double = 31.2357
 
-    // 🎯 استقبال المعرف الممرر من الـ HomeFragment للتحكم بالبلاغ الملغى
+
     private var passedSosAlertId: String? = null
 
     private val requestPermissionsLauncher =
@@ -65,7 +65,7 @@ class SosFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 🎯 جلب الـ ID المرفوع مسبقاً من الـ HomeFragment
+
         passedSosAlertId = arguments?.getString("sosAlertId")
 
         val dbRoom = AppDatabase.getDatabase(requireContext())
@@ -203,7 +203,7 @@ class SosFragment : Fragment() {
                 val selectedNumbers = emergencyContacts.map { it.phone }
                 val message = "🚨 استغاثة طارئة من SafeRoute. الموقع: خط عرض $currentLatitude و خط طول $currentLongitude"
 
-                // 1️⃣ إرسال الـ SMS فوراً وبشكل منفصل
+
                 try {
                     val smsManager = android.telephony.SmsManager.getDefault()
                     for (number in selectedNumbers) {
@@ -212,11 +212,11 @@ class SosFragment : Fragment() {
                         }
                     }
                 } catch (e: Exception) {
-                    // نستخدم Log فقط حتى لا نؤثر على سير العمل
+
                     Log.e("SosFragment", "SMS Error: ${e.message}")
                 }
 
-                // 2️⃣ الآن نقوم برفع البلاغ وإرسال إشعار الـ FCM (بمجرد اكتمال الـ SMS)
+
                 db.collection("users").document(currentUserId).get()
                     .addOnSuccessListener { userDoc ->
                         val userName = userDoc.getString("name") ?: "مستخدم"
@@ -281,7 +281,7 @@ class SosFragment : Fragment() {
             isTimerRunning = false
         }
 
-        // 🎯 اللمسة السحرية: تحديث حالة البلاغ المفتوح مسبقاً في الفايرستور ليصبح "canceled"
+
         if (!passedSosAlertId.isNullOrEmpty()) {
             db.collection("emergency_logs").document(passedSosAlertId!!)
                 .update("status", "canceled")

@@ -25,7 +25,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     private var sosListener: ListenerRegistration? = null
 
-    // متغيرات لتخزين بيانات الموقع والهاتف لإعادة استخدامها عند الضغط على الأزرار
+
     private var senderPhone: String = ""
     private var latitude: Double = 30.0444
     private var longitude: Double = 31.2357
@@ -34,7 +34,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEmergencyNotificationBinding.bind(view)
 
-        // استقبال الـ ID بأمان
+
         val sosAlertId = arguments?.getString("SOS_ALERT_ID")
 
         if (!sosAlertId.isNullOrEmpty()) {
@@ -46,7 +46,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         binding.btnDismiss.setOnClickListener { findNavController().popBackStack() }
 
         binding.btnCallUser.setOnClickListener {
-            // التحقق المباشر من النص
+
             if (senderPhone.isEmpty()) {
                 Toast.makeText(context, "جاري تحميل رقم الهاتف، يرجى الانتظار...", Toast.LENGTH_SHORT).show()
             } else {
@@ -56,7 +56,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         }
 
         binding.btnNavigate.setOnClickListener {
-            // التحقق اللحظي من القيم قبل فتح الخرائط
+
             if (latitude != 0.0 && longitude != 0.0) {
                 val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=$latitude,$longitude"))
                 mapIntent.setPackage("com.google.android.apps.maps")
@@ -86,27 +86,25 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                 val rawStatus = snapshot.getString("status") ?: "Dispatched"
                 val actualStatus = rawStatus.split("|").getOrNull(0) ?: "Dispatched"
 
-                // جلب بيانات الموقع الجغرافي ديناميكياً
                 latitude = snapshot.getDouble("latitude") ?: 30.0444
                 longitude = snapshot.getDouble("longitude") ?: 31.2357
 
-                // جلب الـ Uid الخاص بالشخص الذي أرسل الـ SOS للبحث عن رقم هاتفه وعلاقته بالمستخدم الحالي
+
                 val senderUid = snapshot.getString("userId") ?: ""
 
-                // 1. تحديث نسبة البطارية الحقيقية للجهاز المرفوع
+
                 val battery = snapshot.getLong("batteryLevel")?.toInt() ?: 100
                 binding.tvLiveInfo.text = "📍 Live Tracking  •  🔋 $battery% Battery"
 
-                // 2. جلب اسم الحساب الذي أرسل الاستغاثة
+
                 val accountName = snapshot.getString("userName") ?: "مستخدم الطوارئ"
                 binding.tvSenderName.text = accountName
 
-                // 4️⃣ جلب رقم الهاتف وصلة القرابة ديناميكياً من جهات اتصال المستخدم الحالي
+
                 if (senderUid.isNotEmpty()) {
                     fetchSenderContactInfo(senderUid, accountName)
                 }
 
-                // 3. التحكم في شكل وحالة البلاغ (نشط / منتهي آمن)
                 if (actualStatus.contains("Resolved", ignoreCase = true)) {
                     binding.cardAlertIconContainer.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#DCFCE7")))
                     binding.tvDetailAlertIcon.text = "✅"
@@ -131,18 +129,16 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
             }
     }
 
-    /**
-     * دالة تقوم بالبحث في جهات اتصال المستخدم الحالي لمعرفة صلة قرابته بالشخص المستغيث ورقم هاتفه
-     */
+
     private fun fetchSenderContactInfo(senderUid: String, accountName: String) {
-        // أولاً: جلب رقم هاتف المرسل من مستنده الأساسي في users
+
         db.collection("users").document(senderUid).get()
             .addOnSuccessListener { userDoc ->
                 if (userDoc != null && userDoc.exists()) {
                     senderPhone = userDoc.getString("phone") ?: ""
 
                     if (senderPhone.isNotEmpty() && currentUserId.isNotEmpty()) {
-                        // ثانياً: البحث عن هذا الرقم داخل قائمة contacts الخاصة بالمستخدم الحالي (ماما مثلاً)
+
                         db.collection("users")
                             .document(currentUserId)
                             .collection("contacts")
@@ -154,11 +150,11 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                                     val relationship = contactDoc.getString("relationship") ?: ""
                                     val savedName = contactDoc.getString("name") ?: accountName
 
-                                    // عرض الاسم المسجل مع صلة القرابة (مثال: بنتي (مريم) أو أختي (سارة))
+
                                     binding.tvSenderName.text = "$savedName ($relationship)"
                                     binding.tvFallDescription.text = "ℹ️ بلاغ استغاثة نشط وموثق من صلة القرابة الممسوحة كـ ($relationship) بالحساب: $accountName"
                                 } else {
-                                    // إذا لم يكن مسجلاً في جهات الاتصال، نكتفي باسم الحساب فقط
+
                                     binding.tvFallDescription.text = "ℹ️ بلاغ استغاثة نشط وموثق للحساب المسجل باسم: $accountName"
                                 }
                             }

@@ -31,7 +31,7 @@ class LocationTrackingService : Service() {
         override fun onLocationChanged(location: Location) {
             Log.d("LocationService", "New location: ${location.latitude}, ${location.longitude}")
 
-            // إرسال الإحداثيات عبر Broadcast ليتم استقبالها في الـ Fragment بأمان
+
             val intent = Intent("LocationUpdateIntent").apply {
                 putExtra("lat", location.latitude)
                 putExtra("lon", location.longitude)
@@ -59,7 +59,7 @@ class LocationTrackingService : Service() {
             return
         }
 
-        // إرسال آخر موقع معروف فوراً
+
         val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         val initialLocation = lastGps ?: lastNet
@@ -83,7 +83,7 @@ class LocationTrackingService : Service() {
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("تتبع المسار الآمن نشط")
             .setContentText("يتم الآن تحديث موقعك لضمان سلامتك...")
-            .setSmallIcon(R.drawable.ic_map_marker) // تأكد من وجود أيقونة صالحة هنا
+            .setSmallIcon(R.drawable.ic_map_marker)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
@@ -101,7 +101,7 @@ class LocationTrackingService : Service() {
                 "خدمة تتبع الموقع",
                 NotificationManager.IMPORTANCE_LOW
             )
-            // تم إصلاح السطر هنا بنجاح
+
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
             manager?.createNotificationChannel(channel)
         }

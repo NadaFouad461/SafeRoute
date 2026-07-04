@@ -31,7 +31,7 @@ class HistoryViewModel : ViewModel() {
                     val status = doc.getString("status") ?: "Emergency Dispatched"
                     val sharedWith = doc.get("sharedWith") as? List<*> ?: emptyList<Any>()
 
-                    // 🎯 حماية صارمة: تخطي البلاغات الملغية أو البلاغات الأولية التي لم تكتمل بعد
+
                     if (status.equals("canceled", ignoreCase = true) || status.equals("triggered", ignoreCase = true)) {
                         continue
                     }
@@ -45,12 +45,12 @@ class HistoryViewModel : ViewModel() {
                         val userName = doc.getString("userName") ?: "شخص مقرب"
                         val logType = if (isFromMe) "SOS" else "SOS_INCOMING"
 
-                        // في HistoryViewModel.kt
+
                         val customStatus = when {
                             status.contains("Resolved", ignoreCase = true) || status == "safe" -> {
                                 if (isFromMe) "Resolved" else "✅ $userName Is Safe Now"
                             }
-                            // اجعلي الـ triggered ظاهرة في الهيستوري، لأنها استغاثة حقيقية بدأت بالفعل
+
                             status.contains("Dispatched", ignoreCase = true) || status == "triggered" -> {
                                 if (isFromMe) "Emergency Dispatched" else "⚠️ $userName Needs Help!"
                             }
@@ -63,11 +63,11 @@ class HistoryViewModel : ViewModel() {
                             else -> System.currentTimeMillis()
                         }
 
-                        // عدلي دالة الـ for loop داخل listenToEmergencyLogs
+
                         val log = EmergencyLog(
                             id = doc.id.hashCode(),
                             userId = doc.id,
-                            // التعديل هنا: ندمج المعرف الحقيقي في الـ type ليتم استخراجه لاحقاً
+
                             type = "$logType|${doc.id}",
                             latitude = doc.getDouble("latitude") ?: 0.0,
                             longitude = doc.getDouble("longitude") ?: 0.0,

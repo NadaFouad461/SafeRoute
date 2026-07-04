@@ -35,7 +35,7 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
             val pass = binding.passwordEt.text.toString().trim()
             val confirmPass = binding.confirmPasswordEt.text.toString().trim()
 
-            // التحقق من الحقول الأساسية فقط (بدون أرقام الأهل هنا)
+
             if (name.isEmpty() || phone.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
                 Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -63,7 +63,6 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
                     if (task.isSuccessful) {
                         val uid = auth.currentUser!!.uid
 
-                        // جلب توكن الإشعارات (FCM Token) لحفظه مع المستخدم
                         FirebaseMessaging.getInstance().token
                             .addOnSuccessListener { token ->
                                 val userData = hashMapOf(
@@ -71,7 +70,7 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
                                     "email" to email,
                                     "phone" to phone,
                                     "fcmToken" to token
-                                    // تم حذف dad و mom بنجاح من الهيكل الأساسي!
+
                                 )
 
                                 db.collection("users")

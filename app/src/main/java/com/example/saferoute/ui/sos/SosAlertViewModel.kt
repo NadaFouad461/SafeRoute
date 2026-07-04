@@ -44,11 +44,11 @@ class SosAlertViewModel : ViewModel() {
                 val alertedContacts = logSnapshot.get("alertedContacts") as? List<*> ?: emptyList<Any>()
                 val totalAlerted = alertedContacts.size
 
-                // 🎯 القيمة الافتراضية الذكية في حال لم يجد صلة قرابة مخصصة
+
                 var contactRelation = if (totalAlerted > 0) "$totalAlerted Contacts Notified" else "Direct SOS Alert"
 
                 if (girlUserId.isNotEmpty()) {
-                    // 1. جلب بيانات البنت (الاسم والرقم)
+
                     firestore.collection("users").document(girlUserId).get()
                         .addOnSuccessListener { girlSnapshot ->
                             if (!girlSnapshot.exists()) return@addOnSuccessListener
@@ -56,7 +56,7 @@ class SosAlertViewModel : ViewModel() {
                             val girlRealName = girlSnapshot.getString("name") ?: "مستخدم SafeRoute"
                             val girlPhone = girlSnapshot.getString("phone") ?: ""
 
-                            // 2. 🎯 السحر هنا: البحث برقم البنت جوه جهات اتصال الشخص اللي فاتح الأبليكيشن حالياً (currentUserId)
+
                             if (currentUserId.isNotEmpty() && girlPhone.isNotEmpty()) {
                                 firestore.collection("users").document(currentUserId)
                                     .collection("contacts")
@@ -65,19 +65,19 @@ class SosAlertViewModel : ViewModel() {
                                     .addOnSuccessListener { contactSnapshots ->
                                         var finalDisplayName = girlRealName
 
-                                        // لو الشخص اللي فاتح الموبايل مسجل البنت دي عنده في الـ Contacts
+
                                         if (!contactSnapshots.isEmpty) {
                                             val contactDoc = contactSnapshots.documents.first()
-                                            // الاسم اللي الشخص مسجله عنده (مثلاً: بنتي حبيبتي)
+
                                             finalDisplayName = contactDoc.getString("name") ?: girlRealName
-                                            // 🎯 صلة القرابة الديناميكية (ابنتي / صديقتي / أختي) الحقيقية المحدثة
+
                                             contactRelation = contactDoc.getString("relation") ?: contactDoc.getString("relationship") ?: contactRelation
                                         }
 
-                                        // تحديث الشاشة بالبيانات المخصصة للشخص اللي بيقرا الإشعار حالياً
+
                                         _alertState.value = SosAlertState(
                                             senderName = finalDisplayName,
-                                            relation = contactRelation, // 🔥 هتظهر "ابنتي" للأم، وتظهر "صديقتي" للصديقة، وتظهر "1 Contacts Notified" لو مش مسجلة!
+                                            relation = contactRelation,
                                             avatarUrl = "",
                                             distance = 0.0,
                                             batteryLevel = battery,

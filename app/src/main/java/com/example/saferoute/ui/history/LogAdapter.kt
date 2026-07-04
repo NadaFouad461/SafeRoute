@@ -40,7 +40,7 @@ class LogAdapter : ListAdapter<EmergencyLog, LogAdapter.LogViewHolder>(LogDiffCa
     class LogViewHolder(private val binding: ItemHistoryLogBinding) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(log: EmergencyLog, clickListener: ((EmergencyLog) -> Unit)?, safeClickListener: ((EmergencyLog) -> Unit)?) {
-            // تنظيف الأزرار قبل إعادة الربط لتجنب تكرار الـ Listeners
+
             binding.btnResolveAlert.setOnClickListener(null)
             binding.tvViewDetail.setOnClickListener(null)
             binding.locationContainer.setOnClickListener(null)
@@ -104,7 +104,7 @@ class LogAdapter : ListAdapter<EmergencyLog, LogAdapter.LogViewHolder>(LogDiffCa
             val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
             binding.tvLogTime.text = sdf.format(Date(log.timestamp))
 
-            // ربط الأزرار بعد التأكد من أنها ليست null
+
             binding.btnResolveAlert.setOnClickListener { safeClickListener?.invoke(log) }
             binding.tvViewDetail.setOnClickListener { clickListener?.invoke(log) }
             binding.locationContainer.setOnClickListener {

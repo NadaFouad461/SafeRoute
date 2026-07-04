@@ -117,8 +117,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setIntent(intent)
-        handleIncomingNotification(intent)
+        setIntent(intent) // مهم جداً لتحديث الـ Intent الخاص بالـ Activity
+
+        val sosId = intent.getStringExtra("SOS_ALERT_ID")
+        Log.d("NAV_DEBUG", "🚀 onNewIntent - SOS_ID: $sosId")
+
+        if (!sosId.isNullOrEmpty()) {
+            val bundle = Bundle().apply {
+                putString("SOS_ALERT_ID", sosId)
+            }
+
+            // استخدام post للـ UI Thread
+            binding.root.post {
+                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                navHostFragment?.navController?.navigate(R.id.emergencyNotificationFragment, bundle)
+            }
+        }
     }
 
     private fun handleIncomingNotification(intent: Intent?) {
@@ -169,13 +183,22 @@ class MainActivity : AppCompatActivity() {
                                             if (isContact) {
                                                 val sosAlertId = logDoc.id
 
-                                                val pendingIntent = NavDeepLinkBuilder(this@MainActivity)
-                                                    .setGraph(R.navigation.nav_graph)
-                                                    .setDestination(R.id.emergencyNotificationFragment)
-                                                    .setArguments(Bundle().apply {
-                                                        putString("SOS_ALERT_ID", sosAlertId)
-                                                    })
-                                                    .createPendingIntent()
+                                                // التعديل: إنشاء Intent يحتوي على البيانات و Flags للتحكم في حالة الـ Activity
+                                                val intent = Intent(this@MainActivity, MainActivity::class.java).apply {
+                                                    action = "OPEN_SOS_FRAGMENT"
+                                                    val bundle = Bundle()
+                                                    bundle.putString("SOS_ALERT_ID", sosAlertId)
+                                                    putExtras(bundle)
+                                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                                }
+
+                                                // استخدام System.currentTimeMillis لضمان رقم فريد لكل إشعار
+                                                val pendingIntent = PendingIntent.getActivity(
+                                                    this@MainActivity,
+                                                    0, // جربي تثبيت الـ RequestCode مؤقتاً لـ 0
+                                                    intent,
+                                                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE // غيرناها لـ MUTABLE
+                                                )
 
                                                 showLocalNotification(
                                                     "🚨 استغاثة طوارئ SafeRoute!",
@@ -214,12 +237,15 @@ class MainActivity : AppCompatActivity() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_launcher_foreground) // تأكدي أن الأيقونة موجودة
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_CALL) // مهم جداً للأولويات القصوى
             .setContentIntent(pendingIntent)
+            .setFullScreenIntent(pendingIntent, true) // 🔥 هذا هو السر: يجبر التطبيق على الفتح
             .setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // ليظهر على شاشة القفل
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())

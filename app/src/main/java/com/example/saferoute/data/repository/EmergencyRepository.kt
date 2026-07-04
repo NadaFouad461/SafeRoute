@@ -10,7 +10,7 @@ class EmergencyRepository(
     private val firestoreService: FirestoreService
 ) {
 
-    // حفظ محلي نظيف وبدون تكرار في السيرفر
+
     suspend fun insertLog(log: EmergencyLog) {
         emergencyDao.insertLog(log)
     }
