@@ -1,6 +1,6 @@
 package com.example.saferoute.ui.start
 
-import PermissionModel
+
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment

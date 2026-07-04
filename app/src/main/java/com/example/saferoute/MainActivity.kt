@@ -1,4 +1,4 @@
-package com.example.saferoute
+package com.example.saferoute.ui
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.messaging.FirebaseMessaging
+import com.example.saferoute.R
 
 class MainActivity : AppCompatActivity() {
 

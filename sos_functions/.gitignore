@@ -1,2 +1,5 @@
 node_modules/
 *.local
+serviceAccountKey.json
+node_modules
+.idea/
