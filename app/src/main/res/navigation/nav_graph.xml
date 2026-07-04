@@ -146,8 +146,8 @@
             android:id="@+id/action_historyFragment_to_homeFragment"
             app:destination="@id/homeFragment" />
         <action
-            android:id="@+id/action_historyFragment_to_logDetailsFragment"
-            app:destination="@id/logDetailsFragment" />
+            android:id="@+id/action_historyFragment_to_emergencyNotificationFragment2"
+            app:destination="@id/emergencyNotificationFragment2" />
     </fragment>
     <fragment
         android:id="@+id/emergencyNotificationFragment"
@@ -158,8 +158,8 @@
         android:name="com.example.saferoute.ui.sos.SosFragment"
         android:label="SosFragment" />
     <fragment
-        android:id="@+id/logDetailsFragment"
-        android:name="com.example.saferoute.ui.history.LogDetailsFragment"
-        android:label="LogDetailsFragment" />
+        android:id="@+id/emergencyNotificationFragment2"
+        android:name="com.example.saferoute.ui.emergency.EmergencyNotificationFragment"
+        android:label="EmergencyNotificationFragment" />
 
 </navigation>

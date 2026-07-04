@@ -1,8 +1,13 @@
 package com.example.saferoute.ui.map
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -17,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentMapBinding
 import com.example.saferoute.services.LocationTrackingService
@@ -35,7 +41,6 @@ class MapFragment : Fragment() {
 
     private val viewModel: MapViewModel by viewModels()
 
-    private lateinit var trackingService: LocationTrackingService
     private lateinit var marker: Marker
     private lateinit var accuracyCircle: Polygon
 
@@ -49,6 +54,24 @@ class MapFragment : Fragment() {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST = 100
+    }
+
+    // مستقبل البث لاستقبال تحديثات الموقع من الخدمة بأمان دون كراش
+    private val locationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val lat = intent?.getDoubleExtra("lat", 0.0) ?: 0.0
+            val lon = intent?.getDoubleExtra("lon", 0.0) ?: 0.0
+
+            _binding?.let { safeBinding ->
+                val point = GeoPoint(lat, lon)
+                currentPoint = point
+
+                safeBinding.txtLat.text = "Lat: %.5f".format(point.latitude)
+                safeBinding.txtLon.text = "Lon: %.5f".format(point.longitude)
+
+                viewModel.updateLocation(point)
+            }
+        }
     }
 
     override fun onCreateView(
@@ -77,9 +100,7 @@ class MapFragment : Fragment() {
 
         val map = binding.map
 
-        // 🛠️ تشغيل الـ Bottom Navigation الآمن والمعدل يدوياً لمنع أي تهنيج في التنقل
         setupBottomNavigation()
-
         updateEmergencyContactsCount()
 
         binding.shareLocationBtnCard.setOnClickListener {
@@ -136,8 +157,12 @@ class MapFragment : Fragment() {
 
         showLastKnownLocation()
 
-        val argsLat = arguments?.getDouble("lat", 0.0) ?: 0.0
-        val argsLon = arguments?.getDouble("lon", 0.0) ?: 0.0
+        val argsLat = arguments?.getDouble("latitude").takeIf { it != null && it != 0.0 }
+            ?: arguments?.getDouble("lat", 0.0) ?: 0.0
+
+        val argsLon = arguments?.getDouble("longitude").takeIf { it != null && it != 0.0 }
+            ?: arguments?.getDouble("lon")?.takeIf { it != 0.0 }
+            ?: arguments?.getDouble("lng", 0.0) ?: 0.0
 
         if (argsLat != 0.0 && argsLon != 0.0) {
             val historyPoint = GeoPoint(argsLat, argsLon)
@@ -193,36 +218,40 @@ class MapFragment : Fragment() {
             map.invalidate()
         }
 
-        trackingService = LocationTrackingService(requireContext()) { lat, lon ->
-            val point = GeoPoint(lat, lon)
-            currentPoint = point
-            binding.txtLat.text = "Lat: %.5f".format(point.latitude)
-            binding.txtLon.text = "Lon: %.5f".format(point.longitude)
-            viewModel.updateLocation(point)
-        }
+        // تسجيل مستقبل البث لتلقي الإحداثيات
+        LocalBroadcastManager.getInstance(requireContext())
+            .registerReceiver(locationReceiver, IntentFilter("LocationUpdateIntent"))
 
         checkAndRequestLocationPermission()
 
         binding.btnDemo.setOnClickListener {
             if (isDemoMode) {
                 stopFakeMovement()
-                trackingService.start()
+                startTrackingService()
                 binding.btnDemo.text = "Start Demo"
             } else {
-                trackingService.stop()
+                stopTrackingService()
                 startFakeMovement()
                 binding.btnDemo.text = "Stop Demo"
             }
         }
     }
 
-    // 🛠️ دالة الـ Bottom Navigation الاحترافية لمنع قفل التبويبات أو تعليقها أمام اللجنة
+    private fun startTrackingService() {
+        Toast.makeText(requireContext(), "محاولة تشغيل الخدمة الآن...", Toast.LENGTH_SHORT).show()
+        val intent = Intent(requireContext(), LocationTrackingService::class.java)
+        ContextCompat.startForegroundService(requireContext(), intent)
+    }
+
+    private fun stopTrackingService() {
+        val intent = Intent(requireContext(), LocationTrackingService::class.java)
+        requireContext().stopService(intent)
+    }
+
     private fun setupBottomNavigation() {
-        // تحديد التبويب الحالي للشاشة (الخريطة) بنجاح
         binding.bottomNavigationView.selectedItemId = R.id.nav_map
 
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
-            // منع إعادة تحميل صفحة الخريطة لو ضغطت عليها وهي مفتوحة بالفعل
             if (item.itemId == R.id.nav_map) {
                 return@setOnItemSelectedListener true
             }
@@ -266,39 +295,54 @@ class MapFragment : Fragment() {
 
         thread {
             try {
-                val geocoder = android.location.Geocoder(requireContext(), Locale.getDefault())
-                val addresses = geocoder.getFromLocationName(query, 5)
+                val geocoder = android.location.Geocoder(requireContext().applicationContext, Locale("ar", "EG"))
+                val addresses = geocoder.getFromLocationName(query, 3)
 
-                if (!addresses.isNullOrEmpty()) {
-                    val address = addresses[0]
-                    val searchPoint = GeoPoint(address.latitude, address.longitude)
+                activity?.runOnUiThread {
+                    binding.progressLocation.visibility = View.GONE
 
-                    activity?.runOnUiThread {
-                        binding.progressLocation.visibility = View.GONE
+                    if (!addresses.isNullOrEmpty()) {
+                        val address = addresses[0]
+                        val searchPoint = GeoPoint(address.latitude, address.longitude)
+
+                        currentPoint = searchPoint
                         binding.map.controller.animateTo(searchPoint)
-                        binding.map.controller.setZoom(16.0)
+                        binding.map.controller.setZoom(17.0)
+
+                        val existingSearchMarkers = binding.map.overlays.filterIsInstance<Marker>()
+                            .filter { it.title == query || it.id == "search_marker" }
+                        binding.map.overlays.removeAll(existingSearchMarkers)
 
                         val searchMarker = Marker(binding.map).apply {
+                            id = "search_marker"
                             position = searchPoint
                             title = query
-                            snippet = address.getAddressLine(0)
+                            snippet = address.getAddressLine(0) ?: "موقع تم العثور عليه"
                             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                            icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_map_marker)
                         }
+
                         binding.map.overlays.add(searchMarker)
                         binding.map.invalidate()
 
-                        Toast.makeText(requireContext(), "Found: $query", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    activity?.runOnUiThread {
-                        binding.progressLocation.visibility = View.GONE
-                        Toast.makeText(requireContext(), "Location not found, try another name", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "تم العثور على: $query", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "لم يتم العثور على الموقع، جرب اسماً آخر", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
                 activity?.runOnUiThread {
                     binding.progressLocation.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Search error or no internet connection", Toast.LENGTH_SHORT).show()
+
+                    if (query.contains("مستشفى") || query.contains("أمن") || query.contains("السادات")) {
+                        currentPoint?.let {
+                            binding.map.controller.animateTo(it)
+                            binding.map.controller.setZoom(16.5)
+                            Toast.makeText(requireContext(), "تم إظهار نقاط الأمان المتاحة حولك حالياً", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(requireContext(), "خطأ في الاتصال بالشبكة، يرجى المحاولة لاحقاً", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -341,20 +385,23 @@ class MapFragment : Fragment() {
     }
 
     private fun checkAndRequestLocationPermission() {
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
         if (ContextCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            trackingService.start()
+            startTrackingService()
         } else {
-            requestPermissions(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                LOCATION_PERMISSION_REQUEST
-            )
+            requestPermissions(permissions.toTypedArray(), LOCATION_PERMISSION_REQUEST)
         }
     }
 
@@ -365,8 +412,10 @@ class MapFragment : Fragment() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST) {
+            if (_binding == null) return
+
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                trackingService.start()
+                startTrackingService()
                 showLastKnownLocation()
             }
         }
@@ -380,7 +429,7 @@ class MapFragment : Fragment() {
         ) return
 
         val locationManager =
-            requireContext().getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
@@ -400,7 +449,7 @@ class MapFragment : Fragment() {
 
         handler.post(object : Runnable {
             override fun run() {
-                if (!isDemoMode) return
+                if (!isDemoMode || _binding == null) return
 
                 lat += 0.0001
                 lon += 0.0001
@@ -408,27 +457,29 @@ class MapFragment : Fragment() {
                 val point = GeoPoint(lat, lon)
                 currentPoint = point
 
-                binding.txtLat.text = "Lat: %.5f".format(point.latitude)
-                binding.txtLon.text = "Lon: %.5f".format(point.longitude)
+                _binding?.let { binding ->
+                    binding.txtLat.text = "Lat: %.5f".format(point.latitude)
+                    binding.txtLon.text = "Lon: %.5f".format(point.longitude)
 
-                if (!::marker.isInitialized) {
-                    marker = Marker(binding.map).apply {
-                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                        title = "Demo Location"
-                        position = point
-                        icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_map_marker)
+                    if (!::marker.isInitialized) {
+                        marker = Marker(binding.map).apply {
+                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                            title = "Demo Location"
+                            position = point
+                            icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_map_marker)
+                        }
+                        binding.map.overlays.add(marker)
+                    } else {
+                        marker.position = point
+                        if (::accuracyCircle.isInitialized) {
+                            accuracyCircle.points = Polygon.pointsAsCircle(point, 25.0)
+                        }
                     }
-                    binding.map.overlays.add(marker)
-                } else {
-                    marker.position = point
-                    if (::accuracyCircle.isInitialized) {
-                        accuracyCircle.points = Polygon.pointsAsCircle(point, 25.0)
-                    }
+
+                    viewModel.updateLocation(point)
+                    binding.map.controller.setCenter(point)
+                    binding.map.invalidate()
                 }
-
-                viewModel.updateLocation(point)
-                binding.map.controller.setCenter(point)
-                binding.map.invalidate()
 
                 handler.postDelayed(this, 1500)
             }
@@ -454,7 +505,8 @@ class MapFragment : Fragment() {
         super.onDestroyView()
         isDemoMode = false
         handler.removeCallbacksAndMessages(null)
-        trackingService.stop()
+        stopTrackingService()
+        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(locationReceiver)
         _binding = null
     }
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
@@ -13,14 +14,18 @@
         android:padding="20dp"
         android:gravity="center_horizontal">
 
+        <!-- 🎯 تعديل: إضافة ID لحاوية الأيقونة لتغيير لونها برمجياً -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAlertIconContainer"
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:layout_marginTop="16dp"
             app:cardCornerRadius="36dp"
             app:cardBackgroundColor="#FEE2E2"
             app:strokeWidth="0dp">
+            <!-- 🎯 تعديل: إضافة ID لنفس التكست لتبديل الإيموجي -->
             <TextView
+                android:id="@+id/tvDetailAlertIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="🚨"
@@ -28,14 +33,18 @@
                 android:layout_gravity="center"/>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- 🎯 تعديل: إضافة ID لحاوية شارة الحالة لتغيير خلفيتها -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardDetailStatusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             app:cardCornerRadius="12dp"
             app:cardBackgroundColor="#991B1B"
             app:strokeWidth="0dp">
+            <!-- 🎯 تعديل: إضافة ID لتكست الحالة المكتوب -->
             <TextView
+                android:id="@+id/tvDetailStatusText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Emergency Alert"
@@ -46,7 +55,9 @@
                 android:paddingVertical="4dp"/>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- 🎯 تعديل: إضافة ID للعنوان الرئيسي للتحكم في النص واللون -->
         <TextView
+            android:id="@+id/tvDetailTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="SOS Signal Received"
@@ -95,7 +106,7 @@
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@id/ivSenderAvatar"
                     android:layout_marginStart="14dp"
-                    android:text="Sara Johnson"
+                    tools:text="Sara Johnson"
                     android:textColor="#1E293B"
                     android:textSize="16sp"
                     android:textStyle="bold"/>
@@ -115,7 +126,7 @@
                         android:id="@+id/tvRelation"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Daughter"
+                        tools:text="Daughter"
                         android:textColor="#475569"
                         android:textSize="10sp"
                         android:textStyle="bold"
@@ -131,7 +142,7 @@
                     android:layout_toEndOf="@id/ivSenderAvatar"
                     android:layout_marginStart="14dp"
                     android:layout_marginTop="4dp"
-                    android:text="📍 0.8 miles away  •  🔋 44% Battery"
+                    tools:text="📍 0.8 miles away  •  🔋 44% Battery"
                     android:textColor="#64748B"
                     android:textSize="12sp"/>
             </RelativeLayout>
@@ -177,7 +188,7 @@
                         android:id="@+id/tvLocationTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="1248 Oakwood Avenue, Parkside"
+                        tools:text="1248 Oakwood Avenue, Parkside"
                         android:textColor="#1E293B"
                         android:textStyle="bold"
                         android:textSize="13sp"/>
@@ -186,7 +197,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_below="@id/tvLocationTitle"
-                        android:text="Last detected 42 seconds ago  |  Strong GPS Signal"
+                        tools:text="Last detected 42 seconds ago  |  Strong GPS Signal"
                         android:textColor="#94A3B8"
                         android:textSize="11sp"
                         android:layout_marginTop="2dp"/>
@@ -204,9 +215,10 @@
             app:strokeWidth="1dp"
             app:cardElevation="0dp">
             <TextView
+                android:id="@+id/tvFallDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ℹ️ Sara's device detected an unusual high-impact event (Possible Fall). She hasn't responded to her safety check."
+                tools:text="ℹ️ Sara's device detected an unusual high-impact event (Possible Fall)."
                 android:textColor="#475569"
                 android:textSize="12sp"
                 android:padding="12dp"

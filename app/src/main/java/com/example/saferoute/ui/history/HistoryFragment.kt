@@ -3,12 +3,15 @@ package com.example.saferoute.ui.history
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentHistoryBinding
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlin.math.log
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
@@ -22,27 +25,113 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHistoryBinding.bind(view)
 
-        // 1. ربط الـ ViewModel
         viewModel = ViewModelProvider(this)[HistoryViewModel::class.java]
 
-        // 2. إعداد الـ RecyclerView
         binding.rvHistory.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = logAdapter
         }
 
-        // 3. مراقبة الـ LiveData وتحديث الواجهة
+        // 🎯 1. تفاصيل البلاغ (عند الضغط على الكارت)
+        logAdapter.setOnItemClickListener { log ->
+            val typeParts = log.type.split("|")
+            val firestoreDocId = typeParts.getOrNull(1)
+
+            if (!firestoreDocId.isNullOrEmpty()) {
+                val bundle = Bundle().apply {
+                    putString("SOS_ALERT_ID", firestoreDocId)
+                }
+                findNavController().navigate(R.id.emergencyNotificationFragment, bundle)
+            } else {
+                Toast.makeText(context, "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+// 🎯 2. تحديث الفايرستور (عند الضغط على زر "I am safe")
+        logAdapter.setOnSafeClickListener { log ->
+            val typeParts = log.type.split("|")
+            val firestoreDocId = typeParts.getOrNull(1)
+
+            if (!firestoreDocId.isNullOrEmpty()) {
+                AlertDialog.Builder(requireContext())
+                    .setTitle("تأكيد حالة الأمان")
+                    .setMessage("هل أنتِ بخير وتريدين إنهاء حالة الاستغاثة الحالية؟")
+                    .setPositiveButton("نعم") { _, _ ->
+                        FirebaseFirestore.getInstance().collection("emergency_logs")
+                            .document(firestoreDocId)
+                            .update("status", "Resolved")
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "تم إغلاق البلاغ بنجاح 🎉", Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(context, "فشل التحديث", Toast.LENGTH_SHORT).show()
+                            }
+                    }
+                    .setNegativeButton("إلغاء", null)
+                    .show()
+            } else {
+                Toast.makeText(context, "خطأ: لا يمكن العثور على معرف البلاغ", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // 🎯 3. التصفية الزمنية الصارمة لمنع تكرار الكروت مع الحفاظ على التاريخ كاملاً لايف شغال
         viewModel.logs.observe(viewLifecycleOwner) { logsList ->
             if (logsList != null) {
-                logAdapter.submitList(logsList)
-                binding.tvTotalEventsCount.text = logsList.size.toString()
-                calculateSafeDays(logsList) // 👈 تمرير اللستة هنا
+                val uniqueLogsMap = LinkedHashMap<String, com.example.saferoute.data.local.EmergencyLog>()
+
+                logsList.forEach { log ->
+                    if (!log.userId.isNullOrEmpty()) {
+                        // مفتاح دمج ذكي وسحري: ندمج الكروت بناءً على الـ UID الخاص بالبنت ووقت البلاغ مقسوماً على دقيقة واحدة
+                        // وبكده لو في بلاغين ترفعوا في نفس الدقيقة لنفس البنت، هيتعرض كارت واحد بس وتتحل مشكلة التكرار
+                        val timeKey = log.timestamp / 60000
+                        val uniqueKey = "${log.userId}_$timeKey"
+
+                        if (!uniqueLogsMap.containsKey(uniqueKey)) {
+                            uniqueLogsMap[uniqueKey] = log
+                        } else {
+                            // لو الكارت المكرر التاني حالته تم حلها (Resolved)، بنحدث الكارت المدمج عشان يقلب أخضر
+                            if (log.status.contains("Resolved")) {
+                                uniqueLogsMap[uniqueKey] = log
+                            }
+                        }
+                    }
+                }
+
+                // التحقق من الإشعارات الخارجية وتجنب تكرار كارت الـ Incoming المفتوح من الخارج
+                val isFromSomeoneElse = arguments?.getBoolean("IS_FROM_SOMEONE_ELSE", false) ?: false
+                val incomingSosId = arguments?.getString("INCOMING_SOS_ID") ?: ""
+                val senderName = arguments?.getString("SENDER_NAME") ?: "ابنتكِ"
+
+                if (isFromSomeoneElse && incomingSosId.isNotEmpty()) {
+                    val timeKey = System.currentTimeMillis() / 60000
+                    val externalUniqueKey = "${incomingSosId}_$timeKey"
+                    val existingLog = uniqueLogsMap[externalUniqueKey]
+
+                    if (existingLog == null || !existingLog.status.contains("Resolved", ignoreCase = true)) {
+                        val externalLog = com.example.saferoute.data.local.EmergencyLog(
+                            id = incomingSosId.hashCode(),
+                            userId = incomingSosId,
+                            type = "SOS|$incomingSosId", // ندمج المعرف هنا أيضاً للتماشي مع بقية الأزرار
+                            latitude = arguments?.getDouble("LAT", 0.0) ?: 0.0,
+                            longitude = arguments?.getDouble("LNG", 0.0) ?: 0.0,
+                            timestamp = System.currentTimeMillis(),
+                            status = "Incoming_SOS|$senderName",
+                            batteryLevel = 100
+                        )
+                        uniqueLogsMap[externalUniqueKey] = externalLog
+                    }
+                }
+
+                // تحويل القيمة النهائية لقائمة مرتبة تنازلياً وعرضها في الـ Adapter
+                val finalFilteredList = uniqueLogsMap.values.toList().sortedByDescending { it.timestamp }
+
+                logAdapter.submitList(finalFilteredList)
+                binding.tvTotalEventsCount.text = finalFilteredList.size.toString()
+                calculateSafeDays(finalFilteredList)
             }
         }
 
         viewModel.listenToEmergencyLogs()
-
-        // 4. تشغيل الـ Bottom Navigation الآمن والمعدل
         setupBottomNavigation()
     }
 
@@ -51,49 +140,24 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             binding.tvSafeDaysCount.text = "30"
             return
         }
-
-        // جلب وقت آخر حادثة حصلت (أول عنصر لأن اللستة مرتبة تنازلياً بالأحدث)
         val lastLogTimestamp = logsList.first().timestamp
         val currentTimestamp = System.currentTimeMillis()
-
-        // حساب الفرق بالملي ثانية وتحويله لأيام
         val diffInMs = currentTimestamp - lastLogTimestamp
         val diffInDays = (diffInMs / (1000 * 60 * 60 * 24)).toInt()
-
-        // الأيام الآمنة هي الأيام التي مرت منذ آخر حادثة (بحد أقصى 30 يوم)
         val safeDays = if (diffInDays > 30) 30 else diffInDays
         binding.tvSafeDaysCount.text = safeDays.toString()
     }
 
-    // 🛠️ إصلاح الكوبيلوت: استخدام الـ Menu IDs الصحيحة لتفادي أي عطل في التنقل أو التحديد
     private fun setupBottomNavigation() {
         binding.bottomNavigationHistory.selectedItemId = R.id.nav_history
-
         binding.bottomNavigationHistory.setOnItemSelectedListener { item ->
-            // منع إعادة تحميل الصفحة لو ضغطت على نفس التبويب الحالي
-            if (item.itemId == R.id.nav_history) {
-                return@setOnItemSelectedListener true
-            }
-
+            if (item.itemId == R.id.nav_history) return@setOnItemSelectedListener true
             try {
-                // استخدام الـ IDs القادمة من الـ @menu/bottom_nav_menu
                 when (item.itemId) {
-                    R.id.nav_home -> {
-                        findNavController().navigate(R.id.homeFragment)
-                        true
-                    }
-                    R.id.nav_map -> {
-                        findNavController().navigate(R.id.mapFragment)
-                        true
-                    }
-                    R.id.nav_contacts -> {
-                        findNavController().navigate(R.id.contactsListFragment)
-                        true
-                    }
-                    R.id.nav_profile -> {
-                        findNavController().navigate(R.id.profileFragment2)
-                        true
-                    }
+                    R.id.nav_home -> { findNavController().navigate(R.id.homeFragment); true }
+                    R.id.nav_map -> { findNavController().navigate(R.id.mapFragment); true }
+                    R.id.nav_contacts -> { findNavController().navigate(R.id.contactsListFragment); true }
+                    R.id.nav_profile -> { findNavController().navigate(R.id.profileFragment2); true }
                     else -> false
                 }
             } catch (e: Exception) {

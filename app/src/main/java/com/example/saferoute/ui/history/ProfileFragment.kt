@@ -44,20 +44,24 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     private fun fetchUserData() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
+            // 🎯 خطوة الحماية: تصفير النصوص فوراً لمنع وميض "سارة" القديمة
+            binding.tvProfileName.text = "جاري التحميل... ⏳"
+            binding.tvProfileEmail.text = ""
+
             db.collection("users").document(currentUid).get()
                 .addOnSuccessListener { documentSnapshot ->
-
                     if (_binding != null && documentSnapshot != null && documentSnapshot.exists()) {
-                        val name = documentSnapshot.getString("name") ?: "Sara Jenkins"
-                        val email = documentSnapshot.getString("email") ?: "sara.jenkins@example.com"
+                        // الاعتماد على اسم الحساب الحقيقي المسجل بالفايرستور أو إظهار اسم عام بديل وليس سارة
+                        val name = documentSnapshot.getString("name") ?: "مستخدم SafeRoute"
+                        val email = documentSnapshot.getString("email") ?: ""
 
                         binding.tvProfileName.text = name
                         binding.tvProfileEmail.text = email
                     }
                 }
                 .addOnFailureListener {
-
                     if (_binding != null) {
+                        binding.tvProfileName.text = "فشل تحميل الاسم"
                         Toast.makeText(context, "Failed to load updated profile data", Toast.LENGTH_SHORT).show()
                     }
                 }

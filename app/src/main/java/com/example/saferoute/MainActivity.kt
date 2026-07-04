@@ -2,41 +2,149 @@ package com.example.saferoute
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
+import androidx.navigation.NavDeepLinkBuilder
+import androidx.navigation.fragment.NavHostFragment
+import com.example.saferoute.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityMainBinding
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val CHANNEL_ID = "SafeRoute_SOS_Channel"
 
+    // المتغير المسؤول عن منع تكرار تحديث التوكن
+    private var isTokenUpdated = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         org.osmdroid.config.Configuration.getInstance().userAgentValue = packageName
 
-        // 1. إنشاء قنوات الإشعارات (مطلوب في إصدارات أندرويد الحديثة)
         createNotificationChannel()
-
-        // 2. بدء الاستماع اللحظي لأي طوارئ تحدث في التطبيق
         startListeningForSOSTriggers()
+
+        // تحديث التوكن محمي من التكرار
+        if (!isTokenUpdated) {
+            updateFcmTokenInFirestore()
+        }
+
+        // 🔥 تعديل آمن: نقرأ الـ Intent وننتظر حتى يتم تحميل الـ NavHostFragment بالكامل لمنع الكراش
+        val sosAlertId = intent.getStringExtra("SOS_ALERT_ID")
+        if (!sosAlertId.isNullOrEmpty()) {
+            val bundle = Bundle().apply {
+                putString("SOS_ALERT_ID", sosAlertId)
+            }
+
+            // ننتظر تدوير الـ View للتأكد من أن الـ Navigation Graph جاهز
+            binding.root.post {
+                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                val navController = navHostFragment?.navController
+                navController?.navigate(R.id.emergencyNotificationFragment, bundle)
+            }
+        }
+
+        handleIncomingNotification(intent)
+
+        // استخراج الـ SHA-1 الحقيقي للجهاز للتأكد من ربط الفايربيز
+        try {
+            val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            val signatures = info.signingInfo?.signingCertificateHistory
+            if (signatures != null) {
+                for (signature in signatures) {
+                    val md = java.security.MessageDigest.getInstance("SHA1")
+                    val digest = md.digest(signature.toByteArray())
+                    val sha1 = digest.joinToString(":") { String.format("%02X", it) }
+                    Log.d("MY_REAL_SHA1", "🎯 الـ SHA-1 الحقيقي لجهازك هو: $sha1")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MY_REAL_SHA1", "خطأ أثناء استخراج البصمة", e)
+        }
+    }
+
+    private fun updateFcmTokenInFirestore() {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        val userEmail = currentUser.email
+
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM_TOKEN_UPDATE", "❌ فشل جلب التوكن الجديد", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val currentToken = task.result
+            if (!currentToken.isNullOrEmpty() && !userEmail.isNullOrEmpty()) {
+                db.collection("users")
+                    .whereEqualTo("email", userEmail)
+                    .get()
+                    .addOnSuccessListener { querySnapshot ->
+                        if (!querySnapshot.isEmpty) {
+                            for (document in querySnapshot.documents) {
+                                db.collection("users").document(document.id)
+                                    .update("fcmToken", currentToken)
+                                    .addOnSuccessListener {
+                                        Log.d("FCM_TOKEN_UPDATE", "✅ تم تحديث التوكن بنجاح!")
+                                        isTokenUpdated = true
+                                    }
+                            }
+                        } else {
+                            Log.e("FCM_TOKEN_UPDATE", "❌ لم يتم العثور على أي مستند يحتوي على هذا الإيميل!")
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("FCM_TOKEN_UPDATE", "❌ فشل الاتصال بقاعدة البيانات", e)
+                    }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingNotification(intent)
+    }
+
+    private fun handleIncomingNotification(intent: Intent?) {
+        val navigateTo = intent?.getStringExtra("NAVIGATE_TO")
+        if (navigateTo == "HISTORY") {
+            val sosId = intent.getStringExtra("INCOMING_SOS_ID")
+            val senderName = intent.getStringExtra("SENDER_NAME")
+
+            val bundle = Bundle().apply {
+                putString("INCOMING_SOS_ID", sosId)
+                putString("SENDER_NAME", senderName)
+                putBoolean("IS_FROM_SOMEONE_ELSE", true)
+            }
+
+            // 🔥 تعديل آمن هنا أيضاً باستخدام الـ View.post
+            binding.root.post {
+                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                val navController = navHostFragment?.navController
+                navController?.navigate(R.id.historyFragment, bundle)
+            }
+        }
     }
 
     private fun startListeningForSOSTriggers() {
-        // الاستماع لكولكشن emergencies وترتيبها حسب الأحدث
-        db.collection("emergencies")
+        db.collection("emergency_logs")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(1) // نراقب آخر مستند تم إنشاؤه فقط
+            .limit(1)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     Log.e("SOS_LISTENER", "Listen failed.", error)
@@ -45,29 +153,33 @@ class MainActivity : AppCompatActivity() {
 
                 val currentUid = auth.currentUser?.uid ?: return@addSnapshotListener
 
-                // جلب رقم هاتف المستخدم الحالي (الأب أو الأم) لمعرفة هل الاستغاثة موجهة له
                 db.collection("users").document(currentUid).get()
                     .addOnSuccessListener { userDocument ->
                         if (userDocument != null && userDocument.exists()) {
                             val myPhone = userDocument.getString("phone") ?: ""
 
                             for (doc in snapshots!!.documentChanges) {
-                                // نتحقق فقط من المستندات المضافة حديثاً (Triggered)
                                 if (doc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
-                                    val emergencyUserId = doc.document.getString("userId")
-                                    val userName = doc.document.getString("userName") ?: "Someone"
-                                    val locationName = doc.document.getString("locationName") ?: "Unknown Location"
+                                    val logDoc = doc.document
+                                    val emergencyUserId = logDoc.getString("userId") ?: ""
 
-                                    // لمنع هاتف البنت نفسها من استقبال الإشعار الذي أرسلته
                                     if (emergencyUserId != currentUid) {
-
-                                        // 🛑 الفحص الذهبي: نتحقق هل المستغيث يمتلك رقم الهاتف هذا كـ dad أو mom؟
                                         checkIfIAnEmergencyContact(emergencyUserId, myPhone) { isContact ->
                                             if (isContact) {
-                                                // إظهار الإشعار فوراً على هاتف الأب/الأم!
+                                                val sosAlertId = logDoc.id
+
+                                                val pendingIntent = NavDeepLinkBuilder(this@MainActivity)
+                                                    .setGraph(R.navigation.nav_graph)
+                                                    .setDestination(R.id.emergencyNotificationFragment)
+                                                    .setArguments(Bundle().apply {
+                                                        putString("SOS_ALERT_ID", sosAlertId)
+                                                    })
+                                                    .createPendingIntent()
+
                                                 showLocalNotification(
-                                                    "🚨 SafeRoute EMERGENCY ALERT!",
-                                                    "$userName is in danger near $locationName. Check them immediately!"
+                                                    "🚨 استغاثة طوارئ SafeRoute!",
+                                                    "بنتك في خطر وبحاجة للمساعدة، اضغطي لفتح الموقع حياً",
+                                                    pendingIntent
                                                 )
                                             }
                                         }
@@ -79,25 +191,17 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    // دالة للتحقق من صلة القرابة في قاعدة البيانات
-    private fun checkIfIAnEmergencyContact(emergencyUserId: String?, myPhone: String, callback: (Boolean) -> Unit) {
-        if (emergencyUserId == null || myPhone.isEmpty()) {
+    private fun checkIfIAnEmergencyContact(emergencyUserId: String, myPhone: String, callback: (Boolean) -> Unit) {
+        if (emergencyUserId.isEmpty() || myPhone.isEmpty()) {
             callback(false)
             return
         }
-
         db.collection("users").document(emergencyUserId).get()
             .addOnSuccessListener { document ->
                 if (document != null && document.exists()) {
                     val dadPhone = document.getString("dad") ?: ""
                     val momPhone = document.getString("mom") ?: ""
-
-                    // لو رقم هاتف الأب أو الأم الحالي يطابق الأرقام المسجلة عند البنت
-                    if (myPhone == dadPhone || myPhone == momPhone) {
-                        callback(true)
-                    } else {
-                        callback(false)
-                    }
+                    callback(myPhone == dadPhone || myPhone == momPhone)
                 } else {
                     callback(false)
                 }
@@ -105,22 +209,21 @@ class MainActivity : AppCompatActivity() {
             .addOnFailureListener { callback(false) }
     }
 
-    // دالة بناء وإظهار الإشعار على الشاشة بنجاح
-    private fun showLocalNotification(title: String, body: String) {
+    private fun showLocalNotification(title: String, body: String, pendingIntent: PendingIntent) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // يمكنك استبداله بأيقونة تطبيقك المفضلة
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body)) // لعرض الرسالة كاملة لو كانت طويلة
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 
-    // إعداد الـ Channel الخاص بالأندرويد
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Emergency Alerts"
@@ -129,8 +232,7 @@ class MainActivity : AppCompatActivity() {
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
             }
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
     }

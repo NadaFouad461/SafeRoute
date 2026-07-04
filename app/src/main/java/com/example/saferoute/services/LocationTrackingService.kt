@@ -1,75 +1,116 @@
 package com.example.saferoute.services
 
 import android.Manifest
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.saferoute.R
 
-class LocationTrackingService(
-    private val context: Context,
-    private val onLocationUpdate: (lat: Double, lon: Double) -> Unit
-) {
+class LocationTrackingService : Service() {
 
-    private val locationManager =
-        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    private lateinit var locationManager: LocationManager
+    private val NOTIFICATION_ID = 1001
+    private val CHANNEL_ID = "location_tracking_channel"
 
     private val listener = object : LocationListener {
-
         override fun onLocationChanged(location: Location) {
             Log.d("LocationService", "New location: ${location.latitude}, ${location.longitude}")
-            onLocationUpdate(location.latitude, location.longitude)
-        }
 
+            // إرسال الإحداثيات عبر Broadcast ليتم استقبالها في الـ Fragment بأمان
+            val intent = Intent("LocationUpdateIntent").apply {
+                putExtra("lat", location.latitude)
+                putExtra("lon", location.longitude)
+            }
+            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
+        }
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
     }
 
-    fun start() {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            Log.w("LocationService", "Permission not granted, cannot start tracking")
+    override fun onCreate() {
+        super.onCreate()
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        createNotificationChannel()
+        startForegroundServiceWithNotification()
+        startTracking()
+        return START_STICKY
+    }
+
+    private fun startTracking() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            stopSelf()
             return
         }
 
-        // 🚀 إضافة ذكية: لقط آخر موقع مسجل فوراً في بداية التشغيل لكسر تعليق البروجرس بار
+        // إرسال آخر موقع معروف فوراً
         val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         val initialLocation = lastGps ?: lastNet
         initialLocation?.let {
-            onLocationUpdate(it.latitude, it.longitude)
+            val intent = Intent("LocationUpdateIntent").apply {
+                putExtra("lat", it.latitude)
+                putExtra("lon", it.longitude)
+            }
+            LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
         }
 
-        // تسجيل الـ Listener التقليدي للتحديثات المستمرة
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                1000L,
-                0f,
-                listener
-            )
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, listener)
         }
-
         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                1000L,
-                0f,
-                listener
-            )
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L, 0f, listener)
         }
-
-        Log.d("LocationService", "Tracking started")
     }
 
-    fun stop() {
+    private fun startForegroundServiceWithNotification() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("تتبع المسار الآمن نشط")
+            .setContentText("يتم الآن تحديث موقعك لضمان سلامتك...")
+            .setSmallIcon(R.drawable.ic_map_marker) // تأكد من وجود أيقونة صالحة هنا
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "خدمة تتبع الموقع",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            // تم إصلاح السطر هنا بنجاح
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
+            manager?.createNotificationChannel(channel)
+        }
+    }
+
+    override fun onDestroy() {
         locationManager.removeUpdates(listener)
-        Log.d("LocationService", "Tracking stopped")
+        super.onDestroy()
     }
+
+    override fun onBind(intent: Intent?): IBinder? = null
 }

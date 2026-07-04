@@ -16,36 +16,68 @@ class HistoryViewModel : ViewModel() {
     private val _logs = MutableLiveData<List<EmergencyLog>>()
     val logs: LiveData<List<EmergencyLog>> get() = _logs
 
-    // 🎯 دالة الاستماع الفوري للفايرستور لجلب البيانات الحقيقية والديناميكية
-    fun listenToEmergencyLogs() {
+    fun listenToEmergencyLogs(incomingSosId: String? = null) {
         if (currentUserId.isEmpty()) return
 
         db.collection("emergency_logs")
-            .whereEqualTo("userId", currentUserId)
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
-                if (error != null || snapshots == null) {
-                    return@addSnapshotListener
-                }
+                if (error != null || snapshots == null) return@addSnapshotListener
 
                 val logsList = mutableListOf<EmergencyLog>()
-                for (doc in snapshots) {
-                    // جلب قائمة الأسماء الديناميكية من الفايرستور
-                    val alertedContacts = doc.get("alertedContacts") as? List<String> ?: emptyList()
 
-                    // تحويل بيانات الفايرستور لكائن EmergencyLog يعرضه الـ Adapter
-                    val log = EmergencyLog(
-                        id = doc.id.hashCode(), // تحويل الـ ID لـ Int متوافق مع Room
-                        userId = doc.getString("userId") ?: "",
-                        type = doc.getString("type") ?: "SOS",
-                        latitude = doc.getDouble("latitude") ?: 0.0,
-                        longitude = doc.getDouble("longitude") ?: 0.0,
-                        timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: System.currentTimeMillis(),
-                        status = doc.getString("status") ?: "Dispatched",
-                        // 🔥 هنا السحر: بنخلي نسبة البطارية تشيل عدد جهات الاتصال ديناميكياً ليقرأها الـ Adapter بتاعكِ فوراً!
-                        batteryLevel = alertedContacts.size
-                    )
-                    logsList.add(log)
+                for (doc in snapshots) {
+                    val userIdInDoc = doc.getString("userId") ?: ""
+                    val status = doc.getString("status") ?: "Emergency Dispatched"
+                    val sharedWith = doc.get("sharedWith") as? List<*> ?: emptyList<Any>()
+
+                    // 🎯 حماية صارمة: تخطي البلاغات الملغية أو البلاغات الأولية التي لم تكتمل بعد
+                    if (status.equals("canceled", ignoreCase = true) || status.equals("triggered", ignoreCase = true)) {
+                        continue
+                    }
+
+                    val isFromMe = userIdInDoc == currentUserId
+                    val isForMe = sharedWith.contains(currentUserId) || doc.id == incomingSosId || (!isFromMe && status != "canceled")
+
+                    if (isFromMe || isForMe) {
+                        val alertedContacts = doc.get("alertedContacts") as? List<*> ?: emptyList<Any>()
+                        val realBattery = doc.getLong("batteryLevel")?.toInt() ?: 100
+                        val userName = doc.getString("userName") ?: "شخص مقرب"
+                        val logType = if (isFromMe) "SOS" else "SOS_INCOMING"
+
+                        // في HistoryViewModel.kt
+                        val customStatus = when {
+                            status.contains("Resolved", ignoreCase = true) || status == "safe" -> {
+                                if (isFromMe) "Resolved" else "✅ $userName Is Safe Now"
+                            }
+                            // اجعلي الـ triggered ظاهرة في الهيستوري، لأنها استغاثة حقيقية بدأت بالفعل
+                            status.contains("Dispatched", ignoreCase = true) || status == "triggered" -> {
+                                if (isFromMe) "Emergency Dispatched" else "⚠️ $userName Needs Help!"
+                            }
+                            else -> status
+                        }
+
+                        val finalTimestamp: Long = when (val rawTime = doc.get("timestamp")) {
+                            is com.google.firebase.Timestamp -> rawTime.toDate().time
+                            is Long -> rawTime
+                            else -> System.currentTimeMillis()
+                        }
+
+                        // عدلي دالة الـ for loop داخل listenToEmergencyLogs
+                        val log = EmergencyLog(
+                            id = doc.id.hashCode(),
+                            userId = doc.id,
+                            // التعديل هنا: ندمج المعرف الحقيقي في الـ type ليتم استخراجه لاحقاً
+                            type = "$logType|${doc.id}",
+                            latitude = doc.getDouble("latitude") ?: 0.0,
+                            longitude = doc.getDouble("longitude") ?: 0.0,
+                            timestamp = finalTimestamp,
+                            status = "$customStatus|${alertedContacts.size.coerceAtLeast(1)}",
+                            batteryLevel = realBattery
+                        )
+
+                        logsList.add(log)
+                    }
                 }
                 _logs.postValue(logsList)
             }
