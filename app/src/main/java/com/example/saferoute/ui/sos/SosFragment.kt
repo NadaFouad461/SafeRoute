@@ -201,44 +201,25 @@ class SosFragment : Fragment() {
                 binding.progressBar.visibility = View.VISIBLE
 
                 val selectedNumbers = emergencyContacts.map { it.phone }
+                val message = "🚨 استغاثة طارئة من SafeRoute. الموقع: خط عرض $currentLatitude و خط طول $currentLongitude"
 
-                if (selectedNumbers.isEmpty()) {
-                    Toast.makeText(requireContext(), "⚠️ قائمة الأرقام فارغة!", Toast.LENGTH_SHORT).show()
-                    binding.progressBar.visibility = View.GONE
-                    return
-                }
-
-                // 1️⃣ إرسال رسائل SMS لجميع جهات الاتصال (بدون لينكات)
+                // 1️⃣ إرسال الـ SMS فوراً وبشكل منفصل
                 try {
-                    val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        requireContext().getSystemService(android.telephony.SmsManager::class.java)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        android.telephony.SmsManager.getDefault()
-                    }
-
-                    // الرسالة المطلوبة (إحداثيات فقط)
-                    val message = "🚨 استغاثة طارئة! أنا في خطر. إحداثيات موقعي الحالية هي: Latitude: $currentLatitude, Longitude: $currentLongitude"
-
+                    val smsManager = android.telephony.SmsManager.getDefault()
                     for (number in selectedNumbers) {
                         if (number.isNotEmpty()) {
                             smsManager.sendTextMessage(number, null, message, null, null)
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e("SosFragment", "فشل إرسال الـ SMS: ${e.message}")
+                    // نستخدم Log فقط حتى لا نؤثر على سير العمل
+                    Log.e("SosFragment", "SMS Error: ${e.message}")
                 }
 
-                // 2️⃣ إكمال العمل الأصلي (الفايربيز)
-                val batteryManager = requireContext().getSystemService(android.os.BatteryManager::class.java)
-                val realBatteryLevel = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
-
+                // 2️⃣ الآن نقوم برفع البلاغ وإرسال إشعار الـ FCM (بمجرد اكتمال الـ SMS)
                 db.collection("users").document(currentUserId).get()
                     .addOnSuccessListener { userDoc ->
-                        if (_binding == null) return@addOnSuccessListener
-
-                        val userName = userDoc.getString("name") ?: "مستخدم غير معروف"
-
+                        val userName = userDoc.getString("name") ?: "مستخدم"
                         val emergencyData = hashMapOf(
                             "userId" to currentUserId,
                             "userName" to userName,
@@ -246,43 +227,22 @@ class SosFragment : Fragment() {
                             "type" to "SOS",
                             "latitude" to currentLatitude,
                             "longitude" to currentLongitude,
-                            "batteryLevel" to realBatteryLevel,
-                            "alertedContacts" to selectedNumbers,
                             "timestamp" to com.google.firebase.Timestamp.now()
                         )
 
-                        val saveTask = if (!passedSosAlertId.isNullOrEmpty()) {
-                            db.collection("emergency_logs").document(passedSosAlertId!!).set(emergencyData)
-                        } else {
-                            db.collection("emergency_logs").add(emergencyData)
-                        }
+                        db.collection("emergency_logs").add(emergencyData).addOnSuccessListener { reference ->
+                            val finalDocId = reference.id
 
-                        saveTask.addOnSuccessListener { reference ->
-                            if (_binding == null) return@addOnSuccessListener
-
-                            val finalDocId = passedSosAlertId ?: (reference as? com.google.firebase.firestore.DocumentReference)?.id ?: ""
-
+                            // إرسال الإشعار
                             emergencyContacts.forEach { contact ->
                                 if (contact.fcmToken.isNotEmpty()) {
                                     sendFcmNotification(contact.fcmToken, userName, finalDocId)
                                 }
                             }
 
-                            val bundle = bundleOf("SOS_ALERT_ID" to finalDocId)
                             binding.progressBar.visibility = View.GONE
-
-                            findNavController().navigate(
-                                R.id.emergencyNotificationFragment,
-                                bundle,
-                                androidx.navigation.NavOptions.Builder()
-                                    .setPopUpTo(R.id.sosFragment, true)
-                                    .build()
-                            )
+                            findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to finalDocId))
                         }
-                            .addOnFailureListener { exception ->
-                                if (_binding != null) binding.progressBar.visibility = View.GONE
-                                Toast.makeText(requireContext(), "❌ خطأ: ${exception.localizedMessage}", Toast.LENGTH_LONG).show()
-                            }
                     }
             }
         }.start()
