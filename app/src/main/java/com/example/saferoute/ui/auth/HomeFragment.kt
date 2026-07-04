@@ -142,7 +142,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     // 🛠️ السحر هنا: دالة الاستماع الفوري للبلاغات الطارئة عند فتح التطبيق
     private fun startListeningForIncomingSos(currentUserId: String) {
         db.collection("emergency_logs")
-            .whereEqualTo("status", "triggered") // البحث عن البلاغات النشطة فقط
+            .whereEqualTo("status", "triggered")
             .addSnapshotListener { snapshots, e ->
                 if (e != null) {
                     Log.w("HomeFragment", "Listen failed.", e)
@@ -156,11 +156,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                             val sosAlertId = doc.id
                             val girlUserId = doc.getString("userId") ?: ""
 
-                            // منع التطبيق من إظهار إشعار للشخص الذي أرسل الاستغاثة نفسه
                             if (girlUserId == currentUserId) continue
 
-                            // 🎯 نذهب لجدول الـ ViewModel الخاص بـ لوحة الـ SOS لنعرض التنبيه منبثقاً لوالدتك
-                            showEmergencyDialog(sosAlertId)
+                            // ❌ بدلاً من استدعاء الدالة، ضعي علامة التعليق هذه:
+                            // showEmergencyDialog(sosAlertId)
                         }
                     }
                 }
