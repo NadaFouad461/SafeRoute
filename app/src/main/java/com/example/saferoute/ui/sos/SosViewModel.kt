@@ -7,7 +7,7 @@ class SosViewModel(
     private val repository: SosRepository
 ) : ViewModel() {
 
-    // جعلناه نظيفاً وفارغاً لمنع أي تداخل قديم أو إرسال مزدوج تلقائي
+
     private val _sosStatus = MutableLiveData<SosState>()
     val sosStatus: LiveData<SosState> = _sosStatus
 }

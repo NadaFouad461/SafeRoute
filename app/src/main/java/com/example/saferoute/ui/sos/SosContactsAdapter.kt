@@ -10,7 +10,7 @@ class SosContactsAdapter(
     private val contacts: MutableList<ContactItem>
 ) : RecyclerView.Adapter<SosContactsAdapter.SosViewHolder>() {
 
-    // استخدام الـ View Binding داخل الـ ViewHolder مباشرة
+
     class SosViewHolder(val binding: ItemSosContactHorizontalBinding) :
         RecyclerView.ViewHolder(binding.root)
 
@@ -26,15 +26,14 @@ class SosContactsAdapter(
     override fun onBindViewHolder(holder: SosViewHolder, position: Int) {
         val contact = contacts[position]
 
-        // ربط البيانات بالـ Binding بدون findViewById
+
         holder.binding.tvContactName.text = contact.name
 
-        // يمكنك هنا مستقبلاً ربط صورة حقيقية لو متوفرة في السيرفر
-        // holder.binding.ivContactAvatar.load(contact.imageUrl)
 
-        // عند الضغط على الـ (X) يتم حذف الحامي من قائمة الإرسال فوراً وتحديث الواجهة
+
+
         holder.binding.btnRemoveContact.setOnClickListener {
-            // تأمين جلب الـ position الصحيح لتجنب كراش الحذف المتتالي
+
             val currentPosition = holder.adapterPosition
             if (currentPosition != RecyclerView.NO_POSITION) {
                 contacts.removeAt(currentPosition)

@@ -21,6 +21,6 @@ data class EmergencyLog(
 
     val status: String = "ACTIVE",
 
-    // 🔋 نسبة البطارية ديناميكية وقت البلاغ (تُمرر عند إنشاء البلاغ)
+
     val batteryLevel: Int = 100
 )

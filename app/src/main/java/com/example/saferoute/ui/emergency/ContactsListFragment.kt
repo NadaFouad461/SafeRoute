@@ -42,11 +42,11 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
     }
 
     private fun setupRecyclerView() {
-        // تمرير لوجيك التعديل والحذف مباشرة داخل الأدابتر
+
         contactsAdapter = ContactsAdapter(
             emergencyContactsList,
             onEditClick = { contact ->
-                // 📝 لوجيك التعديل: نمرر الـ ID أو بيانات الكونتكت لصفحة التعديل
+
                 val bundle = Bundle().apply {
                     putString("contactId", contact.id)
                     putString("contactName", contact.name)
@@ -54,11 +54,11 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                     putString("contactRelation", contact.relationship)
                     putBoolean("isPriority", contact.isPriority)
                 }
-                // تأكدي من وجود هذا الأكشن في الـ nav_graph أو استبدليه بـ ID الفرغمنت مباشرة
+
                 findNavController().navigate(R.id.action_contactsListFragment_to_addContactFragment, bundle)
             },
             onDeleteClick = { contact ->
-                // 🗑️ لوجيك الحذف المباشر من الفايرستور
+
                 deleteContactFromFirestore(contact)
             }
         )
