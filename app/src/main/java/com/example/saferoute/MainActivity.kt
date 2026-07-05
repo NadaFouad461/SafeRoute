@@ -1,4 +1,4 @@
-package com.example.saferoute.ui
+package com.example.saferoute
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val CHANNEL_ID = "SafeRoute_SOS_Channel"
 
-    // المتغير المسؤول عن منع تكرار تحديث التوكن
+
     private var isTokenUpdated = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,19 +40,19 @@ class MainActivity : AppCompatActivity() {
         createNotificationChannel()
         startListeningForSOSTriggers()
 
-        // تحديث التوكن محمي من التكرار
+
         if (!isTokenUpdated) {
             updateFcmTokenInFirestore()
         }
 
-        // 🔥 تعديل آمن: نقرأ الـ Intent وننتظر حتى يتم تحميل الـ NavHostFragment بالكامل لمنع الكراش
+
         val sosAlertId = intent.getStringExtra("SOS_ALERT_ID")
         if (!sosAlertId.isNullOrEmpty()) {
             val bundle = Bundle().apply {
                 putString("SOS_ALERT_ID", sosAlertId)
             }
 
-            // ننتظر تدوير الـ View للتأكد من أن الـ Navigation Graph جاهز
+
             binding.root.post {
                 val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
                 val navController = navHostFragment?.navController
@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
 
         handleIncomingNotification(intent)
 
-        // استخراج الـ SHA-1 الحقيقي للجهاز للتأكد من ربط الفايربيز
+
         try {
             val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
             val signatures = info.signingInfo?.signingCertificateHistory
@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        setIntent(intent) // مهم جداً لتحديث الـ Intent الخاص بالـ Activity
+        setIntent(intent)
 
         val sosId = intent.getStringExtra("SOS_ALERT_ID")
         Log.d("NAV_DEBUG", "🚀 onNewIntent - SOS_ID: $sosId")
@@ -127,7 +127,7 @@ class MainActivity : AppCompatActivity() {
                 putString("SOS_ALERT_ID", sosId)
             }
 
-            // استخدام post للـ UI Thread
+
             binding.root.post {
                 val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
                 navHostFragment?.navController?.navigate(R.id.emergencyNotificationFragment, bundle)
@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity() {
                 putBoolean("IS_FROM_SOMEONE_ELSE", true)
             }
 
-            // 🔥 تعديل آمن هنا أيضاً باستخدام الـ View.post
+
             binding.root.post {
                 val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
                 val navController = navHostFragment?.navController
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity() {
                                             if (isContact) {
                                                 val sosAlertId = logDoc.id
 
-                                                // التعديل: إنشاء Intent يحتوي على البيانات و Flags للتحكم في حالة الـ Activity
+
                                                 val intent = Intent(this@MainActivity, MainActivity::class.java).apply {
                                                     action = "OPEN_SOS_FRAGMENT"
                                                     val bundle = Bundle()
@@ -192,10 +192,10 @@ class MainActivity : AppCompatActivity() {
                                                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                                                 }
 
-                                                // استخدام System.currentTimeMillis لضمان رقم فريد لكل إشعار
+
                                                 val pendingIntent = PendingIntent.getActivity(
                                                     this@MainActivity,
-                                                    0, // جربي تثبيت الـ RequestCode مؤقتاً لـ 0
+                                                    0,
                                                     intent,
                                                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE // غيرناها لـ MUTABLE
                                                 )
@@ -237,15 +237,15 @@ class MainActivity : AppCompatActivity() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // تأكدي أن الأيقونة موجودة
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_CALL) // مهم جداً للأولويات القصوى
+            .setCategory(NotificationCompat.CATEGORY_CALL)
             .setContentIntent(pendingIntent)
-            .setFullScreenIntent(pendingIntent, true) // 🔥 هذا هو السر: يجبر التطبيق على الفتح
+            .setFullScreenIntent(pendingIntent, true)
             .setAutoCancel(true)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // ليظهر على شاشة القفل
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
