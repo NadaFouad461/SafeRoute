@@ -8,15 +8,17 @@
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/circle_countdown_bg"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/circle_green"
         android:supportsRtl="true"
         android:theme="@style/Theme.SafeRoute">
 
@@ -41,6 +43,10 @@
             android:name=".services.FallDetectionService"
             android:foregroundServiceType="health"
             android:exported="false" />
+        <service
+            android:name=".services.SafeWalkService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false" />
 
         <activity
             android:name=".ui.sensors.FallAlertActivity"
@@ -49,6 +55,6 @@
             android:excludeFromRecents="true"
             android:launchMode="singleInstance"
            />
-
+        <receiver android:name=".services.FakeCallService" android:exported="false" />
     </application>
 </manifest>

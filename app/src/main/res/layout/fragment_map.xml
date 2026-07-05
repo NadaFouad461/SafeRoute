@@ -1,14 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.map.MapFragment">
+    android:background="#E2E8F0">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <org.osmdroid.views.MapView
+        android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_above="@id/bottomNavigationView" />
 
-</FrameLayout>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="25dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="16dp">
+            <ImageView
+                android:id="@+id/searchIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_menu_search"
+                android:layout_centerVertical="true"
+                app:tint="#94A3B8"/>
+            <EditText
+                android:id="@+id/searchSafeDestinationsEt"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_toEndOf="@id/searchIcon"
+                android:background="@null"
+                android:hint="Search safe destinations..."
+                android:paddingStart="12dp"
+                android:textColorHint="#94A3B8"
+                android:textSize="14sp"
+                android:inputType="text"/>
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <ProgressBar
+        android:id="@+id/progressLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="visible"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="16dp"
+        android:gravity="center">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnMyLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_mylocation"
+            app:backgroundTint="#FFFFFF"
+            app:tint="#74C3EE"
+            app:fabSize="mini"
+            android:layout_marginBottom="12dp"
+            app:elevation="4dp"/>
+
+        <Button
+            android:id="@+id/btnDemo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start Demo"
+            android:textSize="11sp"
+            android:textColor="#FFFFFF"
+            app:backgroundTint="#74C3EE"
+            app:cornerRadius="8dp"
+            android:paddingHorizontal="8dp"/>
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/coordinatesCard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/shareLocationBtnCard"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="8dp"
+        app:cardCornerRadius="8dp"
+        app:cardBackgroundColor="#80000000"
+        app:strokeWidth="0dp">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="6dp">
+            <TextView
+                android:id="@+id/txtLat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lat: 0.0"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:layout_marginEnd="8dp"/>
+            <TextView
+                android:id="@+id/txtLon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lon: 0.0"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/shareLocationBtnCard"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_above="@id/bottomNavigationView"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="#74C3EE"
+        app:cardElevation="4dp"
+        app:strokeWidth="0dp">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Share Live Location"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:layout_centerVertical="true"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WITH 3 EMERGENCY CONTACTS"
+                android:textColor="#E0F2FE"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"/>
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:layout_alignParentBottom="true"
+        android:background="#FFFFFF"
+        app:elevation="16dp"
+        app:menu="@menu/bottom_nav_menu" />
+
+</RelativeLayout>

@@ -54,7 +54,7 @@ class FallAlertActivity : AppCompatActivity() {
     }
 
     private fun setupButtons() {
-        binding.btnImOkay.setOnClickListener {
+        binding.btnCancelSos.setOnClickListener {
             countDownTimer?.cancel()
             val notificationManager =
                 getSystemService(NOTIFICATION_SERVICE) as NotificationManager

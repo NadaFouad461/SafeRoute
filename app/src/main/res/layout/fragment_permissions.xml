@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🛡️ SECURITY SETUP"
+        android:textColor="#74C3EE"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.05"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Finalize Your Safety"
+        android:textColor="#1A1A1A"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginTop="6dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="To provide 24/7 protection, SafeRoute needs access to a few system features. You can change these anytime in settings."
+        android:textColor="#666666"
+        android:textSize="14sp"
+        android:layout_marginTop="8dp"
+        android:lineSpacingMultiplier="1.2" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPermissions"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        tools:itemCount="3"
+        tools:listitem="@layout/item_permission_card" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="#F9F9F9"
+        app:strokeWidth="0dp"
+        app:cardElevation="0dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_dialog_info"
+                app:tint="#666666"
+                android:layout_marginEnd="12dp"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Your data is encrypted and only shared with your chosen emergency contacts during an active SOS event. We never sell your location history."
+                android:textColor="#666666"
+                android:textSize="11sp"
+                android:lineSpacingMultiplier="1.1"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGrantPermissions"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:text="Grant All Permissions to Continue"
+        android:textColor="#999999"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="#F5F5F5"
+        app:cornerRadius="27dp"
+        app:elevation="0dp" />
+
+</LinearLayout>

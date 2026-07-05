@@ -1,13 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.history.HistoryFragment">
+    android:background="#FFFFFF">
 
     <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Alert History"
+        android:textColor="#1E293B"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="16dp"/>
+
+    <LinearLayout
+        android:id="@+id/statsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvTitle"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:weightSum="2">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="#EFF6FF">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TOTAL EVENTS" android:textSize="11sp" android:textColor="#1E40AF"/>
+                <TextView android:id="@+id/tvTotalEventsCount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textSize="24sp" android:textStyle="bold" android:textColor="#1D4ED8"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="#F3E8FF">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SAFE DAYS" android:textSize="11sp" android:textColor="#6B21A8"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="12" android:textSize="24sp" android:textStyle="bold" android:textColor="#7E22CE"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation_history"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="#FFFFFF"
+        app:elevation="8dp"
+        app:menu="@menu/bottom_nav_menu" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHistory"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Hello" />
+        android:layout_below="@id/statsContainer"
+        android:layout_above="@id/bottom_navigation_history"
+        android:layout_marginTop="12dp" />
 
-</FrameLayout>
+</RelativeLayout>
