@@ -12,6 +12,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentHomeBinding
+import com.example.saferoute.ui.auth.HomeItem
+
+
+
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
@@ -45,11 +49,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         binding.fabEmergency.setOnClickListener {
             handleSosTrigger()
+        binding.actionSafeWalk.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_safeWalkFragment)
         }
 
 
         binding.sosBtnCard.setOnClickListener {
             handleSosTrigger()
+        binding.actionFakeCall.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_fakeCallFragment)
         }
 
 
@@ -114,6 +122,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         )
 
         binding.recentActivityRv.layoutManager = LinearLayoutManager(context)
+
         binding.recentActivityRv.adapter = HomeAdapter(activityLogList)
     }
 
@@ -122,6 +131,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         if (currentUid != null) {
             db.collection("users").document(currentUid).get()
                 .addOnSuccessListener { documentSnapshot ->
+
                     if (_binding != null && isAdded && documentSnapshot != null && documentSnapshot.exists()) {
                         currentUserName = documentSnapshot.getString("name") ?: "User"
                         currentUserPhone = documentSnapshot.getString("phone") ?: ""
@@ -129,6 +139,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
                         startListeningForIncomingSos(currentUid)
+                        val userName = documentSnapshot.getString("name") ?: "User"
+                        binding.welcomeTv.text = "Good Evening, $userName"
                     }
                 }
                 .addOnFailureListener {
