@@ -1,0 +1,155 @@
+package com.example.saferoute.ui.history
+
+import android.content.Context
+import android.os.Bundle
+import android.view.View
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.example.saferoute.R
+import com.example.saferoute.databinding.FragmentProfileBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+
+class ProfileFragment : Fragment(R.layout.fragment_profile) {
+
+    private var _binding: FragmentProfileBinding? = null
+    private val binding get() = _binding!!
+
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
+
+    private val sharedPreferences by lazy {
+        requireActivity().getSharedPreferences("SafeRouteSettings", Context.MODE_PRIVATE)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentProfileBinding.bind(view)
+
+
+        fetchUserData()
+
+
+        loadSettingsState()
+
+
+        setupClickListeners()
+
+
+        setupSwitchListeners()
+    }
+
+    private fun fetchUserData() {
+        val currentUid = auth.currentUser?.uid
+        if (currentUid != null) {
+
+            binding.tvProfileName.text = "جاري التحميل... ⏳"
+            binding.tvProfileEmail.text = ""
+
+            db.collection("users").document(currentUid).get()
+                .addOnSuccessListener { documentSnapshot ->
+                    if (_binding != null && documentSnapshot != null && documentSnapshot.exists()) {
+
+                        val name = documentSnapshot.getString("name") ?: "مستخدم SafeRoute"
+                        val email = documentSnapshot.getString("email") ?: ""
+
+                        binding.tvProfileName.text = name
+                        binding.tvProfileEmail.text = email
+                    }
+                }
+                .addOnFailureListener {
+                    if (_binding != null) {
+                        binding.tvProfileName.text = "فشل تحميل الاسم"
+                        Toast.makeText(context, "Failed to load updated profile data", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        }
+    }
+
+    private fun loadSettingsState() {
+        binding.switchFallDetection.isChecked = sharedPreferences.getBoolean("fall_detection", true)
+        binding.switchNotifications.isChecked = sharedPreferences.getBoolean("notifications", true)
+        binding.switchDarkMode.isChecked = sharedPreferences.getBoolean("dark_mode", false)
+    }
+
+    private fun setupClickListeners() {
+        binding.btnEditProfile.setOnClickListener {
+            findNavController().navigate(R.id.action_profileFragment2_to_editProfileFragment)
+        }
+
+
+        binding.btnSafeWalkSettings.setOnClickListener {
+            Toast.makeText(context, "Opening Safe Walk Settings...", Toast.LENGTH_SHORT).show()
+        }
+
+
+        binding.btnLanguage.setOnClickListener {
+            Toast.makeText(context, "Language Selection Clicked", Toast.LENGTH_SHORT).show()
+        }
+
+
+        val logoutAction = View.OnClickListener {
+            auth.signOut()
+            Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.loginFragment)
+        }
+
+        binding.btnLogoutClick.setOnClickListener(logoutAction)
+        binding.btnExitApp.setOnClickListener(logoutAction)
+
+        val navContainer = binding.bottomNavigationContainer.getChildAt(0) as? android.widget.LinearLayout
+
+        navContainer?.let { layout ->
+
+            layout.getChildAt(0)?.setOnClickListener {
+                findNavController().navigate(R.id.homeFragment)
+            }
+
+
+            layout.getChildAt(1)?.setOnClickListener {
+                findNavController().navigate(R.id.mapFragment)
+            }
+
+
+            layout.getChildAt(2)?.setOnClickListener {
+                findNavController().navigate(R.id.action_profileFragment2_to_historyFragment)
+            }
+
+
+            layout.getChildAt(3)?.setOnClickListener {
+
+            }
+        }
+    }
+
+    private fun setupSwitchListeners() {
+        binding.switchFallDetection.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("fall_detection", isChecked).apply()
+            if (isChecked) {
+                Toast.makeText(context, "Fall Detection Activated", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Fall Detection Deactivated", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("notifications", isChecked).apply()
+        }
+
+        binding.switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
+            sharedPreferences.edit().putBoolean("dark_mode", isChecked).apply()
+            if (isChecked) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}

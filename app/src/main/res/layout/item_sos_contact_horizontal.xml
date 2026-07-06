@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="8dp">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivContactAvatar"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_margin="4dp"
+            android:src="@android:drawable/ic_menu_gallery"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+        <ImageView
+            android:id="@+id/btnRemoveContact"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_alignEnd="@id/ivContactAvatar"
+            android:layout_alignTop="@id/ivContactAvatar"
+            android:background="#FF3B30"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            app:tint="#FFFFFF"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:elevation="3dp"
+            android:backgroundTint="#FF3B30" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tvContactName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Name"
+        android:textColor="#1E293B"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:maxLength="10"
+        android:ellipsize="end" />
+
+</LinearLayout>

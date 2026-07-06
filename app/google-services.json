@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "139600904291",
-    "project_id": "safe-route-ca0d0",
-    "storage_bucket": "safe-route-ca0d0.firebasestorage.app"
+    "project_number": "231837825090",
+    "project_id": "myproject-76176",
+    "storage_bucket": "myproject-76176.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:139600904291:android:c89240010f97aa80803856",
+        "mobilesdk_app_id": "1:231837825090:android:ede3b49242deee37cf15db",
         "android_client_info": {
           "package_name": "com.example.saferoute"
         }
       },
       "oauth_client": [
         {
-          "client_id": "139600904291-nlpdf6q1lckibhhm6sjljt3vdvbqg35t.apps.googleusercontent.com",
+          "client_id": "231837825090-bi50ntj12b9evcn0rqd7a9gki7298bhe.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.saferoute",
-            "certificate_hash": "961e705fb2a9662d29b6ed4ab9cd0aa4c9c6e600"
+            "certificate_hash": "998f7367d94383ca62aad69970ab0f14f8f9f160"
           }
         },
         {
-          "client_id": "139600904291-6h2485nr5orjj7a24k0vmq2l4m4dr2ho.apps.googleusercontent.com",
+          "client_id": "231837825090-6cbu49nu0vocg7g7hq0lok3fos7mhmqa.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAoKyOL_moWpo6avwo9i6PzJeEOKwm6mdI"
+          "current_key": "AIzaSyARk54_uahx7RZzOwdYpxuHHYpugZy5BVQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "139600904291-6h2485nr5orjj7a24k0vmq2l4m4dr2ho.apps.googleusercontent.com",
+              "client_id": "231837825090-6cbu49nu0vocg7g7hq0lok3fos7mhmqa.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
