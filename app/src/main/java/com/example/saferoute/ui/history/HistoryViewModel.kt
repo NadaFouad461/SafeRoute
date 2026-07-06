@@ -66,8 +66,7 @@ class HistoryViewModel : ViewModel() {
 
                         val log = EmergencyLog(
                             id = doc.id.hashCode(),
-                            userId = doc.id,
-
+                            userId = doc.getString("userId") ?: "unknown",
                             type = "$logType|${doc.id}",
                             latitude = doc.getDouble("latitude") ?: 0.0,
                             longitude = doc.getDouble("longitude") ?: 0.0,

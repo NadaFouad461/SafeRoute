@@ -153,7 +153,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     for (change in snapshots.documentChanges) {
                         if (change.type == DocumentChange.Type.ADDED) {
                             val doc = change.document
-                            val sosAlertId = doc.id
                             val girlUserId = doc.getString("userId") ?: ""
 
                             if (girlUserId == currentUserId) continue
@@ -163,37 +162,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
                 }
             }
-    }
-
-    private fun showEmergencyDialog(sosAlertId: String) {
-        if (_binding == null || !isAdded) return
-
-
-        val sharedPrefs = requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
-        val isDismissedBefore = sharedPrefs.getBoolean("dismissed_$sosAlertId", false)
-        if (isDismissedBefore) return
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("🚨 بلاغ استغاثة طارئ SOS!")
-            .setMessage("هناك خطر يواجه أحد جهات اتصالك المقربة الآن! اضغطي للانتقال للسجل ومتابعة الحالة.")
-            .setCancelable(false)
-            .setPositiveButton("الانتقال للسجل (History)") { _, _ ->
-                val bundle = Bundle().apply {
-                    putString("incomingSosId", sosAlertId)
-                    putBoolean("isFromSomeoneElse", true)
-                }
-
-                val navController = findNavController()
-                if (navController.currentDestination?.id == R.id.homeFragment) {
-                    navController.navigate(R.id.action_homeFragment_to_historyFragment, bundle)
-                }
-            }
-            .setNegativeButton("إغلاق") { dialog, _ ->
-
-                sharedPrefs.edit().putBoolean("dismissed_$sosAlertId", true).apply()
-                dialog.dismiss()
-            }
-            .show()
     }
 
 

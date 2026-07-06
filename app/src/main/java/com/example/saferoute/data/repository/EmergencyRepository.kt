@@ -7,7 +7,6 @@ import com.example.saferoute.data.remote.FirestoreService
 
 class EmergencyRepository(
     private val emergencyDao: EmergencyDao,
-    private val firestoreService: FirestoreService
 ) {
 
 
@@ -15,9 +14,4 @@ class EmergencyRepository(
         emergencyDao.insertLog(log)
     }
 
-    fun getLogsByUser(
-        userId: String
-    ): LiveData<List<EmergencyLog>> {
-        return emergencyDao.getLogsByUser(userId)
-    }
 }

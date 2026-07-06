@@ -12,7 +12,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.saferoute.data.local.AppDatabase
 import com.example.saferoute.data.local.EmergencyLog
-import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.data.repository.EmergencyRepository
 import com.example.saferoute.utils.EmergencyType
 import com.google.android.gms.location.CurrentLocationRequest
@@ -37,8 +36,7 @@ class SosBackgroundService : Service() {
         createNotificationChannel()
 
         val appDb = AppDatabase.getDatabase(applicationContext)
-        val firestoreService = FirestoreService()
-        emergencyRepository = EmergencyRepository(appDb.emergencyDao(), firestoreService)
+        emergencyRepository = EmergencyRepository(appDb.emergencyDao())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

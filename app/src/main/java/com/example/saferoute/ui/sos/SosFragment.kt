@@ -1,6 +1,6 @@
 package com.example.saferoute.ui.sos
 
-import android.os.Build
+
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -11,14 +11,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
-import com.example.saferoute.data.local.AppDatabase
-import com.example.saferoute.data.remote.FirestoreService
-import com.example.saferoute.data.repository.EmergencyRepository
-import com.example.saferoute.data.repository.SosRepository
 import com.example.saferoute.databinding.FragmentSosBinding
 import com.example.saferoute.models.ContactItem
 import com.example.saferoute.utils.PermissionManager
@@ -30,8 +26,8 @@ class SosFragment : Fragment() {
     private var _binding: FragmentSosBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: SosViewModel
-    private lateinit var sosRepository: SosRepository
+    private var passedBatteryLevel: Int = -1
+
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
     private val db = FirebaseFirestore.getInstance()
 
@@ -65,15 +61,9 @@ class SosFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-
         passedSosAlertId = arguments?.getString("sosAlertId")
 
-        val dbRoom = AppDatabase.getDatabase(requireContext())
-        val firestoreService = FirestoreService()
-        val emergencyRepository = EmergencyRepository(dbRoom.emergencyDao(), firestoreService)
-        sosRepository = SosRepository(emergencyRepository)
-
-        viewModel = ViewModelProvider(this, SosViewModelFactory(sosRepository))[SosViewModel::class.java]
+        passedBatteryLevel = arguments?.getInt("batteryLevel", -1) ?: -1
 
         setupHorizontalRecyclerView()
         loadEmergencyContacts()
@@ -217,6 +207,9 @@ class SosFragment : Fragment() {
                 }
 
 
+
+
+
                 db.collection("users").document(currentUserId).get()
                     .addOnSuccessListener { userDoc ->
                         val userName = userDoc.getString("name") ?: "مستخدم"
@@ -227,21 +220,31 @@ class SosFragment : Fragment() {
                             "type" to "SOS",
                             "latitude" to currentLatitude,
                             "longitude" to currentLongitude,
-                            "timestamp" to com.google.firebase.Timestamp.now()
+                            "timestamp" to com.google.firebase.Timestamp.now(),
+                            "alertedContacts" to selectedNumbers,
+                            "batteryLevel" to if (passedBatteryLevel >= 0) passedBatteryLevel else getCurrentBatteryLevel()
                         )
 
-                        db.collection("emergency_logs").add(emergencyData).addOnSuccessListener { reference ->
-                            val finalDocId = reference.id
 
-                            // إرسال الإشعار
-                            emergencyContacts.forEach { contact ->
-                                if (contact.fcmToken.isNotEmpty()) {
-                                    sendFcmNotification(contact.fcmToken, userName, finalDocId)
+                        if (!passedSosAlertId.isNullOrEmpty()) {
+                            db.collection("emergency_logs").document(passedSosAlertId!!)
+                                .set(emergencyData, com.google.firebase.firestore.SetOptions.merge())
+                                .addOnSuccessListener {
+                                    emergencyContacts.forEach { contact ->
+                                        if (contact.fcmToken.isNotEmpty()) sendFcmNotification(contact.fcmToken, userName, passedSosAlertId!!)
+                                    }
+                                    binding.progressBar.visibility = View.GONE
+                                    findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to passedSosAlertId))
                                 }
+                        } else {
+                            db.collection("emergency_logs").add(emergencyData).addOnSuccessListener { reference ->
+                                val finalDocId = reference.id
+                                emergencyContacts.forEach { contact ->
+                                    if (contact.fcmToken.isNotEmpty()) sendFcmNotification(contact.fcmToken, userName, finalDocId)
+                                }
+                                binding.progressBar.visibility = View.GONE
+                                findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to finalDocId))
                             }
-
-                            binding.progressBar.visibility = View.GONE
-                            findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to finalDocId))
                         }
                     }
             }
@@ -298,6 +301,12 @@ class SosFragment : Fragment() {
 
     private fun navigateToHistoryFragment() {
         try { findNavController().navigate(R.id.emergencyNotificationFragment) } catch(e: Exception) {}
+    }
+    private fun getCurrentBatteryLevel(): Int {
+        return try {
+            val bm = requireContext().getSystemService(android.content.Context.BATTERY_SERVICE) as android.os.BatteryManager
+            bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        } catch (e: Exception) { 100 }
     }
 
     override fun onDestroyView() {
