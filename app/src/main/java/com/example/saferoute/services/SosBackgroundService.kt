@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.telephony.SmsManager
@@ -15,10 +16,10 @@ import com.example.saferoute.data.local.EmergencyLog
 import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.data.repository.EmergencyRepository
 import com.example.saferoute.utils.EmergencyType
+import com.example.saferoute.utils.PermissionManager
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.example.saferoute.utils.PermissionManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
@@ -37,16 +38,23 @@ class SosBackgroundService : Service() {
         createNotificationChannel()
 
         val appDb = AppDatabase.getDatabase(applicationContext)
-        val firestoreService = FirestoreService()
+        val firestoreService =
+            FirestoreService(FirebaseFirestore.getInstance())
         emergencyRepository = EmergencyRepository(appDb.emergencyDao(), firestoreService)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = createNotification()
         startForeground(1, notification)
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } else {
+            startForeground(1, notification)
+        }
         if (intent?.action == "TRIGGER_SOS_ACTION") {
-            val userId = intent.getStringExtra("USER_ID") ?: FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
+            val userId =
+                intent.getStringExtra("USER_ID") ?: FirebaseAuth.getInstance().currentUser?.uid
+                ?: "unknown_user"
 
 
             fetchContactsAndTrigger(userId)
@@ -78,8 +86,10 @@ class SosBackgroundService : Service() {
             fusedLocationClient.getCurrentLocation(locationRequest, null)
                 .addOnSuccessListener { location ->
                     if (location != null) {
-                        val mapsUrl = "https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}"
-                        val message = "استغاثة تلقائية من SafeRoute! أنا في خطر، موقعي الحالي: $mapsUrl"
+                        val mapsUrl =
+                            "https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}"
+                        val message =
+                            "استغاثة تلقائية من SafeRoute! أنا في خطر، موقعي الحالي: $mapsUrl"
 
                         try {
                             val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -123,7 +133,11 @@ class SosBackgroundService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(CHANNEL_ID, "SafeRoute Service Channel", NotificationManager.IMPORTANCE_LOW)
+            val serviceChannel = NotificationChannel(
+                CHANNEL_ID,
+                "SafeRoute Service Channel",
+                NotificationManager.IMPORTANCE_LOW
+            )
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(serviceChannel)
         }

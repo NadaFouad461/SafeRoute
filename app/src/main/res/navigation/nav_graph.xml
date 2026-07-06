@@ -9,7 +9,7 @@
         android:id="@+id/loginFragment"
         android:name="com.example.saferoute.ui.auth.LoginFragment"
         android:label="fragment_login"
-        tools:layout="@layout/fragment_login" >
+        tools:layout="@layout/fragment_login">
         <action
             android:id="@+id/action_loginFragment_to_signUpFragment"
             app:destination="@id/signUpFragment" />
@@ -24,7 +24,7 @@
         android:id="@+id/signUpFragment"
         android:name="com.example.saferoute.ui.auth.SignUpFragment"
         android:label="fragment_sign_up"
-        tools:layout="@layout/fragment_sign_up" >
+        tools:layout="@layout/fragment_sign_up">
         <action
             android:id="@+id/action_signUpFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -36,7 +36,7 @@
         android:id="@+id/homeFragment"
         android:name="com.example.saferoute.ui.auth.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home" >
+        tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_homeFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -55,12 +55,19 @@
         <action
             android:id="@+id/action_homeFragment_to_sosFragment"
             app:destination="@id/sosFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_safeWalkFragment"
+            app:destination="@id/safeWalkFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_fakeCallFragment"
+            app:destination="@id/fakeCallFragment" />
+
     </fragment>
     <fragment
         android:id="@+id/forgetFragment"
         android:name="com.example.saferoute.ui.auth.ForgetFragment"
         android:label="fragment_forget"
-        tools:layout="@layout/fragment_forget" >
+        tools:layout="@layout/fragment_forget">
         <action
             android:id="@+id/action_forgetFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
@@ -68,7 +75,7 @@
     <fragment
         android:id="@+id/onboardingFragment"
         android:name="com.example.saferoute.ui.start.OnboardingFragment"
-        android:label="OnboardingFragment" >
+        android:label="OnboardingFragment">
 
         <action
             android:id="@+id/action_onboardingFragment_to_permissionsFragment"
@@ -88,7 +95,7 @@
     <fragment
         android:id="@+id/contactsListFragment"
         android:name="com.example.saferoute.ui.contacts.ContactsListFragment"
-        android:label="ContactsListFragment" >
+        android:label="ContactsListFragment">
         <action
             android:id="@+id/action_contactsListFragment_to_addContactFragment"
             app:destination="@id/addContactFragment" />
@@ -99,7 +106,7 @@
     <fragment
         android:id="@+id/mapFragment"
         android:name="com.example.saferoute.ui.map.MapFragment"
-        android:label="MapFragment" >
+        android:label="MapFragment">
         <action
             android:id="@+id/action_mapFragment_to_historyFragment"
             app:destination="@id/historyFragment" />
@@ -117,7 +124,7 @@
     <fragment
         android:id="@+id/profileFragment2"
         android:name="com.example.saferoute.ui.history.ProfileFragment"
-        android:label="ProfileFragment" >
+        android:label="ProfileFragment">
         <action
             android:id="@+id/action_profileFragment2_to_editProfileFragment"
             app:destination="@id/editProfileFragment" />
@@ -132,7 +139,7 @@
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.example.saferoute.ui.history.HistoryFragment"
-        android:label="HistoryFragment" >
+        android:label="HistoryFragment">
         <action
             android:id="@+id/action_historyFragment_to_mapFragment"
             app:destination="@id/mapFragment" />
@@ -161,5 +168,14 @@
         android:id="@+id/emergencyNotificationFragment2"
         android:name="com.example.saferoute.ui.emergency.EmergencyNotificationFragment"
         android:label="EmergencyNotificationFragment" />
+    <fragment
+        android:id="@+id/safeWalkFragment"
+        android:name="com.example.saferoute.ui.sensors.SafeWalkFragment"
+        android:label="fragment_safe_walk"
+        tools:layout="@layout/fragment_safe_walk" />
+    <fragment
+        android:id="@+id/fakeCallFragment"
+        android:name="com.example.saferoute.ui.fakeCall.FakeCallFragment"
+        android:label="FakeCallFragment" />
 
 </navigation>

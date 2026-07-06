@@ -1,5 +1,6 @@
 package com.example.saferoute.ui.sensors
 
+
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -26,7 +27,7 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
 
         if (!SafeWalkService.isWalkActive.value) {
             val serviceIntent = Intent(requireContext(), SafeWalkService::class.java).apply {
-                putExtra("DURATION_MINUTES", 15)
+                putExtra("DURATION_MINUTES", 1)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 requireContext().startForegroundService(serviceIntent)
@@ -42,7 +43,6 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
             }
         }
 
-        // 3. برمجة أزرار التحكم
         setupButtons()
 
         // 💡 ملاحظة لزميلك بتاع الخرائط: 

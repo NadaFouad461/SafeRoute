@@ -1,6 +1,5 @@
 package com.example.saferoute.ui.sos
 
-import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -52,12 +51,20 @@ class SosFragment : Fragment() {
             if (PermissionManager.hasAllPermissions(requireContext())) {
                 startSosCountdown()
             } else {
-                Toast.makeText(requireContext(), "يجب الموافقة على الصلاحيات لتشغيل الاستغاثة!", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    requireContext(),
+                    "يجب الموافقة على الصلاحيات لتشغيل الاستغاثة!",
+                    Toast.LENGTH_LONG
+                ).show()
                 findNavController().popBackStack()
             }
         }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentSosBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -69,11 +76,12 @@ class SosFragment : Fragment() {
         passedSosAlertId = arguments?.getString("sosAlertId")
 
         val dbRoom = AppDatabase.getDatabase(requireContext())
-        val firestoreService = FirestoreService()
+        val firestoreService = FirestoreService(db)
         val emergencyRepository = EmergencyRepository(dbRoom.emergencyDao(), firestoreService)
         sosRepository = SosRepository(emergencyRepository)
 
-        viewModel = ViewModelProvider(this, SosViewModelFactory(sosRepository))[SosViewModel::class.java]
+        viewModel =
+            ViewModelProvider(this, SosViewModelFactory(sosRepository))[SosViewModel::class.java]
 
         setupHorizontalRecyclerView()
         loadEmergencyContacts()
@@ -107,7 +115,11 @@ class SosFragment : Fragment() {
         emergencyContacts.clear()
 
         if (currentUserId == "unknown_user") {
-            Toast.makeText(requireContext(), "خطأ: لم يتم التعرف على الـ UID للمستخدم الحالي!", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "خطأ: لم يتم التعرف على الـ UID للمستخدم الحالي!",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -117,7 +129,13 @@ class SosFragment : Fragment() {
             .get()
             .addOnSuccessListener { documents ->
                 if (documents.isEmpty) {
-                    Toast.makeText(requireContext(), "⚠️ قائمة جهات الاتصال الطارئة فارغة!", Toast.LENGTH_LONG).show()
+                    context?.let { ctx ->
+                        Toast.makeText(
+                            ctx,
+                            "⚠️ قائمة جهات الاتصال الطارئة فارغة!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                     return@addOnSuccessListener
                 }
 
@@ -156,14 +174,27 @@ class SosFragment : Fragment() {
                         }
                         .addOnFailureListener {
                             checkCount++
-                            val contact = ContactItem(id = doc.id, name = name, phone = phone, relationship = relationship, isPriority = isPriority, fcmToken = "")
+                            val contact = ContactItem(
+                                id = doc.id,
+                                name = name,
+                                phone = phone,
+                                relationship = relationship,
+                                isPriority = isPriority,
+                                fcmToken = ""
+                            )
                             emergencyContacts.add(contact)
                             if (checkCount == totalDocs) sosContactsAdapter.notifyDataSetChanged()
                         }
                 }
             }
             .addOnFailureListener { exception ->
-                Toast.makeText(requireContext(), "فشل جلب الأرقام: ${exception.message}", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(
+                        ctx,
+                        "فشل جلب الأرقام: ${exception.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
     }
 
@@ -201,7 +232,8 @@ class SosFragment : Fragment() {
                 binding.progressBar.visibility = View.VISIBLE
 
                 val selectedNumbers = emergencyContacts.map { it.phone }
-                val message = "🚨 استغاثة طارئة من SafeRoute. الموقع: خط عرض $currentLatitude و خط طول $currentLongitude"
+                val message =
+                    "🚨 استغاثة طارئة من SafeRoute. الموقع: خط عرض $currentLatitude و خط طول $currentLongitude"
 
 
                 try {
@@ -230,19 +262,23 @@ class SosFragment : Fragment() {
                             "timestamp" to com.google.firebase.Timestamp.now()
                         )
 
-                        db.collection("emergency_logs").add(emergencyData).addOnSuccessListener { reference ->
-                            val finalDocId = reference.id
+                        db.collection("emergency_logs").add(emergencyData)
+                            .addOnSuccessListener { reference ->
+                                val finalDocId = reference.id
 
-                            // إرسال الإشعار
-                            emergencyContacts.forEach { contact ->
-                                if (contact.fcmToken.isNotEmpty()) {
-                                    sendFcmNotification(contact.fcmToken, userName, finalDocId)
+                                // إرسال الإشعار
+                                emergencyContacts.forEach { contact ->
+                                    if (contact.fcmToken.isNotEmpty()) {
+                                        sendFcmNotification(contact.fcmToken, userName, finalDocId)
+                                    }
                                 }
-                            }
 
-                            binding.progressBar.visibility = View.GONE
-                            findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to finalDocId))
-                        }
+                                binding.progressBar.visibility = View.GONE
+                                findNavController().navigate(
+                                    R.id.emergencyNotificationFragment,
+                                    bundleOf("SOS_ALERT_ID" to finalDocId)
+                                )
+                            }
                     }
             }
         }.start()
@@ -297,7 +333,10 @@ class SosFragment : Fragment() {
     }
 
     private fun navigateToHistoryFragment() {
-        try { findNavController().navigate(R.id.emergencyNotificationFragment) } catch(e: Exception) {}
+        try {
+            findNavController().navigate(R.id.emergencyNotificationFragment)
+        } catch (e: Exception) {
+        }
     }
 
     override fun onDestroyView() {

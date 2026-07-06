@@ -2,11 +2,13 @@ package com.example.saferoute.data.remote
 
 import com.example.saferoute.data.local.EmergencyLog
 import com.google.firebase.firestore.FirebaseFirestore
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FirestoreService {
-
-    private val db = FirebaseFirestore.getInstance()
-
+@Singleton
+class FirestoreService @Inject constructor(
+    private val db: FirebaseFirestore
+) {
 
     fun getUserData(userId: String, onResult: (Boolean, Map<String, Any>?, String?) -> Unit) {
         db.collection("users").document(userId).get()

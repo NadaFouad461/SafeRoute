@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -10,29 +9,21 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
-    <uses-feature
-        android:name="android.hardware.telephony"
-        android:required="false" />
-
-
-
-
     <uses-permission android:name="android.permission.SEND_SMS" /> <!-- صلاحيات الإنترنت والوصول للشبكة -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" /> <!-- صلاحية التخزين للكاش (مطلوبة بقوة في إصدارات osmdroid) -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
 
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
 
 
     <queries>
@@ -46,10 +37,10 @@
             <data android:scheme="https" />
         </intent>
 
-            <!-- السماح للتطبيق بفتح واتساب العادي -->
-            <package android:name="com.whatsapp" />
-            <!-- السماح للتطبيق بفتح واتساب الأعمال لو الجهاز التاني بيستخدمه -->
-            <package android:name="com.whatsapp.w4b" />
+        <!-- السماح للتطبيق بفتح واتساب العادي -->
+        <package android:name="com.whatsapp" />
+        <!-- السماح للتطبيق بفتح واتساب الأعمال لو الجهاز التاني بيستخدمه -->
+        <package android:name="com.whatsapp.w4b" />
 
     </queries>
 
@@ -64,28 +55,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SafeRoute">
 
-        <activity
-            android:name=".ui.auth.SignupActivity"
-        android:theme="@style/Theme.SafeRoute"
-        android:usesCleartextTraffic="true">
 
+        <service
+            android:name=".services.LocationTrackingService"
+            android:foregroundServiceType="location" />
 
         <service
             android:name=".services.SosBackgroundService"
-            android:exported="false" />
-        <service
-            android:name=".services.LocationTrackingService"
-            android:foregroundServiceType="location"
+            android:exported="false"
+            android:foregroundServiceType="location" />
 
         <activity
-            android:name=".ui.auth.LoginActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
+            android:exported="true"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait"
-            android:exported="true">
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -95,21 +79,22 @@
 
         <service
             android:name=".services.FallDetectionService"
-            android:foregroundServiceType="health"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="health" />
         <service
             android:name=".services.SafeWalkService"
-            android:foregroundServiceType="specialUse"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
         <activity
             android:name=".ui.sensors.FallAlertActivity"
-            android:showOnLockScreen="true"
-            android:turnScreenOn="true"
             android:excludeFromRecents="true"
             android:launchMode="singleInstance"
-           />
-        <receiver android:name=".services.FakeCallService" android:exported="false" />
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true" />
+        <receiver
+            android:name=".services.FakeCallService"
+            android:exported="false" />
 
 
         <service

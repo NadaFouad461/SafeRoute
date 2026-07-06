@@ -4,23 +4,24 @@ import android.view.View
 import android.widget.Toast
 import com.example.saferoute.R
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.saferoute.databinding.FragmentLoginBinding
-import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
 
-    private val auth = FirebaseAuth.getInstance()
-
-
+    private val viewModel: AuthViewModel by viewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLoginBinding.bind(view)
-        if (FirebaseAuth.getInstance().currentUser != null) {
+
+        if (viewModel.getCurrentUserId() != null) {
             findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
         }
         binding.forgotPasswordTv.setOnClickListener {
@@ -34,15 +35,17 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             val pass = binding.passwordEt.text.toString().trim()
 
             if (email.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            auth.signInWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
+            viewModel.login(email, pass) { success, error ->
+                if (success) {
                     findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                 } else {
-                    Toast.makeText(context, task.exception?.message, Toast.LENGTH_SHORT).show()
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

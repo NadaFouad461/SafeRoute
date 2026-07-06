@@ -1,5 +1,6 @@
 package com.example.saferoute.services
 
+
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -8,7 +9,12 @@ import retrofit2.http.POST
 
 
 data class FcmPayload(val message: FcmMessage)
-data class FcmMessage(val token: String, val notification: FcmNotification, val data: Map<String, String>)
+data class FcmMessage(
+    val token: String,
+    val notification: FcmNotification,
+    val data: Map<String, String>
+)
+
 data class FcmNotification(val title: String, val body: String)
 
 interface FcmApiService {

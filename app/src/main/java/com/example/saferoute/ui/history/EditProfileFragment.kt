@@ -24,7 +24,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
         val currentUid = viewModel.getCurrentUserId()
         if (currentUid == null) {
-            Toast.makeText(context, "Error: User not found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Error: User not found", Toast.LENGTH_SHORT).show()
             findNavController().navigateUp()
             return
         }
@@ -35,7 +35,9 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                 binding.etEditName.setText(data["name"] as? String)
                 binding.etEditEmail.setText(data["email"] as? String)
             } else {
-                Toast.makeText(context, errorMessage ?: "Failed to load data", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(ctx, errorMessage ?: "Failed to load data", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -45,7 +47,7 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             val newEmail = binding.etEditEmail.text.toString().trim()
 
             if (newName.isEmpty() || newEmail.isEmpty()) {
-                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -53,14 +55,19 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             viewModel.updateProfile(newName, newEmail) { success, message ->
                 if (success) {
                     if (message != null) {
-
-                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        context?.let { ctx ->
+                            Toast.makeText(ctx, message, Toast.LENGTH_LONG).show()
+                        }
                     } else {
-                        Toast.makeText(context, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                        context?.let { ctx ->
+                            Toast.makeText(ctx, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                        }
                     }
                     findNavController().navigateUp()
                 } else {
-                    Toast.makeText(context, "Update failed: $message", Toast.LENGTH_SHORT).show()
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, "Update failed: $message", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

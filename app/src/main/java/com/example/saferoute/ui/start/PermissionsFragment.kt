@@ -1,6 +1,5 @@
 package com.example.saferoute.ui.start
 
-import PermissionModel
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
@@ -12,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentPermissionsBinding
@@ -36,7 +34,8 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
 
             startFallDetectionSensor()
         } else {
-            Toast.makeText(requireContext(), "يجب الموافقة لتفعيل الميزة", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "يجب الموافقة لتفعيل الميزة", Toast.LENGTH_SHORT)
+                .show()
             binding.rvPermissions.adapter?.notifyDataSetChanged()
         }
     }
@@ -104,10 +103,14 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
         }
         binding.btnGrantPermissions.setOnClickListener {
             if (permissionList.all { it.isGranted }) {
-                Toast.makeText(requireContext(), "All permissions granted!", Toast.LENGTH_SHORT).show()
-                findNavController().navigate(R.id.action_permissionsFragment_to_homeFragment)
+                Toast.makeText(requireContext(), "All permissions granted!", Toast.LENGTH_SHORT)
+                    .show()
             } else {
-                Toast.makeText(requireContext(), "Please grant all permissions to proceed.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Please grant all permissions to proceed.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -133,7 +136,6 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
         val serviceIntent = Intent(requireContext(), FallDetectionService::class.java)
         requireContext().stopService(serviceIntent)
     }
-
 
 
     override fun onDestroyView() {

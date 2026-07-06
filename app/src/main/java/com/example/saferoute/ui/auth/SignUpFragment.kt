@@ -11,7 +11,9 @@ import com.example.saferoute.databinding.FragmentSignUpBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
 
     private var _binding: FragmentSignUpBinding? = null
@@ -37,22 +39,22 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
 
 
             if (name.isEmpty() || phone.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
-                Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                Toast.makeText(context, "Invalid email format", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Invalid email format", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (pass.length < 6) {
-                Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (pass != confirmPass) {
-                Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -78,17 +80,23 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
                                     .set(userData)
                                     .addOnSuccessListener {
                                         binding.signupBtn.isEnabled = true
-                                        Toast.makeText(context, "Account created! 🎉", Toast.LENGTH_SHORT).show()
+                                        context?.let { ctx ->
+                                            Toast.makeText(ctx, "Account created! 🎉", Toast.LENGTH_SHORT).show()
+                                        }
                                         findNavController().navigate(R.id.action_signUpFragment_to_loginFragment)
                                     }
                                     .addOnFailureListener { e ->
                                         binding.signupBtn.isEnabled = true
-                                        Toast.makeText(context, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                        context?.let { ctx ->
+                                            Toast.makeText(ctx, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                             }
                     } else {
                         binding.signupBtn.isEnabled = true
-                        Toast.makeText(context, task.exception?.message, Toast.LENGTH_SHORT).show()
+                        context?.let { ctx ->
+                            Toast.makeText(ctx, task.exception?.message, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
         }

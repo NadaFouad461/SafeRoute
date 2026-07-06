@@ -118,6 +118,11 @@ class FallDetectionService : Service() {
 
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.notify(FALL_ALERT_NOTIFICATION_ID, notification)
+        try {
+            startActivity(fullScreenIntent)
+        } catch (e: Exception) {
+            Log.e("FallDetection", "Failed to start activity directly: ${e.message}")
+        }
     }
 
     // ═══ الـ Foreground Notification الثابتة ═══

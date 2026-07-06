@@ -2,7 +2,6 @@ package com.example.saferoute.ui.sensors
 
 
 import android.app.NotificationManager
-import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -64,8 +63,6 @@ class FallAlertActivity : AppCompatActivity() {
     }
 
     private fun goToSOS() {
-
-        finish()
 
     }
 

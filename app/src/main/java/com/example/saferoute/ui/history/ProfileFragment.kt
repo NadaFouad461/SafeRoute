@@ -1,6 +1,8 @@
 package com.example.saferoute.ui.history
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -9,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentProfileBinding
+import com.example.saferoute.services.FallDetectionService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -62,7 +65,13 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 .addOnFailureListener {
                     if (_binding != null) {
                         binding.tvProfileName.text = "فشل تحميل الاسم"
-                        Toast.makeText(context, "Failed to load updated profile data", Toast.LENGTH_SHORT).show()
+                        context?.let { ctx ->
+                            Toast.makeText(
+                                ctx,
+                                "Failed to load updated profile data",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
         }
@@ -81,25 +90,26 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
 
         binding.btnSafeWalkSettings.setOnClickListener {
-            Toast.makeText(context, "Opening Safe Walk Settings...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Opening Safe Walk Settings...", Toast.LENGTH_SHORT).show()
         }
 
 
         binding.btnLanguage.setOnClickListener {
-            Toast.makeText(context, "Language Selection Clicked", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Language Selection Clicked", Toast.LENGTH_SHORT).show()
         }
 
 
         val logoutAction = View.OnClickListener {
             auth.signOut()
-            Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.loginFragment)
         }
 
         binding.btnLogoutClick.setOnClickListener(logoutAction)
         binding.btnExitApp.setOnClickListener(logoutAction)
 
-        val navContainer = binding.bottomNavigationContainer.getChildAt(0) as? android.widget.LinearLayout
+        val navContainer =
+            binding.bottomNavigationContainer.getChildAt(0) as? android.widget.LinearLayout
 
         navContainer?.let { layout ->
 
@@ -126,14 +136,28 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private fun setupSwitchListeners() {
         binding.switchFallDetection.setOnCheckedChangeListener { _, isChecked ->
-            sharedPreferences.edit().putBoolean("fall_detection", isChecked).apply()
+            // 1. حفظ الحالة بنفس المفتاح المستخدم في باقي التطبيق
+            sharedPreferences.edit().putBoolean("IS_FALL_DETECTION_ACTIVE", isChecked).apply()
+
+            // 2. تجهيز الـ Intent اللي بتشاور على خدمة السقوط
+            val serviceIntent = Intent(requireContext(), FallDetectionService::class.java)
+
             if (isChecked) {
-                Toast.makeText(context, "Fall Detection Activated", Toast.LENGTH_SHORT).show()
+                // 3. تشغيل الخدمة في الخلفية
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    requireContext().startForegroundService(serviceIntent)
+                } else {
+                    requireContext().startService(serviceIntent)
+                }
+                Toast.makeText(requireContext(), "تم تفعيل مستشعر السقوط", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Fall Detection Deactivated", Toast.LENGTH_SHORT).show()
+                // 4. إيقاف الخدمة تماماً
+                requireContext().stopService(serviceIntent)
+                Toast.makeText(requireContext(), "تم إيقاف مستشعر السقوط", Toast.LENGTH_SHORT).show()
             }
         }
 
+        // ... (باقي أزرار الـ Notifications والـ Dark Mode زي ما هي)
         binding.switchNotifications.setOnCheckedChangeListener { _, isChecked ->
             sharedPreferences.edit().putBoolean("notifications", isChecked).apply()
         }

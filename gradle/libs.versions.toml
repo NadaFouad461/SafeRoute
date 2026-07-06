@@ -32,6 +32,7 @@ playServicesLocation = "21.3.0"
 osmdroidAndroid = "6.1.20"
 fragment = "1.8.9"
 recyclerview = "1.4.0"
+retrofit = "3.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -69,6 +70,8 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 androidx-fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx", version = "23.4.1" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

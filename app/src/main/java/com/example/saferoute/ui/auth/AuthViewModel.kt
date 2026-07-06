@@ -2,9 +2,13 @@ package com.example.saferoute.ui.auth
 
 import androidx.lifecycle.ViewModel
 import com.example.saferoute.data.repository.AuthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class AuthViewModel: ViewModel() {
-    private val authRepository = AuthRepository()
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
 
     fun getCurrentUserId(): String? {

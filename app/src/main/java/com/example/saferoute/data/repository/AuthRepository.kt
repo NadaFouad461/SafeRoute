@@ -2,10 +2,14 @@ package com.example.saferoute.data.repository
 
 import com.example.saferoute.data.remote.FirebaseService
 import com.example.saferoute.data.remote.FirestoreService
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthRepository {
+@Singleton
+class AuthRepository @Inject constructor() {
     private val auth = FirebaseService.getInstance()
-    private val firestoreService = FirestoreService()
+    val firestoreService =
+        FirestoreService(com.google.firebase.firestore.FirebaseFirestore.getInstance())
 
 
     fun getCurrentUserId(): String? {
@@ -28,7 +32,11 @@ class AuthRepository {
         }
 
 
-        firestoreService.updateUserData(userId, newName, newEmail) { isFirestoreSuccess, firestoreError ->
+        firestoreService.updateUserData(
+            userId,
+            newName,
+            newEmail
+        ) { isFirestoreSuccess, firestoreError ->
             if (isFirestoreSuccess) {
 
                 currentUser.verifyBeforeUpdateEmail(newEmail)

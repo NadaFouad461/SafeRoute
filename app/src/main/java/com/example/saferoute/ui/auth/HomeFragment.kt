@@ -1,5 +1,6 @@
 package com.example.saferoute.ui.auth
 
+
 import android.content.Context
 import android.os.BatteryManager
 import android.os.Bundle
@@ -12,14 +13,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentHomeBinding
-import com.example.saferoute.ui.auth.HomeItem
-
-
-
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private var _binding: FragmentHomeBinding? = null
@@ -49,6 +48,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         binding.fabEmergency.setOnClickListener {
             handleSosTrigger()
+        }
         binding.actionSafeWalk.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_safeWalkFragment)
         }
@@ -56,6 +56,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         binding.sosBtnCard.setOnClickListener {
             handleSosTrigger()
+        }
         binding.actionFakeCall.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_fakeCallFragment)
         }
@@ -75,6 +76,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
                     true
                 }
+
                 R.id.nav_contacts -> {
                     findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
                     true
@@ -96,19 +98,22 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
 
-    private fun handleSosTrigger() {
+    fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
-            Toast.makeText(context, "🚨 Sending Instant Emergency Alert...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "🚨 Sending Instant Emergency Alert...", Toast.LENGTH_SHORT)
+                .show()
 
 
-            val batteryManager = requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            val currentBatteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+            val batteryManager =
+                requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            val currentBatteryLevel =
+                batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
 
             triggerDirectSOS(currentUid, currentUserName, currentBatteryLevel, 30.3346, 31.7504)
         } else {
-            Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "User not logged in!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -137,10 +142,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         currentUserPhone = documentSnapshot.getString("phone") ?: ""
                         binding.welcomeTv.text = "Good Evening, $currentUserName"
 
-
                         startListeningForIncomingSos(currentUid)
-                        val userName = documentSnapshot.getString("name") ?: "User"
-                        binding.welcomeTv.text = "Good Evening, $userName"
                     }
                 }
                 .addOnFailureListener {
@@ -170,7 +172,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                             if (girlUserId == currentUserId) continue
 
-
+                            showEmergencyDialog(sosAlertId)
                         }
                     }
                 }
@@ -181,7 +183,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         if (_binding == null || !isAdded) return
 
 
-        val sharedPrefs = requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
+        val sharedPrefs =
+            requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
         val isDismissedBefore = sharedPrefs.getBoolean("dismissed_$sosAlertId", false)
         if (isDismissedBefore) return
 
@@ -209,7 +212,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
 
-    private fun triggerDirectSOS(userId: String, userName: String, batteryLevel: Int, latitude: Double, longitude: Double) {
+    private fun triggerDirectSOS(
+        userId: String,
+        userName: String,
+        batteryLevel: Int,
+        latitude: Double,
+        longitude: Double
+    ) {
         val emergencyData = hashMapOf(
             "userId" to userId,
             "userName" to userName,
@@ -224,7 +233,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         db.collection("emergency_logs").add(emergencyData)
             .addOnSuccessListener { documentReference ->
                 if (_binding != null && isAdded) {
-                    Toast.makeText(context, "🚨 SOS Saved to Database!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "🚨 SOS Saved to Database!", Toast.LENGTH_SHORT).show()
 
                     val bundle = Bundle().apply {
                         putString("sosAlertId", documentReference.id)
@@ -232,19 +241,30 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
 
                     try {
-                        findNavController().navigate(R.id.action_homeFragment_to_sosFragment, bundle)
+                        findNavController().navigate(
+                            R.id.action_homeFragment_to_sosFragment,
+                            bundle
+                        )
                     } catch (e: Exception) {
                         try {
                             findNavController().navigate(R.id.sosFragment, bundle)
                         } catch (navError: Exception) {
-                            Toast.makeText(context, "Nav Error: ${navError.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                requireContext(),
+                                "Nav Error: ${navError.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
                 }
             }
             .addOnFailureListener { exception ->
                 if (_binding != null && isAdded) {
-                    Toast.makeText(context, "Failed to trigger SOS: ${exception.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to trigger SOS: ${exception.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
     }
