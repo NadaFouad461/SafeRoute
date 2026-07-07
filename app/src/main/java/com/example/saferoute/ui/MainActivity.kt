@@ -1,5 +1,6 @@
 package com.example.saferoute.ui
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -10,12 +11,12 @@ import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.BigTextStyle
 import androidx.core.app.NotificationCompat.Builder
 import androidx.navigation.fragment.NavHostFragment
+import com.example.saferoute.R
 import com.example.saferoute.R.drawable
 import com.example.saferoute.R.id
 import com.example.saferoute.databinding.ActivityMainBinding
@@ -36,15 +37,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
-    private val CHANNEL_ID = "SafeRoute_SOS_Channel"
-
     @Inject
     lateinit var sharedPrefs: SharedPreferences
 
 
     private var isTokenUpdated = false
 
-    @RequiresApi(VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -79,22 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         handleIncomingNotification(intent)
 
-
-        try {
-            val info =
-                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            val signatures = info.signingInfo?.signingCertificateHistory
-            if (signatures != null) {
-                for (signature in signatures) {
-                    val md = MessageDigest.getInstance("SHA1")
-                    val digest = md.digest(signature.toByteArray())
-                    val sha1 = digest.joinToString(":") { String.format("%02X", it) }
-                    Log.d("MY_REAL_SHA1", "🎯 الـ SHA-1 الحقيقي لجهازك هو: $sha1")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("MY_REAL_SHA1", "خطأ أثناء استخراج البصمة", e)
-        }
+        logSignature()
     }
 
     private fun checkAndStartSensor() {
@@ -137,7 +120,7 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             Log.e(
                                 "FCM_TOKEN_UPDATE",
-                                "❌ لم يتم العثور على أي مستند يحتوي على هذا الإيميل!"
+                                "❌ لم يتم العثور على أي مستند يحتوي على هذا الإيميل!",
                             )
                         }
                     }
@@ -208,7 +191,7 @@ class MainActivity : AppCompatActivity() {
                         if (userDocument != null && userDocument.exists()) {
                             val myPhone = userDocument.getString("phone") ?: ""
 
-                            for (doc in snapshots!!.documentChanges) {
+                            snapshots?.documentChanges?.forEach { doc ->
                                 if (doc.type == Type.ADDED) {
                                     val logDoc = doc.document
                                     val emergencyUserId = logDoc.getString("userId") ?: ""
@@ -239,12 +222,16 @@ class MainActivity : AppCompatActivity() {
                                                     this@MainActivity,
                                                     0,
                                                     intent,
-                                                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE // غيرناها لـ MUTABLE
+                                                    if (VERSION.SDK_INT >= VERSION_CODES.S) {
+                                                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                                                    } else {
+                                                        PendingIntent.FLAG_UPDATE_CURRENT
+                                                    }
                                                 )
 
                                                 showLocalNotification(
-                                                    "🚨 استغاثة طوارئ SafeRoute!",
-                                                    "بنتك في خطر وبحاجة للمساعدة، اضغطي لفتح الموقع حياً",
+                                                    getString(R.string.sos_notification_title),
+                                                    getString(R.string.sos_notification_body),
                                                     pendingIntent
                                                 )
                                             }
@@ -268,7 +255,7 @@ class MainActivity : AppCompatActivity() {
         }
         db.collection("users").document(emergencyUserId).get()
             .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
+                if ((document != null) && document.exists()) {
                     val dadPhone = document.getString("dad") ?: ""
                     val momPhone = document.getString("mom") ?: ""
                     callback(myPhone == dadPhone || myPhone == momPhone)
@@ -279,6 +266,7 @@ class MainActivity : AppCompatActivity() {
             .addOnFailureListener { callback(false) }
     }
 
+    @SuppressLint("UseFullScreenIntent")
     private fun showLocalNotification(title: String, body: String, pendingIntent: PendingIntent) {
         val notificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -310,5 +298,40 @@ class MainActivity : AppCompatActivity() {
                 getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
+    }
+
+    private fun logSignature() {
+        try {
+            if (VERSION.SDK_INT >= VERSION_CODES.P) {
+                val info = packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.GET_SIGNING_CERTIFICATES
+                )
+                val signatures = info.signingInfo?.signingCertificateHistory
+                signatures?.forEach { signature ->
+                    val md = MessageDigest.getInstance("SHA1")
+                    val digest = md.digest(signature.toByteArray())
+                    val sha1 = digest.joinToString(":") { String.format("%02X", it) }
+                    Log.d("MY_REAL_SHA1", "🎯 الـ SHA-1 الحقيقي لجهازك هو: $sha1")
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                @Suppress("DEPRECATION")
+                val signatures = info.signatures
+                signatures?.forEach { signature ->
+                    val md = MessageDigest.getInstance("SHA1")
+                    val digest = md.digest(signature.toByteArray())
+                    val sha1 = digest.joinToString(":") { String.format("%02X", it) }
+                    Log.d("MY_REAL_SHA1", "🎯 الـ SHA-1 الحقيقي لجهازك هو (Legacy): $sha1")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MY_REAL_SHA1", "خطأ أثناء استخراج البصمة", e)
+        }
+    }
+
+    companion object {
+        private const val CHANNEL_ID = "SafeRoute_SOS_Channel"
     }
 }

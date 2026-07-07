@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">SafeRoute</string>
+    <string name="sos_notification_title">🚨 استغاثة طوارئ SafeRoute!</string>
+    <string name="sos_notification_body">بنتك في خطر وبحاجة للمساعدة، اضغطي لفتح الموقع حياً</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

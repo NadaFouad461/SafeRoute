@@ -63,7 +63,7 @@ class FallAlertActivity : AppCompatActivity() {
     }
 
     private fun goToSOS() {
-
+        finish()
     }
 
     override fun onDestroy() {
