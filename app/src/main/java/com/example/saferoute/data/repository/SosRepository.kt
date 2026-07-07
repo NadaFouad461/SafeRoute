@@ -82,7 +82,7 @@ class SosRepository(
                 val firestoreDocId = firestoreResult.id
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "وضع الفحص: جاري الانتقال للواتساب مباشرة... 🟢", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context.applicationContext, "وضع الفحص: جاري الانتقال للواتساب مباشرة... 🟢", Toast.LENGTH_SHORT).show()
                 }
 
                 delay(100)

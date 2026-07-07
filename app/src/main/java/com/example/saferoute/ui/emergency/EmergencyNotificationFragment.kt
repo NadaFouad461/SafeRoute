@@ -40,7 +40,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         if (!sosAlertId.isNullOrEmpty()) {
             listenToCurrentSOSAlert(sosAlertId)
         } else {
-            Toast.makeText(context, "لم يتم العثور على تفاصيل البلاغ", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "لم يتم العثور على تفاصيل البلاغ", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnDismiss.setOnClickListener { findNavController().popBackStack() }
@@ -48,7 +48,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         binding.btnCallUser.setOnClickListener {
 
             if (senderPhone.isEmpty()) {
-                Toast.makeText(context, "جاري تحميل رقم الهاتف، يرجى الانتظار...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "جاري تحميل رقم الهاتف، يرجى الانتظار...", Toast.LENGTH_SHORT).show()
             } else {
                 val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$senderPhone"))
                 startActivity(intent)
@@ -66,7 +66,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")))
                 }
             } else {
-                Toast.makeText(context, "بيانات الموقع لا تزال قيد التحميل...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "بيانات الموقع لا تزال قيد التحميل...", Toast.LENGTH_SHORT).show()
             }
         }
 

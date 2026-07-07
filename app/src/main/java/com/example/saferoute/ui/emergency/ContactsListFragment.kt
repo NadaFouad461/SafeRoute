@@ -35,7 +35,7 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
         }
 
         binding.filterBtn.setOnClickListener {
-            Toast.makeText(context, "Filtering contacts...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Filtering contacts...", Toast.LENGTH_SHORT).show()
         }
 
         setupBottomNavigation()
@@ -91,7 +91,9 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                 updateContactsCount()
             }
             .addOnFailureListener {
-                Toast.makeText(context, "Failed to load contacts", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(ctx, "Failed to load contacts", Toast.LENGTH_SHORT).show()
+                }
             }
     }
 
@@ -104,13 +106,17 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             .document(contact.id)
             .delete()
             .addOnSuccessListener {
-                Toast.makeText(context, "${contact.name} deleted successfully", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(ctx, "${contact.name} deleted successfully", Toast.LENGTH_SHORT).show()
+                }
                 emergencyContactsList.remove(contact)
                 contactsAdapter.notifyDataSetChanged()
                 updateContactsCount()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(context, "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(ctx, "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
     }
 

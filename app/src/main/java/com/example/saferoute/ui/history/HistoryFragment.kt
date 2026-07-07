@@ -43,7 +43,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
                 findNavController().navigate(R.id.emergencyNotificationFragment, bundle)
             } else {
-                Toast.makeText(context, "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -61,16 +61,20 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                             .document(firestoreDocId)
                             .update("status", "Resolved")
                             .addOnSuccessListener {
-                                Toast.makeText(context, "تم إغلاق البلاغ بنجاح 🎉", Toast.LENGTH_SHORT).show()
+                                context?.let { ctx ->
+                                    Toast.makeText(ctx, "تم إغلاق البلاغ بنجاح 🎉", Toast.LENGTH_SHORT).show()
+                                }
                             }
                             .addOnFailureListener {
-                                Toast.makeText(context, "فشل التحديث", Toast.LENGTH_SHORT).show()
+                                context?.let { ctx ->
+                                    Toast.makeText(ctx, "فشل التحديث", Toast.LENGTH_SHORT).show()
+                                }
                             }
                     }
                     .setNegativeButton("إلغاء", null)
                     .show()
             } else {
-                Toast.makeText(context, "خطأ: لا يمكن العثور على معرف البلاغ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "خطأ: لا يمكن العثور على معرف البلاغ", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -160,7 +164,9 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     else -> false
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "مسار التنقل غير مدعوم حالياً", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(ctx, "مسار التنقل غير مدعوم حالياً", Toast.LENGTH_SHORT).show()
+                }
                 false
             }
         }

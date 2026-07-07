@@ -1,26 +1,5 @@
 package com.example.saferoute.data.repository
 
-
-import org.osmdroid.util.GeoPoint
-
-object LocationRepository {
-
-    private var lastKnownLocation: GeoPoint? = null
-
-    fun updateLocation(lat: Double, lon: Double) {
-        lastKnownLocation = GeoPoint(lat, lon)
-    }
-
-    fun getLastKnownLocation(): GeoPoint? {
-        return lastKnownLocation
-    }
-
-    fun getLastKnownLatLng(): Pair<Double, Double>? {
-        val loc = lastKnownLocation ?: return null
-        return Pair(loc.latitude, loc.longitude)
-    }
-
-    fun hasLocation(): Boolean = lastKnownLocation != null
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -43,12 +22,6 @@ object LocationRepository {
         }
     }
 
-    /**
-     * Uploads the location using the currently authenticated user's UID.
-     * If no user is signed in yet, we sign in anonymously first instead of
-     * falling back to a shared constant UID (which caused all unauthenticated
-     * users to overwrite each other's location record).
-     */
     private fun uploadToFirebase(lat: Double, lon: Double) {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#EF4444">
+    android:background="#EF4444"
+    tools:context=".ui.sos.SosFragment">
 
     <ImageView
         android:id="@+id/btnOpenLogs"
@@ -28,13 +28,13 @@
         android:padding="24dp"
         android:visibility="visible">
         <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="EMERGENCY SOS"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.05"/>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EMERGENCY SOS"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -52,7 +52,8 @@
             android:layout_height="220dp"
             android:layout_marginTop="40dp"
             android:background="@android:drawable/toast_frame"
-            android:backgroundTint="#1AFFFFFF">
+            android:backgroundTint="#1AFFFFFF"
+            android:layout_gravity="center_horizontal">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="160dp"
@@ -77,37 +78,7 @@
                         android:textColor="#EF4444"
                         android:textSize="54sp"
                         android:textStyle="bold"/>
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#FAFAFA"
-    tools:context=".ui.sos.SosFragment">
 
-    <Button
-        android:id="@+id/btnSos"
-        android:layout_width="220dp"
-        android:layout_height="220dp"
-        android:backgroundTint="#D32F2F"
-        android:text="SOS"
-        android:textColor="#FFFFFF"
-        android:textSize="36sp"
-        android:textStyle="bold"
-        android:elevation="8dp"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/tvInstruction"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="اضغط في حالة الطوارئ لإرسال موقعك فوراً"
-        android:textColor="#333333"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnSos" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -160,16 +131,18 @@
         android:gravity="center_horizontal"
         android:padding="24dp"
         android:background="#B91C1C"
-        android:visibility="gone"> <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:text="EMERGENCY\nACTIVE"
-        android:textColor="#FFFFFF"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:letterSpacing="0.05"/>
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:text="EMERGENCY\nACTIVE"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:letterSpacing="0.05"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -180,18 +153,6 @@
             android:gravity="center"
             android:layout_marginTop="8dp"/>
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:indeterminateTint="#D32F2F"
-        app:layout_constraintBottom_toTopOf="@+id/btnSos"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="24dp" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
         <com.google.android.material.card.MaterialCardView
             android:layout_width="140dp"
             android:layout_height="140dp"

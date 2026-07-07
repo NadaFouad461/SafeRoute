@@ -88,7 +88,7 @@ class AddContactFragment : Fragment(R.layout.fragment_add_contact) {
 
         val currentUserUid = auth.currentUser?.uid
         if (currentUserUid == null) {
-            Toast.makeText(context, "User session expired. Please log in again.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "User session expired. Please log in again.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -113,14 +113,18 @@ class AddContactFragment : Fragment(R.layout.fragment_add_contact) {
             contactsCollection.document(contactIdToEdit!!)
                 .set(contactMap, com.google.firebase.firestore.SetOptions.merge())
                 .addOnSuccessListener {
-                    Toast.makeText(context, "Contact updated successfully! 🎉", Toast.LENGTH_LONG).show()
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, "Contact updated successfully! 🎉", Toast.LENGTH_LONG).show()
+                    }
                     binding.addContactBtn.isEnabled = true
                     clearFields()
                     findNavController().navigateUp()
                 }
                 .addOnFailureListener { exception ->
                     binding.addContactBtn.isEnabled = true
-                    Toast.makeText(context, "Failed to update contact: ${exception.localizedMessage}", Toast.LENGTH_LONG).show()
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, "Failed to update contact: ${exception.localizedMessage}", Toast.LENGTH_LONG).show()
+                    }
                 }
         } else {
 
@@ -128,14 +132,18 @@ class AddContactFragment : Fragment(R.layout.fragment_add_contact) {
 
             contactsCollection.add(contactMap)
                 .addOnSuccessListener { documentReference ->
-                    Toast.makeText(context, "Contact saved successfully! 🎉", Toast.LENGTH_LONG).show()
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, "Contact saved successfully! 🎉", Toast.LENGTH_LONG).show()
+                    }
                     binding.addContactBtn.isEnabled = true
                     clearFields()
                     findNavController().navigateUp()
                 }
                 .addOnFailureListener { exception ->
                     binding.addContactBtn.isEnabled = true
-                    Toast.makeText(context, "Failed to save contact: ${exception.localizedMessage}", Toast.LENGTH_LONG).show()
+                    context?.let { ctx ->
+                        Toast.makeText(ctx, "Failed to save contact: ${exception.localizedMessage}", Toast.LENGTH_LONG).show()
+                    }
                 }
         }
     }
