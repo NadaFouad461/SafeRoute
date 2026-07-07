@@ -5,9 +5,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.saferoute.data.repository.LocationRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import org.osmdroid.util.GeoPoint
+import javax.inject.Inject
 
-class MapViewModel : ViewModel() {
+
+@HiltViewModel
+class MapViewModel @Inject constructor() : ViewModel() {
 
     private val _currentLocation = MutableLiveData<GeoPoint>()
     val currentLocation: LiveData<GeoPoint> = _currentLocation

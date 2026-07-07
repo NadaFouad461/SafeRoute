@@ -9,7 +9,10 @@ import androidx.navigation.fragment.findNavController
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentEditProfileBinding
 import com.example.saferoute.ui.auth.AuthViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+
+@AndroidEntryPoint
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 
     private var _binding: FragmentEditProfileBinding? = null
@@ -36,7 +39,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                 binding.etEditEmail.setText(data["email"] as? String)
             } else {
                 context?.let { ctx ->
-                    Toast.makeText(ctx, errorMessage ?: "Failed to load data", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(ctx, errorMessage ?: "Failed to load data", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
@@ -47,7 +51,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
             val newEmail = binding.etEditEmail.text.toString().trim()
 
             if (newName.isEmpty() || newEmail.isEmpty()) {
-                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
@@ -60,7 +65,8 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
                         }
                     } else {
                         context?.let { ctx ->
-                            Toast.makeText(ctx, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(ctx, "Profile updated successfully!", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                     findNavController().navigateUp()

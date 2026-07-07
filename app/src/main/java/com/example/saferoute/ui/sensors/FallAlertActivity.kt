@@ -2,13 +2,19 @@ package com.example.saferoute.ui.sensors
 
 
 import android.app.NotificationManager
+import android.content.Intent
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.saferoute.databinding.ActivityFallAlertBinding
 import com.example.saferoute.services.FallDetectionService
+import com.example.saferoute.services.SosBackgroundService
+import com.example.saferoute.ui.MainActivity
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -63,7 +69,38 @@ class FallAlertActivity : AppCompatActivity() {
     }
 
     private fun goToSOS() {
-        finish()
+        // 1. تشغيل إنذار صوتي (نغمة المنبه الافتراضية)
+        try {
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            val ringtone = RingtoneManager.getRingtone(applicationContext, alarmUri)
+            ringtone.play()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // 2. تشغيل خدمة إرسال الرسايل واللوكيشن في الخلفية
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUid != null) {
+            val serviceIntent = Intent(this, SosBackgroundService::class.java).apply {
+                action = "TRIGGER_SOS_ACTION"
+                putExtra("USER_ID", currentUid)
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+            Toast.makeText(this, "🚨 جاري إرسال الاستغاثة لجهات الاتصال!", Toast.LENGTH_LONG).show()
+        }
+
+        // 3. توجيه المستخدم للتطبيق الرئيسي وقفل شاشة الإنذار
+        val mainIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        startActivity(mainIntent)
+
+        finish() // قفل شاشة FallAlertActivity
     }
 
     override fun onDestroy() {

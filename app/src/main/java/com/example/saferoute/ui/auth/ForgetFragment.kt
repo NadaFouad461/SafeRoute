@@ -8,6 +8,9 @@ import androidx.navigation.fragment.findNavController
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentForgetBinding
 import com.google.firebase.auth.FirebaseAuth
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
 
 class ForgetFragment : Fragment(R.layout.fragment_forget) {
 

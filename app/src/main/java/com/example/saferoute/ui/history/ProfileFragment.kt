@@ -14,6 +14,10 @@ import com.example.saferoute.databinding.FragmentProfileBinding
 import com.example.saferoute.services.FallDetectionService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.AndroidEntryPoint
+
+
+@AndroidEntryPoint
 
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
@@ -90,12 +94,14 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
 
         binding.btnSafeWalkSettings.setOnClickListener {
-            Toast.makeText(requireContext(), "Opening Safe Walk Settings...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Opening Safe Walk Settings...", Toast.LENGTH_SHORT)
+                .show()
         }
 
 
         binding.btnLanguage.setOnClickListener {
-            Toast.makeText(requireContext(), "Language Selection Clicked", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Language Selection Clicked", Toast.LENGTH_SHORT)
+                .show()
         }
 
 
@@ -149,11 +155,13 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
                 } else {
                     requireContext().startService(serviceIntent)
                 }
-                Toast.makeText(requireContext(), "تم تفعيل مستشعر السقوط", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "تم تفعيل مستشعر السقوط", Toast.LENGTH_SHORT)
+                    .show()
             } else {
                 // 4. إيقاف الخدمة تماماً
                 requireContext().stopService(serviceIntent)
-                Toast.makeText(requireContext(), "تم إيقاف مستشعر السقوط", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "تم إيقاف مستشعر السقوط", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
 

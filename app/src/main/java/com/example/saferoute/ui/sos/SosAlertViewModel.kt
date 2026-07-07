@@ -3,8 +3,10 @@ package com.example.saferoute.ui.sos
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import javax.inject.Inject
 
 data class SosAlertState(
     val senderName: String = "",
@@ -19,7 +21,9 @@ data class SosAlertState(
     val phoneNumber: String = ""
 )
 
-class SosAlertViewModel : ViewModel() {
+
+@HiltViewModel
+class SosAlertViewModel @Inject constructor() : ViewModel() {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
@@ -39,13 +43,16 @@ class SosAlertViewModel : ViewModel() {
                 val lat = logSnapshot.getDouble("latitude") ?: 0.0
                 val lng = logSnapshot.getDouble("longitude") ?: 0.0
                 val battery = logSnapshot.getLong("batteryLevel")?.toInt() ?: 100
-                val girlUserId = logSnapshot.getString("userId") ?: logSnapshot.getString("girlUserId") ?: ""
+                val girlUserId =
+                    logSnapshot.getString("userId") ?: logSnapshot.getString("girlUserId") ?: ""
 
-                val alertedContacts = logSnapshot.get("alertedContacts") as? List<*> ?: emptyList<Any>()
+                val alertedContacts =
+                    logSnapshot.get("alertedContacts") as? List<*> ?: emptyList<Any>()
                 val totalAlerted = alertedContacts.size
 
 
-                var contactRelation = if (totalAlerted > 0) "$totalAlerted Contacts Notified" else "Direct SOS Alert"
+                var contactRelation =
+                    if (totalAlerted > 0) "$totalAlerted Contacts Notified" else "Direct SOS Alert"
 
                 if (girlUserId.isNotEmpty()) {
 
@@ -69,9 +76,12 @@ class SosAlertViewModel : ViewModel() {
                                         if (!contactSnapshots.isEmpty) {
                                             val contactDoc = contactSnapshots.documents.first()
 
-                                            finalDisplayName = contactDoc.getString("name") ?: girlRealName
+                                            finalDisplayName =
+                                                contactDoc.getString("name") ?: girlRealName
 
-                                            contactRelation = contactDoc.getString("relation") ?: contactDoc.getString("relationship") ?: contactRelation
+                                            contactRelation = contactDoc.getString("relation")
+                                                ?: contactDoc.getString("relationship")
+                                                        ?: contactRelation
                                         }
 
 

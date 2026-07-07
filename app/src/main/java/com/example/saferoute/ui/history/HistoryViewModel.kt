@@ -7,8 +7,11 @@ import com.example.saferoute.data.local.EmergencyLog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class HistoryViewModel : ViewModel() {
+@HiltViewModel
+class HistoryViewModel @Inject constructor() : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
@@ -32,15 +35,21 @@ class HistoryViewModel : ViewModel() {
                     val sharedWith = doc.get("sharedWith") as? List<*> ?: emptyList<Any>()
 
 
-                    if (status.equals("canceled", ignoreCase = true) || status.equals("triggered", ignoreCase = true)) {
+                    if (status.equals("canceled", ignoreCase = true) || status.equals(
+                            "triggered",
+                            ignoreCase = true
+                        )
+                    ) {
                         continue
                     }
 
                     val isFromMe = userIdInDoc == currentUserId
-                    val isForMe = sharedWith.contains(currentUserId) || doc.id == incomingSosId || (!isFromMe && status != "canceled")
+                    val isForMe =
+                        sharedWith.contains(currentUserId) || doc.id == incomingSosId || (!isFromMe && status != "canceled")
 
                     if (isFromMe || isForMe) {
-                        val alertedContacts = doc.get("alertedContacts") as? List<*> ?: emptyList<Any>()
+                        val alertedContacts =
+                            doc.get("alertedContacts") as? List<*> ?: emptyList<Any>()
                         val realBattery = doc.getLong("batteryLevel")?.toInt() ?: 100
                         val userName = doc.getString("userName") ?: "شخص مقرب"
                         val logType = if (isFromMe) "SOS" else "SOS_INCOMING"
@@ -51,9 +60,13 @@ class HistoryViewModel : ViewModel() {
                                 if (isFromMe) "Resolved" else "✅ $userName Is Safe Now"
                             }
 
-                            status.contains("Dispatched", ignoreCase = true) || status == "triggered" -> {
+                            status.contains(
+                                "Dispatched",
+                                ignoreCase = true
+                            ) || status == "triggered" -> {
                                 if (isFromMe) "Emergency Dispatched" else "⚠️ $userName Needs Help!"
                             }
+
                             else -> status
                         }
 

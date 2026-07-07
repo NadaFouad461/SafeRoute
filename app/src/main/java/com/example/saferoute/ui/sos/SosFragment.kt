@@ -23,6 +23,10 @@ import com.example.saferoute.models.ContactItem
 import com.example.saferoute.utils.PermissionManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.AndroidEntryPoint
+
+
+@AndroidEntryPoint
 
 class SosFragment : Fragment() {
 

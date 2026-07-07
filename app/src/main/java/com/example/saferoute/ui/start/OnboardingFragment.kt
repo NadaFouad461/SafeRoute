@@ -7,7 +7,9 @@ import androidx.navigation.fragment.findNavController
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentOnboardingBinding
 import com.google.android.material.tabs.TabLayoutMediator
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class OnboardingFragment : Fragment(R.layout.fragment_onboarding) {
 
     private var _binding: FragmentOnboardingBinding? = null

@@ -4,11 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
-import com.example.saferoute.data.local.EmergencyLog
-import com.example.saferoute.utils.EmergencyType
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -17,8 +14,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class SosRepository(
+class SosRepository @Inject constructor(
     private val emergencyRepository: EmergencyRepository
 ) {
 
@@ -58,11 +56,14 @@ class SosRepository(
             val location = fusedLocationClient.getCurrentLocation(locationRequest, null).await()
 
             if (location != null) {
-                val message = "🚨 emergency SOS! I am in danger. Please help me. My current location coordinates are: ${location.latitude} , ${location.longitude}"
+                val message =
+                    "🚨 emergency SOS! I am in danger. Please help me. My current location coordinates are: ${location.latitude} , ${location.longitude}"
 
 
-                val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
-                val currentBattery = batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                val batteryManager =
+                    context.getSystemService(Context.BATTERY_SERVICE) as android.os.BatteryManager
+                val currentBattery =
+                    batteryManager.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
 
                 val emergencyData = hashMapOf(
@@ -82,7 +83,11 @@ class SosRepository(
                 val firestoreDocId = firestoreResult.id
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context.applicationContext, "وضع الفحص: جاري الانتقال للواتساب مباشرة... 🟢", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context.applicationContext,
+                        "وضع الفحص: جاري الانتقال للواتساب مباشرة... 🟢",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
                 delay(100)
@@ -92,7 +97,8 @@ class SosRepository(
                 try {
                     activeWhatsAppNumber = selectedNumbers.first()
                     val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://wa.me/$activeWhatsAppNumber?text=${Uri.encode(message)}")
+                        data =
+                            Uri.parse("https://wa.me/$activeWhatsAppNumber?text=${Uri.encode(message)}")
                         // 🎯 🔥 الـ Flags دي بتجبر الأندرويد يسيب تطبيقك شغال في الخلفية بالـ Timer بتاعه وميعملش ريستارت لما ترجعي
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     }

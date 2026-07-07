@@ -11,7 +11,9 @@ import com.example.saferoute.databinding.FragmentContactsListBinding
 import com.example.saferoute.models.ContactItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
 
     private var _binding: FragmentContactsListBinding? = null
@@ -55,7 +57,10 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                     putBoolean("isPriority", contact.isPriority)
                 }
 
-                findNavController().navigate(R.id.action_contactsListFragment_to_addContactFragment, bundle)
+                findNavController().navigate(
+                    R.id.action_contactsListFragment_to_addContactFragment,
+                    bundle
+                )
             },
             onDeleteClick = { contact ->
 
@@ -107,7 +112,8 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             .delete()
             .addOnSuccessListener {
                 context?.let { ctx ->
-                    Toast.makeText(ctx, "${contact.name} deleted successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(ctx, "${contact.name} deleted successfully", Toast.LENGTH_SHORT)
+                        .show()
                 }
                 emergencyContactsList.remove(contact)
                 contactsAdapter.notifyDataSetChanged()
@@ -115,7 +121,8 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             }
             .addOnFailureListener { e ->
                 context?.let { ctx ->
-                    Toast.makeText(ctx, "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(ctx, "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
     }
@@ -134,19 +141,23 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                     findNavController().navigate(R.id.homeFragment)
                     true
                 }
+
                 R.id.nav_map -> {
                     findNavController().navigate(R.id.mapFragment)
                     true
                 }
+
                 R.id.nav_contacts -> true
                 R.id.nav_history -> {
                     findNavController().navigate(R.id.historyFragment)
                     true
                 }
+
                 R.id.nav_profile -> {
                     findNavController().navigate(R.id.profileFragment2)
                     true
                 }
+
                 else -> false
             }
         }

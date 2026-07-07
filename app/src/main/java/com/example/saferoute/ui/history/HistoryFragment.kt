@@ -11,7 +11,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentHistoryBinding
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlin.math.log
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
 
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
@@ -43,7 +45,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
                 findNavController().navigate(R.id.emergencyNotificationFragment, bundle)
             } else {
-                Toast.makeText(requireContext(), "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
 
@@ -62,7 +65,11 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                             .update("status", "Resolved")
                             .addOnSuccessListener {
                                 context?.let { ctx ->
-                                    Toast.makeText(ctx, "تم إغلاق البلاغ بنجاح 🎉", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(
+                                        ctx,
+                                        "تم إغلاق البلاغ بنجاح 🎉",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
                             .addOnFailureListener {
@@ -74,14 +81,19 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     .setNegativeButton("إلغاء", null)
                     .show()
             } else {
-                Toast.makeText(requireContext(), "خطأ: لا يمكن العثور على معرف البلاغ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "خطأ: لا يمكن العثور على معرف البلاغ",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
 
         viewModel.logs.observe(viewLifecycleOwner) { logsList ->
             if (logsList != null) {
-                val uniqueLogsMap = LinkedHashMap<String, com.example.saferoute.data.local.EmergencyLog>()
+                val uniqueLogsMap =
+                    LinkedHashMap<String, com.example.saferoute.data.local.EmergencyLog>()
 
                 logsList.forEach { log ->
                     if (!log.userId.isNullOrEmpty()) {
@@ -101,7 +113,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
 
 
-                val isFromSomeoneElse = arguments?.getBoolean("IS_FROM_SOMEONE_ELSE", false) ?: false
+                val isFromSomeoneElse =
+                    arguments?.getBoolean("IS_FROM_SOMEONE_ELSE", false) ?: false
                 val incomingSosId = arguments?.getString("INCOMING_SOS_ID") ?: ""
                 val senderName = arguments?.getString("SENDER_NAME") ?: "ابنتكِ"
 
@@ -110,7 +123,11 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     val externalUniqueKey = "${incomingSosId}_$timeKey"
                     val existingLog = uniqueLogsMap[externalUniqueKey]
 
-                    if (existingLog == null || !existingLog.status.contains("Resolved", ignoreCase = true)) {
+                    if (existingLog == null || !existingLog.status.contains(
+                            "Resolved",
+                            ignoreCase = true
+                        )
+                    ) {
                         val externalLog = com.example.saferoute.data.local.EmergencyLog(
                             id = incomingSosId.hashCode(),
                             userId = incomingSosId,
@@ -126,7 +143,8 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
 
 
-                val finalFilteredList = uniqueLogsMap.values.toList().sortedByDescending { it.timestamp }
+                val finalFilteredList =
+                    uniqueLogsMap.values.toList().sortedByDescending { it.timestamp }
 
                 logAdapter.submitList(finalFilteredList)
                 binding.tvTotalEventsCount.text = finalFilteredList.size.toString()
@@ -157,10 +175,22 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
             if (item.itemId == R.id.nav_history) return@setOnItemSelectedListener true
             try {
                 when (item.itemId) {
-                    R.id.nav_home -> { findNavController().navigate(R.id.homeFragment); true }
-                    R.id.nav_map -> { findNavController().navigate(R.id.mapFragment); true }
-                    R.id.nav_contacts -> { findNavController().navigate(R.id.contactsListFragment); true }
-                    R.id.nav_profile -> { findNavController().navigate(R.id.profileFragment2); true }
+                    R.id.nav_home -> {
+                        findNavController().navigate(R.id.homeFragment); true
+                    }
+
+                    R.id.nav_map -> {
+                        findNavController().navigate(R.id.mapFragment); true
+                    }
+
+                    R.id.nav_contacts -> {
+                        findNavController().navigate(R.id.contactsListFragment); true
+                    }
+
+                    R.id.nav_profile -> {
+                        findNavController().navigate(R.id.profileFragment2); true
+                    }
+
                     else -> false
                 }
             } catch (e: Exception) {

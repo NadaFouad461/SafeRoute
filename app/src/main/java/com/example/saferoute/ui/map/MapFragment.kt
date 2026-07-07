@@ -32,6 +32,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import dagger.hilt.android.AndroidEntryPoint
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -40,6 +41,8 @@ import org.osmdroid.views.overlay.Polygon
 import java.util.Locale
 import kotlin.concurrent.thread
 
+
+@AndroidEntryPoint
 class MapFragment : Fragment() {
 
     private var _binding: FragmentMapBinding? = null
@@ -59,6 +62,7 @@ class MapFragment : Fragment() {
     private var nearestDangerPoint: GeoPoint? = null
 
     private data class DangerZone(val point: GeoPoint, val description: String)
+
     private val dangerZones = mutableListOf<DangerZone>()
     private val dangerZoneMarkers = mutableListOf<Marker>()
     private var dangerZonesListener: ValueEventListener? = null
@@ -119,7 +123,8 @@ class MapFragment : Fragment() {
                 binding.shareLocationBtnCard.setCardBackgroundColor(
                     ColorStateList.valueOf(Color.parseColor("#4FC3F7"))
                 )
-                Toast.makeText(requireContext(), "🔴 تم إيقاف مشاركة الموقع", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "🔴 تم إيقاف مشاركة الموقع", Toast.LENGTH_SHORT)
+                    .show()
             } else {
                 LocationRepository.isSharingLocation = true
                 currentPoint?.let { LocationRepository.updateLocation(it.latitude, it.longitude) }
@@ -136,7 +141,11 @@ class MapFragment : Fragment() {
             if (searchQuery.isNotEmpty()) {
                 performMapSearch(searchQuery)
             } else {
-                Toast.makeText(requireContext(), "Please enter a place to search", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Please enter a place to search",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
@@ -259,10 +268,22 @@ class MapFragment : Fragment() {
             if (item.itemId == R.id.nav_map) return@setOnItemSelectedListener true
             try {
                 when (item.itemId) {
-                    R.id.nav_home -> { findNavController().navigate(R.id.homeFragment); true }
-                    R.id.nav_history -> { findNavController().navigate(R.id.action_mapFragment_to_historyFragment); true }
-                    R.id.nav_contacts -> { findNavController().navigate(R.id.contactsListFragment); true }
-                    R.id.nav_profile -> { findNavController().navigate(R.id.profileFragment2); true }
+                    R.id.nav_home -> {
+                        findNavController().navigate(R.id.homeFragment); true
+                    }
+
+                    R.id.nav_history -> {
+                        findNavController().navigate(R.id.action_mapFragment_to_historyFragment); true
+                    }
+
+                    R.id.nav_contacts -> {
+                        findNavController().navigate(R.id.contactsListFragment); true
+                    }
+
+                    R.id.nav_profile -> {
+                        findNavController().navigate(R.id.profileFragment2); true
+                    }
+
                     else -> false
                 }
             } catch (e: Exception) {
@@ -305,13 +326,21 @@ class MapFragment : Fragment() {
                         binding.map.invalidate()
                         Toast.makeText(requireContext(), "Found: $query", Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(requireContext(), "Location not found, try another name", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            "Location not found, try another name",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } catch (e: Exception) {
                 activity?.runOnUiThread {
                     binding.progressLocation.visibility = View.GONE
-                    Toast.makeText(requireContext(), "Search error or no internet connection", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Search error or no internet connection",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
@@ -357,7 +386,8 @@ class MapFragment : Fragment() {
                 for (zone in snapshot.children) {
                     val lat = zone.child("latitude").getValue(Double::class.java) ?: continue
                     val lon = zone.child("longitude").getValue(Double::class.java) ?: continue
-                    val desc = zone.child("description").getValue(String::class.java) ?: "Danger Zone"
+                    val desc =
+                        zone.child("description").getValue(String::class.java) ?: "Danger Zone"
                     val point = GeoPoint(lat, lon)
                     dangerZones.add(DangerZone(point, desc))
 
@@ -365,7 +395,8 @@ class MapFragment : Fragment() {
                         position = point
                         title = desc
                         setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                        icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_danger_zone)
+                        icon =
+                            ContextCompat.getDrawable(requireContext(), R.drawable.ic_danger_zone)
                     }
                     dangerZoneMarkers.add(marker)
                     binding.map.overlays.add(marker)
@@ -373,6 +404,7 @@ class MapFragment : Fragment() {
                 binding.map.invalidate()
                 updateNearestDangerZone(currentPoint)
             }
+
             override fun onCancelled(error: DatabaseError) {}
         }
         dangerZonesListener = listener
@@ -406,7 +438,8 @@ class MapFragment : Fragment() {
         if (closestZone != null && closestDistance <= 200f) {
             nearestDangerPoint = closestZone.point
             binding.highRiskCard.visibility = View.VISIBLE
-            binding.txtRiskDescription.text = "${closestZone.description} • ${closestDistance.toInt()} m away"
+            binding.txtRiskDescription.text =
+                "${closestZone.description} • ${closestDistance.toInt()} m away"
         } else {
             binding.highRiskCard.visibility = View.GONE
             nearestDangerPoint = null
@@ -414,18 +447,29 @@ class MapFragment : Fragment() {
     }
 
     private fun checkAndRequestLocationPermission() {
-        val permissions = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             startTrackingService()
         } else {
             requestPermissions(permissions.toTypedArray(), LOCATION_PERMISSION_REQUEST)
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST && _binding != null) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -436,8 +480,13 @@ class MapFragment : Fragment() {
     }
 
     private fun showLastKnownLocation() {
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
-        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
+        val locationManager =
+            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
         val lastKnown = lastGps ?: lastNet
@@ -472,7 +521,8 @@ class MapFragment : Fragment() {
                     binding.map.overlays.add(marker)
                 } else {
                     marker.position = point
-                    if (::accuracyCircle.isInitialized) accuracyCircle.points = Polygon.pointsAsCircle(point, 25.0)
+                    if (::accuracyCircle.isInitialized) accuracyCircle.points =
+                        Polygon.pointsAsCircle(point, 25.0)
                 }
                 viewModel.updateLocation(point)
                 binding.map.controller.setCenter(point)

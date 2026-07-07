@@ -12,6 +12,9 @@ import com.example.saferoute.R
 import com.example.saferoute.ui.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 

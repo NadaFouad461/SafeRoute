@@ -19,6 +19,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.saferoute.R
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
 
 class LocationTrackingService : Service() {
 
@@ -36,12 +39,13 @@ class LocationTrackingService : Service() {
             }
             LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
         }
+
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
     }
 
     override fun onCreate() {
         super.onCreate()
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -52,7 +56,11 @@ class LocationTrackingService : Service() {
     }
 
     private fun startTracking() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             stopSelf()
             return
         }
@@ -69,10 +77,20 @@ class LocationTrackingService : Service() {
         }
 
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, listener)
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                1000L,
+                0f,
+                listener
+            )
         }
         if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L, 0f, listener)
+            locationManager.requestLocationUpdates(
+                LocationManager.NETWORK_PROVIDER,
+                1000L,
+                0f,
+                listener
+            )
         }
     }
 
@@ -85,7 +103,11 @@ class LocationTrackingService : Service() {
             .build()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            )
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
@@ -99,7 +121,7 @@ class LocationTrackingService : Service() {
                 NotificationManager.IMPORTANCE_LOW
             )
 
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
+            val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager?
             manager?.createNotificationChannel(channel)
         }
     }

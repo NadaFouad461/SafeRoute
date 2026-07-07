@@ -15,6 +15,9 @@ import com.example.saferoute.databinding.FragmentEmergencyNotificationBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
 
 class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notification) {
 
@@ -40,7 +43,8 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         if (!sosAlertId.isNullOrEmpty()) {
             listenToCurrentSOSAlert(sosAlertId)
         } else {
-            Toast.makeText(requireContext(), "لم يتم العثور على تفاصيل البلاغ", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "لم يتم العثور على تفاصيل البلاغ", Toast.LENGTH_SHORT)
+                .show()
         }
 
         binding.btnDismiss.setOnClickListener { findNavController().popBackStack() }
@@ -48,7 +52,11 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         binding.btnCallUser.setOnClickListener {
 
             if (senderPhone.isEmpty()) {
-                Toast.makeText(requireContext(), "جاري تحميل رقم الهاتف، يرجى الانتظار...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "جاري تحميل رقم الهاتف، يرجى الانتظار...",
+                    Toast.LENGTH_SHORT
+                ).show()
             } else {
                 val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$senderPhone"))
                 startActivity(intent)
@@ -58,21 +66,37 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         binding.btnNavigate.setOnClickListener {
 
             if (latitude != 0.0 && longitude != 0.0) {
-                val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=$latitude,$longitude"))
+                val mapIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("google.navigation:q=$latitude,$longitude")
+                )
                 mapIntent.setPackage("com.google.android.apps.maps")
                 if (mapIntent.resolveActivity(requireContext().packageManager) != null) {
                     startActivity(mapIntent)
                 } else {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")))
+                    startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")
+                        )
+                    )
                 }
             } else {
-                Toast.makeText(requireContext(), "بيانات الموقع لا تزال قيد التحميل...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "بيانات الموقع لا تزال قيد التحميل...",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
 
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() { findNavController().popBackStack() }
-        })
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    findNavController().popBackStack()
+                }
+            })
     }
 
     private fun listenToCurrentSOSAlert(alertId: String) {
@@ -106,20 +130,36 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                 }
 
                 if (actualStatus.contains("Resolved", ignoreCase = true)) {
-                    binding.cardAlertIconContainer.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#DCFCE7")))
+                    binding.cardAlertIconContainer.setCardBackgroundColor(
+                        ColorStateList.valueOf(
+                            Color.parseColor("#DCFCE7")
+                        )
+                    )
                     binding.tvDetailAlertIcon.text = "✅"
 
-                    binding.cardDetailStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#10B981")))
+                    binding.cardDetailStatusBadge.setCardBackgroundColor(
+                        ColorStateList.valueOf(
+                            Color.parseColor("#10B981")
+                        )
+                    )
                     binding.tvDetailStatusText.text = "Resolved / Safe"
 
                     binding.tvDetailTitle.text = "$accountName أصبحت آمنة الآن 🎉"
                     binding.tvDetailTitle.setTextColor(Color.parseColor("#10B981"))
                     binding.btnNavigate.visibility = View.GONE
                 } else {
-                    binding.cardAlertIconContainer.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FEE2E2")))
+                    binding.cardAlertIconContainer.setCardBackgroundColor(
+                        ColorStateList.valueOf(
+                            Color.parseColor("#FEE2E2")
+                        )
+                    )
                     binding.tvDetailAlertIcon.text = "🚨"
 
-                    binding.cardDetailStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#991B1B")))
+                    binding.cardDetailStatusBadge.setCardBackgroundColor(
+                        ColorStateList.valueOf(
+                            Color.parseColor("#991B1B")
+                        )
+                    )
                     binding.tvDetailStatusText.text = "Emergency Alert"
 
                     binding.tvDetailTitle.text = "إشارة استغاثة نشطة"
@@ -152,10 +192,12 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
 
 
                                     binding.tvSenderName.text = "$savedName ($relationship)"
-                                    binding.tvFallDescription.text = "ℹ️ بلاغ استغاثة نشط وموثق من صلة القرابة الممسوحة كـ ($relationship) بالحساب: $accountName"
+                                    binding.tvFallDescription.text =
+                                        "ℹ️ بلاغ استغاثة نشط وموثق من صلة القرابة الممسوحة كـ ($relationship) بالحساب: $accountName"
                                 } else {
 
-                                    binding.tvFallDescription.text = "ℹ️ بلاغ استغاثة نشط وموثق للحساب المسجل باسم: $accountName"
+                                    binding.tvFallDescription.text =
+                                        "ℹ️ بلاغ استغاثة نشط وموثق للحساب المسجل باسم: $accountName"
                                 }
                             }
                     }

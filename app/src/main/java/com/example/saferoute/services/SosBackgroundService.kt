@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.net.Uri
+import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
 import android.telephony.SmsManager
@@ -15,16 +17,18 @@ import com.example.saferoute.data.local.AppDatabase
 import com.example.saferoute.data.local.EmergencyLog
 import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.data.repository.EmergencyRepository
-import com.example.saferoute.utils.EmergencyType
 import com.example.saferoute.utils.PermissionManager
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+@AndroidEntryPoint
 
 class SosBackgroundService : Service() {
 
@@ -38,26 +42,27 @@ class SosBackgroundService : Service() {
         createNotificationChannel()
 
         val appDb = AppDatabase.getDatabase(applicationContext)
-        val firestoreService =
-            FirestoreService(FirebaseFirestore.getInstance())
+        val firestoreService = FirestoreService(FirebaseFirestore.getInstance())
         emergencyRepository = EmergencyRepository(appDb.emergencyDao(), firestoreService)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = createNotification()
-        startForeground(1, notification)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         } else {
             startForeground(1, notification)
         }
+
         if (intent?.action == "TRIGGER_SOS_ACTION") {
             val userId =
                 intent.getStringExtra("USER_ID") ?: FirebaseAuth.getInstance().currentUser?.uid
-                ?: "unknown_user"
-
-
-            fetchContactsAndTrigger(userId)
+            if (userId != null) {
+                fetchContactsAndTrigger(userId)
+            } else {
+                Log.e("SosService", "لم يتم العثور على User ID")
+            }
         }
 
         return START_STICKY
@@ -70,63 +75,141 @@ class SosBackgroundService : Service() {
                 val numbers = documents.mapNotNull { it.getString("phone") }
                 if (numbers.isNotEmpty()) {
                     runEmergencySequence(userId, numbers)
+                } else {
+                    Log.e("SosService", "لا يوجد جهات اتصال مسجلة!")
                 }
             }
     }
 
     @android.annotation.SuppressLint("MissingPermission")
     private fun runEmergencySequence(userId: String, numbers: List<String>) {
+
+        if (!PermissionManager.hasAllPermissions(this)) {
+            val fallbackMsg =
+                "استغاثة من SafeRoute! أنا في خطر (موقعي غير متاح بسبب نقص الصلاحيات)."
+            sendSmsToContacts(numbers, fallbackMsg)
+            openSmsApp(numbers, fallbackMsg)
+            saveToHistory(userId, 0.0, 0.0, numbers)
+            return
+        }
+
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        val locationRequest = CurrentLocationRequest.Builder()
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .build()
 
-        if (PermissionManager.hasAllPermissions(this)) {
-            val locationRequest = CurrentLocationRequest.Builder()
-                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-                .build()
-
-            fusedLocationClient.getCurrentLocation(locationRequest, null)
-                .addOnSuccessListener { location ->
-                    if (location != null) {
-                        val mapsUrl =
-                            "https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}"
-                        val message =
-                            "استغاثة تلقائية من SafeRoute! أنا في خطر، موقعي الحالي: $mapsUrl"
-
-                        try {
-                            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                getSystemService(SmsManager::class.java)
-                            } else {
-                                @Suppress("DEPRECATION")
-                                SmsManager.getDefault()
-                            }
-                            for (number in numbers) {
-                                smsManager.sendTextMessage(number, null, message, null, null)
-                            }
-                        } catch (e: Exception) {
-                            Log.e("SosService", "فشل إرسال الـ SMS من الخلفية: ${e.message}")
-                        }
-
-                        val log = EmergencyLog(
-                            userId = userId,
-                            type = EmergencyType.SOS,
-                            latitude = location.latitude,
-                            longitude = location.longitude,
-                            timestamp = System.currentTimeMillis(),
-                            status = "AUTO"
-                        )
-
-                        serviceScope.launch {
-                            emergencyRepository.insertLog(log)
-                        }
-                    }
+        fusedLocationClient.getCurrentLocation(locationRequest, null)
+            .addOnSuccessListener { location ->
+                val message = if (location != null) {
+                    val mapsUrl =
+                        "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+                    "استغاثة تلقائية من SafeRoute! أنا في خطر، موقعي: $mapsUrl"
+                } else {
+                    "استغاثة تلقائية من SafeRoute! أنا في خطر (تعذر تحديد موقعي بدقة الآن)."
                 }
+
+                // 1. إرسال الرسائل الصامتة
+                sendSmsToContacts(numbers, message)
+
+                // 2. فتح تطبيق الرسائل
+                openSmsApp(numbers, message)
+
+                // 3. الحفظ في الهيستوري (Firestore & Room)
+                saveToHistory(
+                    userId,
+                    location?.latitude ?: 0.0,
+                    location?.longitude ?: 0.0,
+                    numbers
+                )
+            }
+            .addOnFailureListener {
+                val message = "استغاثة تلقائية من SafeRoute! أنا في خطر (الـ GPS لا يستجيب)."
+                sendSmsToContacts(numbers, message)
+                openSmsApp(numbers, message)
+                saveToHistory(userId, 0.0, 0.0, numbers)
+            }
+    }
+
+    private fun sendSmsToContacts(numbers: List<String>, message: String) {
+        try {
+            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                getSystemService(SmsManager::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                SmsManager.getDefault()
+            }
+            for (number in numbers) {
+                smsManager.sendTextMessage(number, null, message, null, null)
+            }
+        } catch (e: Exception) {
+            Log.e("SosService", "فشل إرسال الـ SMS صامتاً: ${e.message}")
+        }
+    }
+
+    private fun openSmsApp(numbers: List<String>, message: String) {
+        try {
+            // تجميع الأرقام (الفواصل تختلف باختلاف نسخة الأندرويد، نستخدم الفاصلة المنقوطة كمعيار)
+            val separator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) "," else ";"
+            val allNumbers = numbers.joinToString(separator)
+
+            val smsIntent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("smsto:$allNumbers")
+                putExtra("sms_body", message)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(smsIntent)
+            Log.d("SosService", "تم فتح تطبيق الرسائل بنجاح")
+        } catch (e: Exception) {
+            Log.e("SosService", "فشل فتح تطبيق الرسائل: ${e.message}")
+        }
+    }
+
+    private fun saveToHistory(userId: String, lat: Double, lng: Double, numbers: List<String>) {
+        db.collection("users").document(userId).get().addOnSuccessListener { doc ->
+            val userName = doc.getString("name") ?: "مستخدم SafeRoute"
+
+            val batteryManager = getSystemService(BATTERY_SERVICE) as BatteryManager
+            val battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+
+            // 1. الحفظ في فايربيز (مرة واحدة فقط بالبيانات الكاملة)
+            val emergencyData = hashMapOf(
+                "userId" to userId,
+                "userName" to userName,
+                "status" to "Emergency Dispatched",
+                "type" to "SOS",
+                "latitude" to lat,
+                "longitude" to lng,
+                "batteryLevel" to battery,
+                "alertedContacts" to numbers,
+                "timestamp" to com.google.firebase.Timestamp.now()
+            )
+
+            db.collection("emergency_logs").add(emergencyData).addOnSuccessListener {
+                Log.d("SosService", "تم الحفظ في History بنجاح")
+            }
+
+            // 2. الحفظ المحلي في (Room) فقط! بدون رفع نسخة تانية للفايربيز
+            val log = EmergencyLog(
+                userId = userId,
+                type = "SOS",
+                latitude = lat,
+                longitude = lng,
+                timestamp = System.currentTimeMillis(),
+                status = "Emergency Dispatched",
+                batteryLevel = battery
+            )
+            serviceScope.launch {
+                val appDb = AppDatabase.getDatabase(applicationContext)
+                appDb.emergencyDao().insertLog(log) // 👈 التعديل هنا
+            }
         }
     }
 
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("SafeRoute في الخدمة حماية الطوارئ نشطة")
+            .setContentTitle("SafeRoute حماية الطوارئ نشطة")
             .setContentText("نظام مراقبة الأمان يعمل في الخلفية لحمايتك...")
-            .setSmallIcon(android.R.drawable.ic_menu_compass)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
