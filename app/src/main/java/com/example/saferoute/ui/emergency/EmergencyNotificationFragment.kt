@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.saferoute.R
@@ -58,13 +59,13 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         binding.btnNavigate.setOnClickListener {
 
             if (latitude != 0.0 && longitude != 0.0) {
-                val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=$latitude,$longitude"))
-                mapIntent.setPackage("com.google.android.apps.maps")
-                if (mapIntent.resolveActivity(requireContext().packageManager) != null) {
-                    startActivity(mapIntent)
-                } else {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")))
-                }
+                // بدل ما نفتح خرائط جوجل، بنفتح خريطة التطبيق بتاعتنا (MapFragment)
+                // ونبعتلها الإحداثيات عشان تحط عليها ماركر مكان البلاغ.
+                val locationBundle = bundleOf(
+                    "latitude" to latitude,
+                    "longitude" to longitude
+                )
+                findNavController().navigate(R.id.mapFragment, locationBundle)
             } else {
                 Toast.makeText(requireContext(), "بيانات الموقع لا تزال قيد التحميل...", Toast.LENGTH_SHORT).show()
             }

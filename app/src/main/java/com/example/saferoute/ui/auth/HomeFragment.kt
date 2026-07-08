@@ -1,18 +1,23 @@
 package com.example.saferoute.ui.auth
 
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
+import com.example.saferoute.data.repository.LocationRepository
 import com.example.saferoute.databinding.FragmentHomeBinding
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
@@ -43,6 +48,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         binding.actionContacts.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
+        }
+
+        binding.actionLiveLocation.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
         }
 
 
@@ -111,9 +120,60 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
 
-            triggerDirectSOS(currentUid, currentUserName, currentBatteryLevel, 30.3346, 31.7504)
+            fetchLocationAndTriggerSOS(currentUid, currentUserName, currentBatteryLevel)
         } else {
             Toast.makeText(requireContext(), "User not logged in!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * بيجيب موقع حقيقي قبل إرسال SOS بدل الإحداثيات الثابتة القديمة.
+     * أولوية الاستخدام:
+     * 1) آخر موقع محفوظ في LocationRepository (لو الماب اتفتحت قبل كده) - أسرع حل.
+     * 2) موقع فعلي طازج من FusedLocationProviderClient.
+     * 3) لو مفيش صلاحية أو فشل الجلب، بيتبعت 0.0/0.0 مع تنبيه للمستخدم بدل ما يوهم إنه بعت مكان حقيقي غلط.
+     */
+    private fun fetchLocationAndTriggerSOS(userId: String, userName: String, batteryLevel: Int) {
+        LocationRepository.getLastKnownLatLng()?.let { (lat, lon) ->
+            triggerDirectSOS(userId, userName, batteryLevel, lat, lon)
+            return
+        }
+
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Toast.makeText(
+                requireContext(),
+                "⚠️ صلاحية الموقع مش متاحة، هيتبعت بلاغ بدون موقع دقيق!",
+                Toast.LENGTH_LONG
+            ).show()
+            triggerDirectSOS(userId, userName, batteryLevel, 0.0, 0.0)
+            return
+        }
+
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location ->
+                    if (_binding == null || !isAdded) return@addOnSuccessListener
+                    if (location != null) {
+                        LocationRepository.updateLocation(location.latitude, location.longitude)
+                        triggerDirectSOS(userId, userName, batteryLevel, location.latitude, location.longitude)
+                    } else {
+                        triggerDirectSOS(userId, userName, batteryLevel, 0.0, 0.0)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("HomeFragment", "Failed to fetch location for SOS: ${e.message}")
+                    if (_binding != null && isAdded) {
+                        triggerDirectSOS(userId, userName, batteryLevel, 0.0, 0.0)
+                    }
+                }
+        } catch (e: SecurityException) {
+            Log.e("HomeFragment", "Location permission missing: ${e.message}")
+            triggerDirectSOS(userId, userName, batteryLevel, 0.0, 0.0)
         }
     }
 

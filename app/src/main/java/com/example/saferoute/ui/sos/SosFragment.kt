@@ -1,5 +1,7 @@
 package com.example.saferoute.ui.sos
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
@@ -8,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -17,10 +20,13 @@ import com.example.saferoute.R
 import com.example.saferoute.data.local.AppDatabase
 import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.data.repository.EmergencyRepository
+import com.example.saferoute.data.repository.LocationRepository
 import com.example.saferoute.data.repository.SosRepository
 import com.example.saferoute.databinding.FragmentSosBinding
 import com.example.saferoute.models.ContactItem
 import com.example.saferoute.utils.PermissionManager
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -40,9 +46,13 @@ class SosFragment : Fragment() {
     private var countDownTimer: CountDownTimer? = null
     private var isTimerRunning = false
 
-    private var currentLatitude: Double = 30.0444
-    private var currentLongitude: Double = 31.2357
+    // القيم دي بتتحدث فورًا بموقع GPS حقيقي في fetchCurrentLocation()، والقيم دي مجرد fallback أخير
+    // لو مفيش أي موقع اتوصلنا بيه خالص (نادر جدًا لأن الصلاحيات بتتفحص الأول).
+    private var currentLatitude: Double = 0.0
+    private var currentLongitude: Double = 0.0
+    private var isRealLocationReady = false
 
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private var passedSosAlertId: String? = null
 
@@ -74,6 +84,9 @@ class SosFragment : Fragment() {
 
 
         passedSosAlertId = arguments?.getString("sosAlertId")
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        fetchCurrentLocation()
 
         val dbRoom = AppDatabase.getDatabase(requireContext())
         val firestoreService = FirestoreService(db)
@@ -198,6 +211,44 @@ class SosFragment : Fragment() {
             }
     }
 
+    /**
+     * بيجيب موقع حقيقي بدل الإحداثيات الثابتة القديمة.
+     * أولاً بياخد آخر موقع محفوظ في LocationRepository لو موجود (فوري)، بعدين بيطلب
+     * موقع طازج من FusedLocationProviderClient عشان يحدث القيمة لحظة إرسال الـ SOS.
+     */
+    private fun fetchCurrentLocation() {
+        LocationRepository.getLastKnownLatLng()?.let { (lat, lon) ->
+            currentLatitude = lat
+            currentLongitude = lon
+            isRealLocationReady = true
+        }
+
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location ->
+                    if (location != null) {
+                        currentLatitude = location.latitude
+                        currentLongitude = location.longitude
+                        isRealLocationReady = true
+                        LocationRepository.updateLocation(location.latitude, location.longitude)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("SosFragment", "Failed to fetch location: ${e.message}")
+                }
+        } catch (e: SecurityException) {
+            Log.e("SosFragment", "Location permission missing: ${e.message}")
+        }
+    }
+
     private fun checkPermissionsAndStart() {
         if (PermissionManager.hasAllPermissions(requireContext())) {
             startSosCountdown()
@@ -230,6 +281,14 @@ class SosFragment : Fragment() {
                 isTimerRunning = false
                 countDownTimer = null
                 binding.progressBar.visibility = View.VISIBLE
+
+                if (!isRealLocationReady && _binding != null) {
+                    Toast.makeText(
+                        requireContext(),
+                        "⚠️ لسه مقدرناش نحدد موقعك بدقة، البلاغ هيتبعت بدون إحداثيات دقيقة!",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
 
                 val selectedNumbers = emergencyContacts.map { it.phone }
                 val message =
