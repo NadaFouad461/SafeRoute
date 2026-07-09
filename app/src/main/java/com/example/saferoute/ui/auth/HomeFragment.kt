@@ -25,6 +25,12 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home) {
+    val currentBatteryLevel: Int
+        get() {
+            val batteryManager =
+                requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        }
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -76,6 +82,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             true
         }
 
+        binding.gpsStatusTv.text = if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            "📍 GPS: ON"
+        } else {
+            "📍 GPS: OFF"
+        }
+        binding.batteryStatusTv.text = "🔋 $currentBatteryLevel%"
+
 
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -110,7 +127,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
-            Toast.makeText(requireContext(), "🚨 Sending Instant Emergency Alert...", Toast.LENGTH_SHORT)
+            Toast.makeText(
+                requireContext(),
+                "🚨 Sending Instant Emergency Alert...",
+                Toast.LENGTH_SHORT
+            )
                 .show()
 
 
@@ -160,7 +181,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     if (_binding == null || !isAdded) return@addOnSuccessListener
                     if (location != null) {
                         LocationRepository.updateLocation(location.latitude, location.longitude)
-                        triggerDirectSOS(userId, userName, batteryLevel, location.latitude, location.longitude)
+                        triggerDirectSOS(
+                            userId,
+                            userName,
+                            batteryLevel,
+                            location.latitude,
+                            location.longitude
+                        )
                     } else {
                         triggerDirectSOS(userId, userName, batteryLevel, 0.0, 0.0)
                     }
@@ -293,7 +320,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         db.collection("emergency_logs").add(emergencyData)
             .addOnSuccessListener { documentReference ->
                 if (_binding != null && isAdded) {
-                    Toast.makeText(requireContext(), "🚨 SOS Saved to Database!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "🚨 SOS Saved to Database!", Toast.LENGTH_SHORT)
+                        .show()
 
                     val bundle = Bundle().apply {
                         putString("sosAlertId", documentReference.id)

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8FAFC">
@@ -35,7 +36,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
-                        android:src="@android:drawable/ic_menu_gallery" />
+                        android:src="@drawable/ic_launcher_foreground" />
                 </com.google.android.material.card.MaterialCardView>
 
                 <LinearLayout
@@ -74,24 +75,27 @@
                 android:paddingHorizontal="12dp">
 
                 <TextView
+                    android:id="@+id/gpsStatusTv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="16dp"
-                    android:text="🧭 GPS: ON"
                     android:textColor="#64748B"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    tools:text="🧭 GPS: ON" />
 
                 <TextView
+                    android:id="@+id/batteryStatusTv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="16dp"
-                    android:text="🔋 84%"
                     android:textColor="#64748B"
                     android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    tools:text="🔋 84%" />
 
                 <TextView
+                    android:id="@+id/networkStatusTv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="📶 LTE"
