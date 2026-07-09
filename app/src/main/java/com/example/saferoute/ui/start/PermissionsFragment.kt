@@ -9,8 +9,10 @@ import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
 import com.example.saferoute.databinding.FragmentPermissionsBinding
@@ -105,6 +107,10 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
             if (permissionList.all { it.isGranted }) {
                 Toast.makeText(requireContext(), "All permissions granted!", Toast.LENGTH_SHORT)
                     .show()
+                val sharedPrefs =
+                    requireActivity().getSharedPreferences("SafeRoutePrefs", Context.MODE_PRIVATE)
+                sharedPrefs.edit().putBoolean("isFirstTime", false).apply()
+                findNavController().navigate(R.id.action_permissionsFragment_to_loginFragment)
             } else {
                 Toast.makeText(
                     requireContext(),
@@ -118,7 +124,7 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
 
     private fun startFallDetectionSensor() {
         requireActivity().getSharedPreferences("SafeRoutePrefs", Context.MODE_PRIVATE)
-            .edit().putBoolean("IS_FALL_DETECTION_ACTIVE", true).apply()
+            .edit { putBoolean("IS_FALL_DETECTION_ACTIVE", true) }
 
         val serviceIntent = Intent(requireContext(), FallDetectionService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -131,7 +137,7 @@ class PermissionsFragment : Fragment(R.layout.fragment_permissions) {
 
     private fun stopFallDetectionSensor() {
         requireActivity().getSharedPreferences("SafeRoutePrefs", Context.MODE_PRIVATE)
-            .edit().putBoolean("IS_FALL_DETECTION_ACTIVE", false).apply()
+            .edit { putBoolean("IS_FALL_DETECTION_ACTIVE", false) }
 
         val serviceIntent = Intent(requireContext(), FallDetectionService::class.java)
         requireContext().stopService(serviceIntent)

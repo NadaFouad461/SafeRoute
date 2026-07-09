@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/loginFragment">
+    app:startDestination="@id/splashFragment">
 
     <fragment
         android:id="@+id/loginFragment"
@@ -87,7 +87,11 @@
     <fragment
         android:id="@+id/permissionsFragment"
         android:name="com.example.saferoute.ui.start.PermissionsFragment"
-        android:label="PermissionsFragment" />
+        android:label="PermissionsFragment">
+        <action
+            android:id="@+id/action_permissionsFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
     <fragment
         android:id="@+id/addContactFragment"
         android:name="com.example.saferoute.ui.contact.AddContactFragment"
@@ -177,5 +181,19 @@
         android:id="@+id/fakeCallFragment"
         android:name="com.example.saferoute.ui.fakeCall.FakeCallFragment"
         android:label="FakeCallFragment" />
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.example.saferoute.ui.start.SplashFragment"
+        android:label="SplashFragment">
+        <action
+            android:id="@+id/action_splashFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_splashFragment_to_onboardingFragment"
+            app:destination="@id/onboardingFragment" />
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
 
 </navigation>

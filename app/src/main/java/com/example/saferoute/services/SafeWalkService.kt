@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 @AndroidEntryPoint
 class SafeWalkService : Service() {
 
-    // الـ Companion Object ده هيخلينا نقدر نقرأ الوقت المتبقي من أي مكان في التطبيق
+
     companion object {
         const val CHANNEL_ID = "SafeWalkChannel"
         const val NOTIFICATION_ID = 101

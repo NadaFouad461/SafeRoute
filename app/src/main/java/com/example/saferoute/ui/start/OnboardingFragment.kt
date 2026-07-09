@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class OnboardingFragment : Fragment(R.layout.fragment_onboarding) {
 
+
     private var _binding: FragmentOnboardingBinding? = null
     private val binding get() = _binding!!
 
@@ -45,6 +46,7 @@ class OnboardingFragment : Fragment(R.layout.fragment_onboarding) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+
         _binding = null
     }
 }
