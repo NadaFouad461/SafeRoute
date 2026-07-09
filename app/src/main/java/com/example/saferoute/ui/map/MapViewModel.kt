@@ -12,7 +12,6 @@ class MapViewModel : ViewModel() {
     private val _currentLocation = MutableLiveData<GeoPoint>()
     val currentLocation: LiveData<GeoPoint> = _currentLocation
 
-
     private val _latitude = MutableLiveData<Double>()
     val latitude: LiveData<Double> = _latitude
 
@@ -34,7 +33,6 @@ class MapViewModel : ViewModel() {
         )
         Log.d("VM_LOCATION", "Updated: ${point.latitude}, ${point.longitude}")
     }
-
 
     fun getLastKnownCoordinates(): Pair<Double, Double>? {
         val lat = _latitude.value

@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#EF4444"
-    tools:context=".ui.sos.SosFragment">
+    android:background="#EF4444">
 
     <ImageView
         android:id="@+id/btnOpenLogs"
@@ -52,8 +50,7 @@
             android:layout_height="220dp"
             android:layout_marginTop="40dp"
             android:background="@android:drawable/toast_frame"
-            android:backgroundTint="#1AFFFFFF"
-            android:layout_gravity="center_horizontal">
+            android:backgroundTint="#1AFFFFFF">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="160dp"
@@ -100,27 +97,6 @@
             android:textStyle="bold"
             android:layout_marginTop="32dp"
             android:letterSpacing="0.05"/>
-
-        <TextView
-            android:id="@+id/tvSendingTo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sending SOS To:"
-            android:textColor="#1E293B"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"
-            android:layout_gravity="center"/>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvEmergencyContactsHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="12dp"
-            android:paddingHorizontal="16dp"
-            android:clipToPadding="false"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     </LinearLayout>
 
     <LinearLayout
@@ -131,18 +107,16 @@
         android:gravity="center_horizontal"
         android:padding="24dp"
         android:background="#B91C1C"
-        android:visibility="gone">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:text="EMERGENCY\nACTIVE"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:letterSpacing="0.05"/>
+        android:visibility="gone"> <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="EMERGENCY\nACTIVE"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:letterSpacing="0.05"/>
 
         <TextView
             android:layout_width="wrap_content"

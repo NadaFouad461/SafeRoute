@@ -1,7 +1,6 @@
 package com.example.saferoute.services
 
 import android.Manifest
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -31,7 +30,6 @@ class LocationTrackingService : Service() {
         override fun onLocationChanged(location: Location) {
             Log.d("LocationService", "New location: ${location.latitude}, ${location.longitude}")
 
-
             val intent = Intent("LocationUpdateIntent").apply {
                 putExtra("lat", location.latitude)
                 putExtra("lon", location.longitude)
@@ -58,7 +56,6 @@ class LocationTrackingService : Service() {
             stopSelf()
             return
         }
-
 
         val lastGps = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
         val lastNet = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)

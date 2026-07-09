@@ -3,14 +3,13 @@ package com.example.saferoute.services
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
-import com.example.saferoute.MainActivity
 import com.example.saferoute.R
+import com.example.saferoute.ui.MainActivity
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 
@@ -32,12 +31,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         wakeUpDeviceScreen()
 
-        // استدعاء دالة بناء الإشعار بمؤثرات الصوت والاهتزاز الكاملة
         sendNotification(title, body, sosAlertId, senderName)
     }
 
     private fun wakeUpDeviceScreen() {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
         val wakeLock = powerManager.newWakeLock(
             PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
             "SafeRoute:EmergencyWakeLock"
@@ -46,8 +44,14 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         wakeLock.acquire(5000)
     }
 
-    private fun sendNotification(title: String, messageBody: String, sosAlertId: String, senderName: String) {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private fun sendNotification(
+        title: String,
+        messageBody: String,
+        sosAlertId: String,
+        senderName: String
+    ) {
+        val notificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         val channelId = "SafeRoute_SOS_Channel"
 

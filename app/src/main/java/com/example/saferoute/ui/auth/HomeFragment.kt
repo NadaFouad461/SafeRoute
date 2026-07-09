@@ -41,6 +41,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.actionContacts.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
         }
+        binding.actionLiveLocation.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
+        }
 
 
         binding.fabEmergency.setOnClickListener {
@@ -91,14 +94,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
-            Toast.makeText(context, "🚨 Sending Instant Emergency Alert...", Toast.LENGTH_SHORT).show()
-
-
-            val batteryManager = requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            val currentBatteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-
-
-            triggerDirectSOS(currentUid, currentUserName, currentBatteryLevel, 30.3346, 31.7504)
+            findNavController().navigate(R.id.action_homeFragment_to_sosFragment)
         } else {
             Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show()
         }
@@ -127,8 +123,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                         currentUserPhone = documentSnapshot.getString("phone") ?: ""
                         binding.welcomeTv.text = "Good Evening, $currentUserName"
 
-
-                        startListeningForIncomingSos(currentUid)
                     }
                 }
                 .addOnFailureListener {
@@ -140,70 +134,40 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
 
-    private fun startListeningForIncomingSos(currentUserId: String) {
-        db.collection("emergency_logs")
-            .whereEqualTo("status", "triggered")
-            .addSnapshotListener { snapshots, e ->
-                if (e != null) {
-                    Log.w("HomeFragment", "Listen failed.", e)
-                    return@addSnapshotListener
+
+
+    private fun showEmergencyDialog(sosAlertId: String) {
+        if (_binding == null || !isAdded) return
+
+
+        val sharedPrefs = requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
+        val isDismissedBefore = sharedPrefs.getBoolean("dismissed_$sosAlertId", false)
+        if (isDismissedBefore) return
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("🚨 بلاغ استغاثة طارئ SOS!")
+            .setMessage("هناك خطر يواجه أحد جهات اتصالك المقربة الآن! اضغطي للانتقال للسجل ومتابعة الحالة.")
+            .setCancelable(false)
+            .setPositiveButton("الانتقال للسجل (History)") { _, _ ->
+                val bundle = Bundle().apply {
+                    putString("incomingSosId", sosAlertId)
+                    putBoolean("isFromSomeoneElse", true)
                 }
 
-                if (snapshots != null && !snapshots.isEmpty) {
-                    for (change in snapshots.documentChanges) {
-                        if (change.type == DocumentChange.Type.ADDED) {
-                            val doc = change.document
-                            val girlUserId = doc.getString("userId") ?: ""
-
-                            if (girlUserId == currentUserId) continue
-
-
-                        }
-                    }
+                val navController = findNavController()
+                if (navController.currentDestination?.id == R.id.homeFragment) {
+                    navController.navigate(R.id.action_homeFragment_to_historyFragment, bundle)
                 }
             }
+            .setNegativeButton("إغلاق") { dialog, _ ->
+
+                sharedPrefs.edit().putBoolean("dismissed_$sosAlertId", true).apply()
+                dialog.dismiss()
+            }
+            .show()
     }
 
 
-    private fun triggerDirectSOS(userId: String, userName: String, batteryLevel: Int, latitude: Double, longitude: Double) {
-        val emergencyData = hashMapOf(
-            "userId" to userId,
-            "userName" to userName,
-            "status" to "triggered",
-            "batteryLevel" to batteryLevel,
-            "latitude" to latitude,
-            "longitude" to longitude,
-            "timestamp" to com.google.firebase.Timestamp.now(),
-            "alertedContacts" to listOf<String>()
-        )
-
-        db.collection("emergency_logs").add(emergencyData)
-            .addOnSuccessListener { documentReference ->
-                if (_binding != null && isAdded) {
-                    Toast.makeText(context, "🚨 SOS Saved to Database!", Toast.LENGTH_SHORT).show()
-
-                    val bundle = Bundle().apply {
-                        putString("sosAlertId", documentReference.id)
-                        putInt("batteryLevel", batteryLevel)
-                    }
-
-                    try {
-                        findNavController().navigate(R.id.action_homeFragment_to_sosFragment, bundle)
-                    } catch (e: Exception) {
-                        try {
-                            findNavController().navigate(R.id.sosFragment, bundle)
-                        } catch (navError: Exception) {
-                            Toast.makeText(context, "Nav Error: ${navError.message}", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }
-            }
-            .addOnFailureListener { exception ->
-                if (_binding != null && isAdded) {
-                    Toast.makeText(context, "Failed to trigger SOS: ${exception.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

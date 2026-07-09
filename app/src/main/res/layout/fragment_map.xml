@@ -14,11 +14,11 @@
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="54dp"
         android:layout_margin="16dp"
-        app:cardCornerRadius="25dp"
+        app:cardCornerRadius="27dp"
         app:cardBackgroundColor="#FFFFFF"
-        app:cardElevation="4dp"
+        app:cardElevation="5dp"
         app:strokeWidth="0dp">
         <RelativeLayout
             android:layout_width="match_parent"
@@ -26,8 +26,8 @@
             android:paddingHorizontal="16dp">
             <ImageView
                 android:id="@+id/searchIcon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:src="@android:drawable/ic_menu_search"
                 android:layout_centerVertical="true"
                 app:tint="#94A3B8"/>
@@ -50,7 +50,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:visibility="visible"/>
+        android:visibility="gone"/>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -67,7 +67,7 @@
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_menu_mylocation"
             app:backgroundTint="#FFFFFF"
-            app:tint="#74C3EE"
+            app:tint="#3AA9F4"
             app:fabSize="mini"
             android:layout_marginBottom="12dp"
             app:elevation="4dp"/>
@@ -79,7 +79,7 @@
             android:text="Start Demo"
             android:textSize="11sp"
             android:textColor="#FFFFFF"
-            app:backgroundTint="#74C3EE"
+            app:backgroundTint="#3AA9F4"
             app:cornerRadius="8dp"
             android:paddingHorizontal="8dp"/>
     </LinearLayout>
@@ -88,17 +88,17 @@
         android:id="@+id/coordinatesCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@id/shareLocationBtnCard"
+        android:layout_above="@id/highRiskCard"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="8dp"
-        app:cardCornerRadius="8dp"
+        app:cardCornerRadius="10dp"
         app:cardBackgroundColor="#80000000"
         app:strokeWidth="0dp">
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="6dp">
+            android:padding="8dp">
             <TextView
                 android:id="@+id/txtLat"
                 android:layout_width="wrap_content"
@@ -106,7 +106,7 @@
                 android:text="Lat: 0.0"
                 android:textColor="#FFFFFF"
                 android:textSize="11sp"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="12dp"/>
             <TextView
                 android:id="@+id/txtLon"
                 android:layout_width="wrap_content"
@@ -118,37 +118,106 @@
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/highRiskCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="10dp"
+        android:layout_above="@id/shareLocationBtnCard"
+        android:visibility="gone"
+        app:cardCornerRadius="18dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardElevation="5dp">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dp">
+            <ImageView
+                android:id="@+id/imgWarning"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:src="@android:drawable/ic_dialog_alert"
+                app:tint="#E53935" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/imgWarning"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nearby High Risk Zone"
+                    android:textStyle="bold"
+                    android:textSize="15sp"
+                    android:textColor="#222222"/>
+                <TextView
+                    android:id="@+id/txtRiskDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Unsafe area detected"
+                    android:textColor="#777777"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewRisk"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="View"
+                android:textSize="13sp"
+                app:cornerRadius="17dp"
+                app:backgroundTint="#E53935"/>
+        </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/shareLocationBtnCard"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
-        android:layout_above="@id/bottomNavigationView"
+        android:layout_height="70dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginBottom="16dp"
-        app:cardCornerRadius="16dp"
-        app:cardBackgroundColor="#74C3EE"
-        app:cardElevation="4dp"
+        android:layout_above="@id/bottomNavigationView"
+        app:cardCornerRadius="20dp"
+        app:cardBackgroundColor="#4FC3F7"
+        app:cardElevation="6dp"
         app:strokeWidth="0dp">
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingHorizontal="16dp">
-            <TextView
+            android:paddingHorizontal="18dp">
+            <ImageView
+                android:id="@+id/shareIcon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_centerVertical="true"
+                android:src="@android:drawable/ic_menu_share"
+                app:tint="#FFFFFF" />
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Share Live Location"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:textSize="14sp"
-                android:layout_centerVertical="true"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="WITH 3 EMERGENCY CONTACTS"
-                android:textColor="#E0F2FE"
-                android:textSize="9sp"
-                android:textStyle="bold"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"/>
+                android:layout_toEndOf="@id/shareIcon"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/txtShareTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Share Live Location"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="#FFFFFF"/>
+                <TextView
+                    android:id="@+id/txtContacts"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="WITH 3 EMERGENCY CONTACTS"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="#EAF9FF"/>
+            </LinearLayout>
         </RelativeLayout>
     </com.google.android.material.card.MaterialCardView>
 

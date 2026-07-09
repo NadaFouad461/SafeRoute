@@ -1,31 +1,44 @@
-package com.example.saferoute
+package com.example.saferoute.ui
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.os.Build
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
-import androidx.navigation.NavDeepLinkBuilder
+import androidx.core.app.NotificationCompat.BigTextStyle
+import androidx.core.app.NotificationCompat.Builder
 import androidx.navigation.fragment.NavHostFragment
-import com.example.saferoute.databinding.ActivityMainBinding
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import com.google.firebase.messaging.FirebaseMessaging
 import com.example.saferoute.R
+import com.example.saferoute.R.drawable
+import com.example.saferoute.R.id
+import com.example.saferoute.databinding.ActivityMainBinding
+import com.example.saferoute.services.FallDetectionService
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentChange.Type
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query.Direction
+import com.google.firebase.messaging.FirebaseMessaging
+import dagger.hilt.android.AndroidEntryPoint
+import org.osmdroid.config.Configuration
+import java.security.MessageDigest
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
-    private val CHANNEL_ID = "SafeRoute_SOS_Channel"
+    @Inject
+    lateinit var sharedPrefs: SharedPreferences
 
 
     private var isTokenUpdated = false
@@ -35,10 +48,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        org.osmdroid.config.Configuration.getInstance().userAgentValue = packageName
+        Configuration.getInstance().userAgentValue = packageName
 
         createNotificationChannel()
         startListeningForSOSTriggers()
+        checkAndStartSensor()
 
 
         if (!isTokenUpdated) {
@@ -54,28 +68,27 @@ class MainActivity : AppCompatActivity() {
 
 
             binding.root.post {
-                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                val navHostFragment =
+                    supportFragmentManager.findFragmentById(id.nav_host_fragment) as? NavHostFragment
                 val navController = navHostFragment?.navController
-                navController?.navigate(R.id.emergencyNotificationFragment, bundle)
+                navController?.navigate(id.emergencyNotificationFragment, bundle)
             }
         }
 
         handleIncomingNotification(intent)
 
+        logSignature()
+    }
 
-        try {
-            val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-            val signatures = info.signingInfo?.signingCertificateHistory
-            if (signatures != null) {
-                for (signature in signatures) {
-                    val md = java.security.MessageDigest.getInstance("SHA1")
-                    val digest = md.digest(signature.toByteArray())
-                    val sha1 = digest.joinToString(":") { String.format("%02X", it) }
-                    Log.d("MY_REAL_SHA1", "🎯 الـ SHA-1 الحقيقي لجهازك هو: $sha1")
-                }
+    private fun checkAndStartSensor() {
+        val isSensorActive = sharedPrefs.getBoolean("IS_FALL_DETECTION_ACTIVE", false)
+        if (isSensorActive) {
+            val serviceIntent = Intent(this, FallDetectionService::class.java)
+            if (VERSION.SDK_INT >= VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
             }
-        } catch (e: Exception) {
-            Log.e("MY_REAL_SHA1", "خطأ أثناء استخراج البصمة", e)
         }
     }
 
@@ -105,7 +118,10 @@ class MainActivity : AppCompatActivity() {
                                     }
                             }
                         } else {
-                            Log.e("FCM_TOKEN_UPDATE", "❌ لم يتم العثور على أي مستند يحتوي على هذا الإيميل!")
+                            Log.e(
+                                "FCM_TOKEN_UPDATE",
+                                "❌ لم يتم العثور على أي مستند يحتوي على هذا الإيميل!",
+                            )
                         }
                     }
                     .addOnFailureListener { e ->
@@ -129,36 +145,31 @@ class MainActivity : AppCompatActivity() {
 
 
             binding.root.post {
-                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-                navHostFragment?.navController?.navigate(R.id.emergencyNotificationFragment, bundle)
+                val navHostFragment =
+                    supportFragmentManager.findFragmentById(id.nav_host_fragment) as? NavHostFragment
+                navHostFragment?.navController?.navigate(id.emergencyNotificationFragment, bundle)
             }
         }
     }
 
     private fun handleIncomingNotification(intent: Intent?) {
         val navigateTo = intent?.getStringExtra("NAVIGATE_TO")
+
         if (navigateTo == "HISTORY") {
-            val sosId = intent.getStringExtra("INCOMING_SOS_ID")
-            val senderName = intent.getStringExtra("SENDER_NAME")
-
-            val bundle = Bundle().apply {
-                putString("INCOMING_SOS_ID", sosId)
-                putString("SENDER_NAME", senderName)
-                putBoolean("IS_FROM_SOMEONE_ELSE", true)
-            }
-
 
             binding.root.post {
-                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
-                val navController = navHostFragment?.navController
-                navController?.navigate(R.id.historyFragment, bundle)
+                val navHost =
+                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+                            as NavHostFragment
+
+                navHost.navController.navigate(R.id.historyFragment)
             }
         }
     }
 
     private fun startListeningForSOSTriggers() {
         db.collection("emergency_logs")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .orderBy("timestamp", Direction.DESCENDING)
             .limit(1)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
@@ -173,23 +184,30 @@ class MainActivity : AppCompatActivity() {
                         if (userDocument != null && userDocument.exists()) {
                             val myPhone = userDocument.getString("phone") ?: ""
 
-                            for (doc in snapshots!!.documentChanges) {
-                                if (doc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                            snapshots?.documentChanges?.forEach { doc ->
+                                if (doc.type == Type.ADDED) {
                                     val logDoc = doc.document
                                     val emergencyUserId = logDoc.getString("userId") ?: ""
 
                                     if (emergencyUserId != currentUid) {
-                                        checkIfIAnEmergencyContact(emergencyUserId, myPhone) { isContact ->
+                                        checkIfIAnEmergencyContact(
+                                            emergencyUserId,
+                                            myPhone
+                                        ) { isContact ->
                                             if (isContact) {
                                                 val sosAlertId = logDoc.id
 
 
-                                                val intent = Intent(this@MainActivity, MainActivity::class.java).apply {
+                                                val intent = Intent(
+                                                    this@MainActivity,
+                                                    MainActivity::class.java
+                                                ).apply {
                                                     action = "OPEN_SOS_FRAGMENT"
                                                     val bundle = Bundle()
                                                     bundle.putString("SOS_ALERT_ID", sosAlertId)
                                                     putExtras(bundle)
-                                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                                    flags =
+                                                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                                                 }
 
 
@@ -197,12 +215,16 @@ class MainActivity : AppCompatActivity() {
                                                     this@MainActivity,
                                                     0,
                                                     intent,
-                                                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE // غيرناها لـ MUTABLE
+                                                    if (VERSION.SDK_INT >= VERSION_CODES.S) {
+                                                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                                                    } else {
+                                                        PendingIntent.FLAG_UPDATE_CURRENT
+                                                    }
                                                 )
 
                                                 showLocalNotification(
-                                                    "🚨 استغاثة طوارئ SafeRoute!",
-                                                    "بنتك في خطر وبحاجة للمساعدة، اضغطي لفتح الموقع حياً",
+                                                    getString(R.string.sos_notification_title),
+                                                    getString(R.string.sos_notification_body),
                                                     pendingIntent
                                                 )
                                             }
@@ -215,14 +237,18 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    private fun checkIfIAnEmergencyContact(emergencyUserId: String, myPhone: String, callback: (Boolean) -> Unit) {
+    private fun checkIfIAnEmergencyContact(
+        emergencyUserId: String,
+        myPhone: String,
+        callback: (Boolean) -> Unit
+    ) {
         if (emergencyUserId.isEmpty() || myPhone.isEmpty()) {
             callback(false)
             return
         }
         db.collection("users").document(emergencyUserId).get()
             .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
+                if ((document != null) && document.exists()) {
                     val dadPhone = document.getString("dad") ?: ""
                     val momPhone = document.getString("mom") ?: ""
                     callback(myPhone == dadPhone || myPhone == momPhone)
@@ -233,11 +259,13 @@ class MainActivity : AppCompatActivity() {
             .addOnFailureListener { callback(false) }
     }
 
+    @SuppressLint("UseFullScreenIntent")
     private fun showLocalNotification(title: String, body: String, pendingIntent: PendingIntent) {
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+        val notificationBuilder = Builder(this, CHANNEL_ID)
+            .setSmallIcon(drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -245,21 +273,57 @@ class MainActivity : AppCompatActivity() {
            // .setFullScreenIntent(pendingIntent, true)
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setStyle(BigTextStyle().bigText(body))
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (VERSION.SDK_INT >= VERSION_CODES.O) {
             val name = "Emergency Alerts"
             val descriptionText = "Channels for SafeRoute SOS notifications"
             val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
             }
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
+    }
+
+    private fun logSignature() {
+        try {
+            if (VERSION.SDK_INT >= VERSION_CODES.P) {
+                val info = packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.GET_SIGNING_CERTIFICATES
+                )
+                val signatures = info.signingInfo?.signingCertificateHistory
+                signatures?.forEach { signature ->
+                    val md = MessageDigest.getInstance("SHA1")
+                    val digest = md.digest(signature.toByteArray())
+                    val sha1 = digest.joinToString(":") { String.format("%02X", it) }
+                    Log.d("MY_REAL_SHA1", "🎯 الـ SHA-1 الحقيقي لجهازك هو: $sha1")
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+                @Suppress("DEPRECATION")
+                val signatures = info.signatures
+                signatures?.forEach { signature ->
+                    val md = MessageDigest.getInstance("SHA1")
+                    val digest = md.digest(signature.toByteArray())
+                    val sha1 = digest.joinToString(":") { String.format("%02X", it) }
+                    Log.d("MY_REAL_SHA1", "🎯 الـ SHA-1 الحقيقي لجهازك هو (Legacy): $sha1")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MY_REAL_SHA1", "خطأ أثناء استخراج البصمة", e)
+        }
+    }
+
+    companion object {
+        private const val CHANNEL_ID = "SafeRoute_SOS_Channel"
     }
 }

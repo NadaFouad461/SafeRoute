@@ -32,7 +32,7 @@ class ForgetFragment : Fragment(R.layout.fragment_forget) {
             if (email.isEmpty()) {
 
                 Toast.makeText(
-                    context,
+                    requireContext(),
                     "Enter your email",
                     Toast.LENGTH_SHORT
                 ).show()
@@ -45,11 +45,13 @@ class ForgetFragment : Fragment(R.layout.fragment_forget) {
 
                     if (task.isSuccessful) {
 
-                        Toast.makeText(
-                            context,
-                            "Reset email sent!",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        context?.let { ctx ->
+                            Toast.makeText(
+                                ctx,
+                                "Reset email sent!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
 
                         findNavController().navigate(
                             R.id.action_forgetFragment_to_loginFragment
@@ -57,11 +59,13 @@ class ForgetFragment : Fragment(R.layout.fragment_forget) {
 
                     } else {
 
-                        Toast.makeText(
-                            context,
-                            task.exception?.message,
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        context?.let { ctx ->
+                            Toast.makeText(
+                                ctx,
+                                task.exception?.message,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
         }

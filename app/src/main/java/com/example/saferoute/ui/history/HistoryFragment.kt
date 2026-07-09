@@ -5,27 +5,29 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
+import com.example.saferoute.data.local.EmergencyLog
 import com.example.saferoute.databinding.FragmentHistoryBinding
 import com.google.firebase.firestore.FirebaseFirestore
+import dagger.hilt.android.AndroidEntryPoint
 import kotlin.math.log
 
+@AndroidEntryPoint
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
     private var _binding: FragmentHistoryBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: HistoryViewModel
+    private val viewModel: HistoryViewModel by viewModels()
     private val logAdapter = LogAdapter()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHistoryBinding.bind(view)
-
-        viewModel = ViewModelProvider(this)[HistoryViewModel::class.java]
 
         binding.rvHistory.apply {
             layoutManager = LinearLayoutManager(context)
@@ -43,7 +45,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
                 findNavController().navigate(R.id.emergencyNotificationFragment, bundle)
             } else {
-                Toast.makeText(context, "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -57,27 +59,21 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     .setTitle("تأكيد حالة الأمان")
                     .setMessage("هل أنتِ بخير وتريدين إنهاء حالة الاستغاثة الحالية؟")
                     .setPositiveButton("نعم") { _, _ ->
-                        FirebaseFirestore.getInstance().collection("emergency_logs")
-                            .document(firestoreDocId)
-                            .update("status", "Resolved")
-                            .addOnSuccessListener {
-                                Toast.makeText(context, "تم إغلاق البلاغ بنجاح 🎉", Toast.LENGTH_SHORT).show()
-                            }
-                            .addOnFailureListener {
-                                Toast.makeText(context, "فشل التحديث", Toast.LENGTH_SHORT).show()
-                            }
+                        viewModel.resolveEmergency(firestoreDocId)
+                        Toast.makeText(requireContext(), "تم إغلاق البلاغ بنجاح 🎉", Toast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("إلغاء", null)
                     .show()
             } else {
-                Toast.makeText(context, "خطأ: لا يمكن العثور على معرف البلاغ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "خطأ: لا يمكن العثور على معرف البلاغ", Toast.LENGTH_SHORT).show()
             }
         }
 
 
         viewModel.logs.observe(viewLifecycleOwner) { logsList ->
             if (logsList != null) {
-                val uniqueLogsMap = LinkedHashMap<String, com.example.saferoute.data.local.EmergencyLog>()
+
+                val uniqueLogsMap = LinkedHashMap<String, EmergencyLog>()
 
                 logsList.forEach { log ->
                     if (!log.userId.isNullOrEmpty()) {
@@ -88,7 +84,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                         if (!uniqueLogsMap.containsKey(uniqueKey)) {
                             uniqueLogsMap[uniqueKey] = log
                         } else {
-
                             if (log.status.contains("Resolved")) {
                                 uniqueLogsMap[uniqueKey] = log
                             }
@@ -97,32 +92,9 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
 
 
-                val isFromSomeoneElse = arguments?.getBoolean("IS_FROM_SOMEONE_ELSE", false) ?: false
-                val incomingSosId = arguments?.getString("INCOMING_SOS_ID") ?: ""
-                val senderName = arguments?.getString("SENDER_NAME") ?: "ابنتكِ"
-
-                if (isFromSomeoneElse && incomingSosId.isNotEmpty()) {
-                    val timeKey = System.currentTimeMillis() / 60000
-                    val externalUniqueKey = "${incomingSosId}_$timeKey"
-                    val existingLog = uniqueLogsMap[externalUniqueKey]
-
-                    if (existingLog == null || !existingLog.status.contains("Resolved", ignoreCase = true)) {
-                        val externalLog = com.example.saferoute.data.local.EmergencyLog(
-                            id = incomingSosId.hashCode(),
-                            userId = incomingSosId,
-                            type = "SOS|$incomingSosId",
-                            latitude = arguments?.getDouble("LAT", 0.0) ?: 0.0,
-                            longitude = arguments?.getDouble("LNG", 0.0) ?: 0.0,
-                            timestamp = System.currentTimeMillis(),
-                            status = "Incoming_SOS|$senderName",
-                            batteryLevel = 100
-                        )
-                        uniqueLogsMap[externalUniqueKey] = externalLog
-                    }
-                }
-
-
-                val finalFilteredList = uniqueLogsMap.values.toList().sortedByDescending { it.timestamp }
+                val finalFilteredList = uniqueLogsMap.values
+                    .toList()
+                    .sortedByDescending { it.timestamp }
 
                 logAdapter.submitList(finalFilteredList)
                 binding.tvTotalEventsCount.text = finalFilteredList.size.toString()
@@ -160,7 +132,9 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     else -> false
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "مسار التنقل غير مدعوم حالياً", Toast.LENGTH_SHORT).show()
+                context?.let { ctx ->
+                    Toast.makeText(ctx, "مسار التنقل غير مدعوم حالياً", Toast.LENGTH_SHORT).show()
+                }
                 false
             }
         }

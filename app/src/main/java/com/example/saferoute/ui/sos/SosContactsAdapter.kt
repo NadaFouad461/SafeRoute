@@ -22,26 +22,24 @@ class SosContactsAdapter(
         )
         return SosViewHolder(binding)
     }
-
+    var onContactRemoved: ((MutableList<ContactItem>) -> Unit)? = null
     override fun onBindViewHolder(holder: SosViewHolder, position: Int) {
         val contact = contacts[position]
-
-
         holder.binding.tvContactName.text = contact.name
 
-
-
-
         holder.binding.btnRemoveContact.setOnClickListener {
-
             val currentPosition = holder.adapterPosition
             if (currentPosition != RecyclerView.NO_POSITION) {
-                contacts.removeAt(currentPosition)
-                notifyItemRemoved(currentPosition)
-                notifyItemRangeChanged(currentPosition, contacts.size)
+                val itemToRemove = contacts[currentPosition]
+                onContactRemoved?.invoke(mutableListOf(itemToRemove))
             }
         }
     }
 
     override fun getItemCount(): Int = contacts.size
+    fun updateList(newList: List<ContactItem>) {
+        this.contacts.clear()
+        this.contacts.addAll(newList)
+        notifyDataSetChanged()
+    }
 }

@@ -16,7 +16,8 @@ class PermissionsAdapter(
 ) : RecyclerView.Adapter<PermissionsAdapter.PermissionViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PermissionViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_permission_card, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_permission_card, parent, false)
         return PermissionViewHolder(view)
     }
 

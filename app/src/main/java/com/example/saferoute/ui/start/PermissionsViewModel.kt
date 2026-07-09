@@ -1,4 +1,4 @@
-package com.example.saferoute.ui.sensors
+package com.example.saferoute.ui.start
 
 import android.content.Context
 import android.content.Intent
@@ -12,35 +12,36 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-@HiltViewModel
-class SensorViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val sharedPrefs: SharedPreferences // Inject SharedPreferences
-) : ViewModel() {
 
-    private val _isDetectionActive = MutableLiveData<Boolean>()
-    val isDetectionActive: LiveData<Boolean> = _isDetectionActive
+@HiltViewModel
+class PermissionsViewModel@Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val sharedPrefs: SharedPreferences
+): ViewModel() {
+
+    private val _permissionsGranted = MutableLiveData<Boolean>()
+    val permissionsGranted: LiveData<Boolean> = _permissionsGranted
+
 
     init {
 
         val isSavedActive = sharedPrefs.getBoolean("IS_FALL_DETECTION_ACTIVE", false)
-        _isDetectionActive.value = isSavedActive
+        _permissionsGranted.value = isSavedActive
 
         if (isSavedActive) {
             startServiceIntent()
         }
     }
 
-    // Method to start or stop the fall detection service
     fun startDetection() {
-        _isDetectionActive.value = true
+        _permissionsGranted.value = true
 
         sharedPrefs.edit().putBoolean("IS_FALL_DETECTION_ACTIVE", true).apply()
         startServiceIntent()
     }
 
     fun stopDetection() {
-        _isDetectionActive.value = false
+        _permissionsGranted.value = false
 
         sharedPrefs.edit().putBoolean("IS_FALL_DETECTION_ACTIVE", false).apply()
         context.stopService(Intent(context, FallDetectionService::class.java))
