@@ -3,11 +3,15 @@ package com.example.saferoute.ui.emergency
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.saferoute.R
@@ -16,6 +20,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.AndroidEntryPoint
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.Marker
+import java.util.Locale
+import kotlin.concurrent.thread
+
 
 @AndroidEntryPoint
 
@@ -33,10 +44,14 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
     private var latitude: Double = 30.0444
     private var longitude: Double = 31.2357
 
+    private var notificationMarker: Marker? = null
+    private var firstLocationReceived = true
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEmergencyNotificationBinding.bind(view)
 
+        setupMiniMap()
 
         val sosAlertId = arguments?.getString("SOS_ALERT_ID")
 
@@ -66,6 +81,13 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         binding.btnNavigate.setOnClickListener {
 
             if (latitude != 0.0 && longitude != 0.0) {
+                // بدل ما نفتح خرائط جوجل، بنفتح خريطة التطبيق بتاعتنا (MapFragment)
+                // ونبعتلها الإحداثيات عشان تحط عليها ماركر مكان البلاغ.
+                val locationBundle = bundleOf(
+                    "latitude" to latitude,
+                    "longitude" to longitude
+                )
+                findNavController().navigate(R.id.mapFragment, locationBundle)
                 val mapIntent = Intent(
                     Intent.ACTION_VIEW,
                     Uri.parse("google.navigation:q=$latitude,$longitude")
@@ -99,6 +121,68 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
             })
     }
 
+    /**
+     * بتشغّل الخريطة المصغّرة (osmdroid) اللي بتعرض مكان الشخص اللي بعت الـ SOS.
+     */
+    private fun setupMiniMap() {
+        Configuration.getInstance().userAgentValue = requireContext().packageName
+        Configuration.getInstance().load(
+            requireContext(),
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+        )
+
+        binding.notificationMap.setTileSource(TileSourceFactory.MAPNIK)
+        binding.notificationMap.setMultiTouchControls(false)
+        binding.notificationMap.controller.setZoom(16.0)
+        binding.notificationMap.controller.setCenter(GeoPoint(latitude, longitude))
+    }
+
+    private fun updateNotificationMap(lat: Double, lon: Double) {
+        if (_binding == null) return
+        val point = GeoPoint(lat, lon)
+
+        if (notificationMarker == null) {
+            notificationMarker = Marker(binding.notificationMap).apply {
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = "📍 مكان الاستغاثة"
+                icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_map_marker)
+            }
+            binding.notificationMap.overlays.add(notificationMarker)
+        }
+        notificationMarker?.position = point
+
+        if (firstLocationReceived) {
+            binding.notificationMap.controller.setZoom(16.0)
+            firstLocationReceived = false
+        }
+        binding.notificationMap.controller.animateTo(point)
+        binding.notificationMap.invalidate()
+
+        reverseGeocodeAddress(lat, lon)
+    }
+
+    private fun reverseGeocodeAddress(lat: Double, lon: Double) {
+        thread {
+            try {
+                val geocoder = Geocoder(requireContext(), Locale.getDefault())
+                val addresses = geocoder.getFromLocation(lat, lon, 1)
+                val addressLine = addresses?.firstOrNull()?.getAddressLine(0)
+
+                activity?.runOnUiThread {
+                    if (_binding == null) return@runOnUiThread
+                    binding.tvLocationTitle.text = addressLine ?: "Lat: %.5f, Lon: %.5f".format(lat, lon)
+                    binding.tvLocationSubtitle.text = "📡 تحديث لحظي  •  إشارة GPS جيدة"
+                }
+            } catch (e: Exception) {
+                activity?.runOnUiThread {
+                    if (_binding == null) return@runOnUiThread
+                    binding.tvLocationTitle.text = "Lat: %.5f, Lon: %.5f".format(lat, lon)
+                    binding.tvLocationSubtitle.text = "📡 تحديث لحظي"
+                }
+            }
+        }
+    }
+
     private fun listenToCurrentSOSAlert(alertId: String) {
         sosListener = db.collection("emergency_logs")
             .document(alertId)
@@ -112,6 +196,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
 
                 latitude = snapshot.getDouble("latitude") ?: 30.0444
                 longitude = snapshot.getDouble("longitude") ?: 31.2357
+                updateNotificationMap(latitude, longitude)
 
 
                 val senderUid = snapshot.getString("userId") ?: ""
@@ -203,6 +288,16 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                     }
                 }
             }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        _binding?.notificationMap?.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        _binding?.notificationMap?.onPause()
     }
 
     override fun onDestroyView() {
