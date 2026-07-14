@@ -65,7 +65,7 @@ class LogAdapter : ListAdapter<EmergencyLog, LogAdapter.LogViewHolder>(LogDiffCa
 
                 when (cleanType.uppercase()) {
                     "SOS" -> {
-                        if (actualStatus.contains("Dispatched", ignoreCase = true) || actualStatus.contains("MANUAL", ignoreCase = true) || actualStatus.contains("Needs Help", ignoreCase = true)) {
+                        if (actualStatus.contains("Dispatched", ignoreCase = true) || actualStatus.contains("MANUAL", ignoreCase = true) || actualStatus.contains("AUTO", ignoreCase = true) ||actualStatus.contains("Needs Help", ignoreCase = true)) {
                             binding.tvLogIcon.text = "⚠️"
                             binding.tvLogStatus.text = "Emergency Dispatched"
                             binding.tvLogStatus.setTextColor(Color.parseColor("#EF4444"))

@@ -5,29 +5,29 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
+import com.example.saferoute.data.local.EmergencyLog
 import com.example.saferoute.databinding.FragmentHistoryBinding
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-
 class HistoryFragment : Fragment(R.layout.fragment_history) {
 
     private var _binding: FragmentHistoryBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: HistoryViewModel
+    private val viewModel: HistoryViewModel by viewModels()
     private val logAdapter = LogAdapter()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHistoryBinding.bind(view)
-
-        viewModel = ViewModelProvider(this)[HistoryViewModel::class.java]
 
         binding.rvHistory.apply {
             layoutManager = LinearLayoutManager(context)
@@ -60,23 +60,13 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                     .setTitle("تأكيد حالة الأمان")
                     .setMessage("هل أنتِ بخير وتريدين إنهاء حالة الاستغاثة الحالية؟")
                     .setPositiveButton("نعم") { _, _ ->
-                        FirebaseFirestore.getInstance().collection("emergency_logs")
-                            .document(firestoreDocId)
-                            .update("status", "Resolved")
-                            .addOnSuccessListener {
-                                context?.let { ctx ->
+                        viewModel.resolveEmergency(firestoreDocId)
                                     Toast.makeText(
-                                        ctx,
+                                        requireContext(),
                                         "تم إغلاق البلاغ بنجاح 🎉",
                                         Toast.LENGTH_SHORT
                                     ).show()
-                                }
-                            }
-                            .addOnFailureListener {
-                                context?.let { ctx ->
-                                    Toast.makeText(ctx, "فشل التحديث", Toast.LENGTH_SHORT).show()
-                                }
-                            }
+
                     }
                     .setNegativeButton("إلغاء", null)
                     .show()
@@ -92,8 +82,9 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
 
         viewModel.logs.observe(viewLifecycleOwner) { logsList ->
             if (logsList != null) {
+
                 val uniqueLogsMap =
-                    LinkedHashMap<String, com.example.saferoute.data.local.EmergencyLog>()
+                    LinkedHashMap<String, EmergencyLog>()
 
                 logsList.forEach { log ->
                     if (!log.userId.isNullOrEmpty()) {
@@ -113,34 +104,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 }
 
 
-                val isFromSomeoneElse =
-                    arguments?.getBoolean("IS_FROM_SOMEONE_ELSE", false) ?: false
-                val incomingSosId = arguments?.getString("INCOMING_SOS_ID") ?: ""
-                val senderName = arguments?.getString("SENDER_NAME") ?: "ابنتكِ"
 
-                if (isFromSomeoneElse && incomingSosId.isNotEmpty()) {
-                    val timeKey = System.currentTimeMillis() / 60000
-                    val externalUniqueKey = "${incomingSosId}_$timeKey"
-                    val existingLog = uniqueLogsMap[externalUniqueKey]
-
-                    if (existingLog == null || !existingLog.status.contains(
-                            "Resolved",
-                            ignoreCase = true
-                        )
-                    ) {
-                        val externalLog = com.example.saferoute.data.local.EmergencyLog(
-                            id = incomingSosId.hashCode(),
-                            userId = incomingSosId,
-                            type = "SOS|$incomingSosId",
-                            latitude = arguments?.getDouble("LAT", 0.0) ?: 0.0,
-                            longitude = arguments?.getDouble("LNG", 0.0) ?: 0.0,
-                            timestamp = System.currentTimeMillis(),
-                            status = "Incoming_SOS|$senderName",
-                            batteryLevel = 100
-                        )
-                        uniqueLogsMap[externalUniqueKey] = externalLog
-                    }
-                }
 
 
                 val finalFilteredList =

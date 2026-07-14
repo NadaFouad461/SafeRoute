@@ -34,7 +34,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         wakeUpDeviceScreen()
 
-        // استدعاء دالة بناء الإشعار بمؤثرات الصوت والاهتزاز الكاملة
         sendNotification(title, body, sosAlertId, senderName)
     }
 

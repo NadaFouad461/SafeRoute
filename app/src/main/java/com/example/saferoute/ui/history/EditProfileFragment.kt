@@ -11,7 +11,6 @@ import com.example.saferoute.databinding.FragmentEditProfileBinding
 import com.example.saferoute.ui.auth.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
-
 @AndroidEntryPoint
 class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
 

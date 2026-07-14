@@ -17,10 +17,12 @@ import com.example.saferoute.data.local.AppDatabase
 import com.example.saferoute.data.local.EmergencyLog
 import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.data.repository.EmergencyRepository
+import com.example.saferoute.utils.EmergencyType
 import com.example.saferoute.utils.PermissionManager
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.example.saferoute.utils.PermissionManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,18 +44,13 @@ class SosBackgroundService : Service() {
         createNotificationChannel()
 
         val appDb = AppDatabase.getDatabase(applicationContext)
-        val firestoreService = FirestoreService(FirebaseFirestore.getInstance())
+        val firestoreService = FirestoreService(db)
         emergencyRepository = EmergencyRepository(appDb.emergencyDao(), firestoreService)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val notification = createNotification()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
-        } else {
-            startForeground(1, notification)
-        }
 
         if (intent?.action == "TRIGGER_SOS_ACTION") {
             val userId =
@@ -216,11 +213,7 @@ class SosBackgroundService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                CHANNEL_ID,
-                "SafeRoute Service Channel",
-                NotificationManager.IMPORTANCE_LOW
-            )
+            val serviceChannel = NotificationChannel(CHANNEL_ID, "SafeRoute Service Channel", NotificationManager.IMPORTANCE_LOW)
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(serviceChannel)
         }

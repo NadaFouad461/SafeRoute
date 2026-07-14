@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import androidx.room.Room
 import com.example.saferoute.data.local.AppDatabase
 import com.example.saferoute.data.EmergencyDao
+import com.example.saferoute.data.remote.FirestoreService
+import com.example.saferoute.data.repository.EmergencyRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
@@ -46,4 +48,19 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFirestoreService(firestore: FirebaseFirestore): FirestoreService {
+        return FirestoreService(firestore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEmergencyRepository(
+        emergencyDao: EmergencyDao,
+        firestoreService: FirestoreService
+    ): EmergencyRepository {
+        return EmergencyRepository(emergencyDao, firestoreService)
+    }
 }

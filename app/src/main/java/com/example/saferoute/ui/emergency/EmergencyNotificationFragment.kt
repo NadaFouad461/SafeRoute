@@ -43,6 +43,8 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
     private var senderPhone: String = ""
     private var latitude: Double = 30.0444
     private var longitude: Double = 31.2357
+    private var notificationMarker: org.osmdroid.views.overlay.Marker? = null
+    private var firstLocationReceived = true
 
     private var notificationMarker: Marker? = null
     private var firstLocationReceived = true
@@ -103,10 +105,15 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                         )
                     )
                 }
+                val locationBundle = bundleOf(
+                    "latitude" to latitude,
+                    "longitude" to longitude
+                )
+                findNavController().navigate(R.id.mapFragment, locationBundle)
             } else {
                 Toast.makeText(
                     requireContext(),
-                    "بيانات الموقع لا تزال قيد التحميل...",
+                    "بيانات الموقع قيد التحميل...",
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -198,6 +205,8 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                 longitude = snapshot.getDouble("longitude") ?: 31.2357
                 updateNotificationMap(latitude, longitude)
 
+                updateNotificationMap(latitude, longitude)
+
 
                 val senderUid = snapshot.getString("userId") ?: ""
 
@@ -207,7 +216,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
 
 
                 val accountName = snapshot.getString("userName") ?: "مستخدم الطوارئ"
-                binding.tvSenderName.text = accountName
+                _binding?.tvSenderName?.text = accountName
 
 
                 if (senderUid.isNotEmpty()) {
@@ -254,11 +263,49 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
             }
     }
 
+    private fun setupMiniMap() {
+        org.osmdroid.config.Configuration.getInstance().userAgentValue = requireContext().packageName
+        binding.notificationMap.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK)
+        binding.notificationMap.setMultiTouchControls(false)
+        binding.notificationMap.controller.setZoom(16.0)
+    }
+    override fun onResume() {
+        super.onResume()
+        binding.notificationMap.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        binding.notificationMap.onPause()
+    }
+    private fun updateNotificationMap(lat: Double, lon: Double) {
+        if (_binding == null) return
+        val point = org.osmdroid.util.GeoPoint(lat, lon)
+
+        if (notificationMarker == null) {
+            notificationMarker = org.osmdroid.views.overlay.Marker(binding.notificationMap).apply {
+                setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM)
+                title = "📍 مكان الاستغاثة"
+                icon = androidx.core.content.ContextCompat.getDrawable(requireContext(), R.drawable.ic_map_marker)
+            }
+            binding.notificationMap.overlays.add(notificationMarker)
+        }
+        notificationMarker?.position = point
+
+        if (firstLocationReceived) {
+            binding.notificationMap.controller.setZoom(16.0)
+            firstLocationReceived = false
+        }
+        binding.notificationMap.controller.animateTo(point)
+        binding.notificationMap.invalidate()
+    }
+
 
     private fun fetchSenderContactInfo(senderUid: String, accountName: String) {
 
         db.collection("users").document(senderUid).get()
             .addOnSuccessListener { userDoc ->
+                if (_binding == null || !isAdded) return@addOnSuccessListener
                 if (userDoc != null && userDoc.exists()) {
                     senderPhone = userDoc.getString("phone") ?: ""
 
@@ -270,19 +317,18 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                             .whereEqualTo("phone", senderPhone)
                             .get()
                             .addOnSuccessListener { contactsSnapshot ->
+                                if (_binding == null || !isAdded) return@addOnSuccessListener
                                 if (!contactsSnapshot.isEmpty) {
                                     val contactDoc = contactsSnapshot.documents[0]
                                     val relationship = contactDoc.getString("relationship") ?: ""
                                     val savedName = contactDoc.getString("name") ?: accountName
 
 
-                                    binding.tvSenderName.text = "$savedName ($relationship)"
-                                    binding.tvFallDescription.text =
-                                        "ℹ️ بلاغ استغاثة نشط وموثق من صلة القرابة الممسوحة كـ ($relationship) بالحساب: $accountName"
+                                    _binding?.tvSenderName?.text = "$savedName ($relationship)"
+                                    _binding?.tvFallDescription?.text = "ℹ️ بلاغ استغاثة نشط وموثق من صلة القرابة الممسوحة كـ ($relationship) بالحساب: $accountName"
                                 } else {
 
-                                    binding.tvFallDescription.text =
-                                        "ℹ️ بلاغ استغاثة نشط وموثق للحساب المسجل باسم: $accountName"
+                                    _binding?.tvFallDescription?.text = "ℹ️ بلاغ استغاثة نشط وموثق للحساب المسجل باسم: $accountName"
                                 }
                             }
                     }

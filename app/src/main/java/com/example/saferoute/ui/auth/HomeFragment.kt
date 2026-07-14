@@ -55,6 +55,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.actionContacts.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
         }
+        binding.actionLiveLocation.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
+        }
 
         binding.actionLiveLocation.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
@@ -124,7 +127,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
 
-    fun handleSosTrigger() {
+    private fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
             Toast.makeText(
@@ -142,8 +145,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
             fetchLocationAndTriggerSOS(currentUid, currentUserName, currentBatteryLevel)
+            findNavController().navigate(R.id.action_homeFragment_to_sosFragment)
         } else {
-            Toast.makeText(requireContext(), "User not logged in!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -270,8 +274,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         if (_binding == null || !isAdded) return
 
 
-        val sharedPrefs =
-            requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
+        val sharedPrefs = requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
         val isDismissedBefore = sharedPrefs.getBoolean("dismissed_$sosAlertId", false)
         if (isDismissedBefore) return
 

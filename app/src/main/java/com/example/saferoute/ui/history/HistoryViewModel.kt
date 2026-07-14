@@ -1,5 +1,6 @@
 package com.example.saferoute.ui.history
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -9,15 +10,32 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import com.google.firebase.Timestamp
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor() : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+@HiltViewModel
+class HistoryViewModel @Inject constructor(
+    private val db: FirebaseFirestore,
+    private val auth: FirebaseAuth
+) : ViewModel() {
+    private val currentUserId = auth.currentUser?.uid ?: ""
 
     private val _logs = MutableLiveData<List<EmergencyLog>>()
     val logs: LiveData<List<EmergencyLog>> get() = _logs
+
+    fun resolveEmergency(alertId: String) {
+        db.collection("emergency_logs").document(alertId)
+            .update("status", "Resolved")
+            .addOnFailureListener {
+                Log.e("HistoryViewModel", "فشل تحديث الحالة: ${it.message}")
+            }
+    }
 
     fun listenToEmergencyLogs(incomingSosId: String? = null) {
         if (currentUserId.isEmpty()) return
@@ -34,22 +52,16 @@ class HistoryViewModel @Inject constructor() : ViewModel() {
                     val status = doc.getString("status") ?: "Emergency Dispatched"
                     val sharedWith = doc.get("sharedWith") as? List<*> ?: emptyList<Any>()
 
-
-                    if (status.equals("canceled", ignoreCase = true) || status.equals(
-                            "triggered",
-                            ignoreCase = true
-                        )
-                    ) {
+                    if (status.equals("canceled", ignoreCase = true)) {
                         continue
                     }
 
+                    val sharedWith = doc.get("sharedWith") as? List<*> ?: emptyList<Any>()
                     val isFromMe = userIdInDoc == currentUserId
                     val isForMe =
-                        sharedWith.contains(currentUserId) || doc.id == incomingSosId || (!isFromMe && status != "canceled")
+                        sharedWith.contains(currentUserId) || doc.id == incomingSosId
 
                     if (isFromMe || isForMe) {
-                        val alertedContacts =
-                            doc.get("alertedContacts") as? List<*> ?: emptyList<Any>()
                         val realBattery = doc.getLong("batteryLevel")?.toInt() ?: 100
                         val userName = doc.getString("userName") ?: "شخص مقرب"
                         val logType = if (isFromMe) "SOS" else "SOS_INCOMING"
@@ -59,11 +71,7 @@ class HistoryViewModel @Inject constructor() : ViewModel() {
                             status.contains("Resolved", ignoreCase = true) || status == "safe" -> {
                                 if (isFromMe) "Resolved" else "✅ $userName Is Safe Now"
                             }
-
-                            status.contains(
-                                "Dispatched",
-                                ignoreCase = true
-                            ) || status == "triggered" -> {
+                            status.contains("Dispatched", ignoreCase = true) || status == "triggered" -> {
                                 if (isFromMe) "Emergency Dispatched" else "⚠️ $userName Needs Help!"
                             }
 
@@ -71,7 +79,7 @@ class HistoryViewModel @Inject constructor() : ViewModel() {
                         }
 
                         val finalTimestamp: Long = when (val rawTime = doc.get("timestamp")) {
-                            is com.google.firebase.Timestamp -> rawTime.toDate().time
+                            is Timestamp -> rawTime.toDate().time
                             is Long -> rawTime
                             else -> System.currentTimeMillis()
                         }
@@ -79,13 +87,12 @@ class HistoryViewModel @Inject constructor() : ViewModel() {
 
                         val log = EmergencyLog(
                             id = doc.id.hashCode(),
-                            userId = doc.id,
-
+                            userId = userIdInDoc,
                             type = "$logType|${doc.id}",
                             latitude = doc.getDouble("latitude") ?: 0.0,
                             longitude = doc.getDouble("longitude") ?: 0.0,
                             timestamp = finalTimestamp,
-                            status = "$customStatus|${alertedContacts.size.coerceAtLeast(1)}",
+                            status = "$customStatus|${sharedWith.size.coerceAtLeast(1)}",
                             batteryLevel = realBattery
                         )
 

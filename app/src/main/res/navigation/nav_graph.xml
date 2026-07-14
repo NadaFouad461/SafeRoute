@@ -172,6 +172,9 @@
         android:id="@+id/sosFragment"
         android:name="com.example.saferoute.ui.sos.SosFragment"
         android:label="SosFragment" />
+        <action
+            android:id="@+id/action_sosFragment_to_emergencyNotificationFragment"
+            app:destination="@id/emergencyNotificationFragment" />
     <fragment
         android:id="@+id/emergencyNotificationFragment2"
         android:name="com.example.saferoute.ui.emergency.EmergencyNotificationFragment"

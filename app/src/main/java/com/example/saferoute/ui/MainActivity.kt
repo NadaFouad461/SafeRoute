@@ -154,22 +154,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleIncomingNotification(intent: Intent?) {
         val navigateTo = intent?.getStringExtra("NAVIGATE_TO")
+
         if (navigateTo == "HISTORY") {
-            val sosId = intent.getStringExtra("INCOMING_SOS_ID")
-            val senderName = intent.getStringExtra("SENDER_NAME")
-
-            val bundle = Bundle().apply {
-                putString("INCOMING_SOS_ID", sosId)
-                putString("SENDER_NAME", senderName)
-                putBoolean("IS_FROM_SOMEONE_ELSE", true)
-            }
-
 
             binding.root.post {
-                val navHostFragment =
-                    supportFragmentManager.findFragmentById(id.nav_host_fragment) as? NavHostFragment
-                val navController = navHostFragment?.navController
-                navController?.navigate(id.historyFragment, bundle)
+                val navHost =
+                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment)
+                            as NavHostFragment
+
+                navHost.navController.navigate(R.id.historyFragment)
             }
         }
     }
@@ -276,9 +269,8 @@ class MainActivity : AppCompatActivity() {
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_CALL)
             .setContentIntent(pendingIntent)
-            .setFullScreenIntent(pendingIntent, true)
+           // .setFullScreenIntent(pendingIntent, true)
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setStyle(BigTextStyle().bigText(body))

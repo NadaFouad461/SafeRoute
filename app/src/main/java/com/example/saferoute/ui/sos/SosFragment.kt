@@ -2,9 +2,9 @@ package com.example.saferoute.ui.sos
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.BatteryManager
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,29 +23,39 @@ import com.example.saferoute.data.repository.EmergencyRepository
 import com.example.saferoute.data.repository.LocationRepository
 import com.example.saferoute.data.repository.SosRepository
 import com.example.saferoute.databinding.FragmentSosBinding
-import com.example.saferoute.models.ContactItem
 import com.example.saferoute.utils.PermissionManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import com.example.saferoute.data.repository.LocationRepository
+import com.google.android.gms.location.LocationServices
+
 import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
 
+import android.Manifest
+import android.telephony.SmsManager
+import android.util.Log
+import androidx.fragment.app.viewModels
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
 class SosFragment : Fragment() {
 
     private var _binding: FragmentSosBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: SosViewModel
-    private lateinit var sosRepository: SosRepository
-    private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "unknown_user"
-    private val db = FirebaseFirestore.getInstance()
+    private val viewModel: SosViewModel by viewModels()
 
-    private var emergencyContacts = mutableListOf<ContactItem>()
-    private lateinit var sosContactsAdapter: SosContactsAdapter
+    private lateinit var adapter: SosContactsAdapter
+
+    private var passedSosAlertId: String? = null
 
     private var countDownTimer: CountDownTimer? = null
     private var isTimerRunning = false
@@ -57,21 +67,27 @@ class SosFragment : Fragment() {
     private var isRealLocationReady = false
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val permissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) {
 
-    private var passedSosAlertId: String? = null
-
-    private val requestPermissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             if (PermissionManager.hasAllPermissions(requireContext())) {
+
                 startSosCountdown()
+
             } else {
+
                 Toast.makeText(
                     requireContext(),
-                    "يجب الموافقة على الصلاحيات لتشغيل الاستغاثة!",
+                    "يجب إعطاء الصلاحيات أولاً",
                     Toast.LENGTH_LONG
                 ).show()
+
                 findNavController().popBackStack()
+
             }
+
         }
 
     override fun onCreateView(
@@ -79,13 +95,19 @@ class SosFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+
         _binding = FragmentSosBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
 
+        super.onViewCreated(view, savedInstanceState)
+        _binding = FragmentSosBinding.bind(view)
 
         passedSosAlertId = arguments?.getString("sosAlertId")
 
@@ -97,122 +119,94 @@ class SosFragment : Fragment() {
         val emergencyRepository = EmergencyRepository(dbRoom.emergencyDao(), firestoreService)
         sosRepository = SosRepository(emergencyRepository)
 
-        viewModel =
-            ViewModelProvider(this, SosViewModelFactory(sosRepository))[SosViewModel::class.java]
+        setupRecycler()
 
-        setupHorizontalRecyclerView()
-        loadEmergencyContacts()
+        observeViewModel()
 
-        checkPermissionsAndStart()
+        viewModel.loadCurrentUser()
+
+        viewModel.loadEmergencyContacts()
+
 
         binding.btnSos.setOnClickListener {
+
             if (!isTimerRunning) {
-                checkPermissionsAndStart()
+
+                checkPermissions()
+
             }
+
         }
 
         binding.btnCancelSos.setOnClickListener {
-            cancelSosCountdown()
-            findNavController().popBackStack()
+
+            cancelCountdown()
+
         }
 
         binding.btnOpenLogs.setOnClickListener {
-            navigateToHistoryFragment()
-        }
-    }
 
-    private fun setupHorizontalRecyclerView() {
-        sosContactsAdapter = SosContactsAdapter(emergencyContacts)
-        binding.rvEmergencyContactsHorizontal.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        binding.rvEmergencyContactsHorizontal.adapter = sosContactsAdapter
-    }
+            findNavController().navigate(
+                R.id.historyFragment
+            )
 
-    private fun loadEmergencyContacts() {
-        emergencyContacts.clear()
-
-        if (currentUserId == "unknown_user") {
-            Toast.makeText(
-                requireContext(),
-                "خطأ: لم يتم التعرف على الـ UID للمستخدم الحالي!",
-                Toast.LENGTH_LONG
-            ).show()
-            return
         }
 
-        db.collection("users")
-            .document(currentUserId)
-            .collection("contacts")
-            .get()
-            .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    context?.let { ctx ->
-                        Toast.makeText(
-                            ctx,
-                            "⚠️ قائمة جهات الاتصال الطارئة فارغة!",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                    return@addOnSuccessListener
-                }
+    }
 
-                var checkCount = 0
-                val totalDocs = documents.size()
+    private fun setupRecycler() {
+        adapter = SosContactsAdapter(mutableListOf())
+        adapter.onContactRemoved = { removedItems ->
+            viewModel.removeContact(removedItems[0])
+        }
 
-                for (doc in documents) {
-                    val phone = doc.getString("phone") ?: ""
-                    val name = doc.getString("name") ?: ""
-                    val relationship = doc.getString("relationship") ?: ""
-                    val isPriority = doc.getBoolean("isPriority") ?: false
+        binding.rvEmergencyContactsHorizontal.adapter = adapter
+    }
 
-                    db.collection("users")
-                        .whereEqualTo("phone", phone)
-                        .get()
-                        .addOnSuccessListener { userQueryResult ->
-                            var realToken = ""
-                            if (!userQueryResult.isEmpty) {
-                                realToken = userQueryResult.documents[0].getString("fcmToken") ?: ""
-                            }
+    private fun observeViewModel() {
 
-                            val contact = ContactItem(
-                                id = doc.id,
-                                name = name,
-                                phone = phone,
-                                relationship = relationship,
-                                isPriority = isPriority,
-                                fcmToken = realToken
-                            )
-                            emergencyContacts.add(contact)
+        viewModel.contacts.observe(viewLifecycleOwner) {
 
-                            checkCount++
-                            if (checkCount == totalDocs) {
-                                sosContactsAdapter.notifyDataSetChanged()
-                            }
-                        }
-                        .addOnFailureListener {
-                            checkCount++
-                            val contact = ContactItem(
-                                id = doc.id,
-                                name = name,
-                                phone = phone,
-                                relationship = relationship,
-                                isPriority = isPriority,
-                                fcmToken = ""
-                            )
-                            emergencyContacts.add(contact)
-                            if (checkCount == totalDocs) sosContactsAdapter.notifyDataSetChanged()
-                        }
-                }
+            adapter.updateList(it)
+
+        }
+            viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+                binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+                binding.btnSos.isEnabled = !isLoading
             }
-            .addOnFailureListener { exception ->
-                context?.let { ctx ->
-                    Toast.makeText(
-                        ctx,
-                        "فشل جلب الأرقام: ${exception.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+
+        viewModel.error.observe(viewLifecycleOwner) {
+
+            if (it.isNotEmpty()) {
+
+                Toast.makeText(
+                    requireContext(),
+                    it,
+                    Toast.LENGTH_SHORT
+                ).show()
+
             }
+
+        }
+
+        viewModel.navigateToAlert.observe(viewLifecycleOwner) {
+
+            it ?: return@observe
+
+            findNavController().navigate(
+
+                R.id.emergencyNotificationFragment,
+
+                bundleOf(
+                    "SOS_ALERT_ID" to it
+                )
+
+            )
+
+            viewModel.clearNavigation()
+
+        }
+
     }
 
     /**
@@ -253,37 +247,42 @@ class SosFragment : Fragment() {
         }
     }
 
-    private fun checkPermissionsAndStart() {
-        if (PermissionManager.hasAllPermissions(requireContext())) {
-            startSosCountdown()
-        } else {
-            requestPermissionsLauncher.launch(PermissionManager.REQUIRED_PERMISSIONS)
-        }
-    }
+    private fun checkPermissions() {
 
-    @Synchronized
-    private fun startSosCountdown() {
-        if (isTimerRunning || countDownTimer != null) {
-            return
+        if (
+            PermissionManager.hasAllPermissions(
+                requireContext()
+            )
+        ) {
+            startSosCountdown()
+
+        } else {
+
+            permissionLauncher.launch(
+                PermissionManager.REQUIRED_PERMISSIONS
+            )
+
         }
+
+    }
+    private fun startSosCountdown() {
+        if (isTimerRunning) return
 
         isTimerRunning = true
-        binding.btnCancelSos.visibility = View.VISIBLE
+        binding.btnSos.visibility = View.GONE
+        binding.tvCountdown.visibility = View.VISIBLE
+        binding.tvCountdown.text = "5"
 
         countDownTimer = object : CountDownTimer(5000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                if (_binding != null) {
-                    val secondsLeft = (millisUntilFinished / 1000) + 1
-                    binding.tvCountdown.text = secondsLeft.toString()
-                }
+                val secondsLeft = (millisUntilFinished / 1000) + 1
+                binding.tvCountdown.text = secondsLeft.toString()
             }
 
             override fun onFinish() {
-                if (_binding == null || !isTimerRunning) return
-
-                binding.tvCountdown.text = "0"
                 isTimerRunning = false
-                countDownTimer = null
+                binding.tvCountdown.visibility = View.GONE
+                binding.btnSos.visibility = View.GONE
                 binding.progressBar.visibility = View.VISIBLE
 
                 if (!isRealLocationReady && _binding != null) {
@@ -294,116 +293,94 @@ class SosFragment : Fragment() {
                     ).show()
                 }
 
-                val selectedNumbers = emergencyContacts.map { it.phone }
-                val message =
-                    "🚨 استغاثة طارئة من SafeRoute. الموقع: خط عرض $currentLatitude و خط طول $currentLongitude"
+                val batteryManager = requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+                val currentBatteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
-
-                try {
-                    val smsManager = android.telephony.SmsManager.getDefault()
-                    for (number in selectedNumbers) {
-                        if (number.isNotEmpty()) {
-                            smsManager.sendTextMessage(number, null, message, null, null)
-                        }
-                    }
-                } catch (e: Exception) {
-
-                    Log.e("SosFragment", "SMS Error: ${e.message}")
-                }
-
-
-                db.collection("users").document(currentUserId).get()
-                    .addOnSuccessListener { userDoc ->
-                        val userName = userDoc.getString("name") ?: "مستخدم"
-                        val emergencyData = hashMapOf(
-                            "userId" to currentUserId,
-                            "userName" to userName,
-                            "status" to "Emergency Dispatched",
-                            "type" to "SOS",
-                            "latitude" to currentLatitude,
-                            "longitude" to currentLongitude,
-                            "timestamp" to com.google.firebase.Timestamp.now()
-                        )
-
-                        db.collection("emergency_logs").add(emergencyData)
-                            .addOnSuccessListener { reference ->
-                                val finalDocId = reference.id
-
-                                // إرسال الإشعار
-                                emergencyContacts.forEach { contact ->
-                                    if (contact.fcmToken.isNotEmpty()) {
-                                        sendFcmNotification(contact.fcmToken, userName, finalDocId)
-                                    }
-                                }
-
-                                binding.progressBar.visibility = View.GONE
-                                findNavController().navigate(
-                                    R.id.emergencyNotificationFragment,
-                                    bundleOf("SOS_ALERT_ID" to finalDocId)
-                                )
-                            }
-                    }
+                fetchLocationAndStartSos(currentBatteryLevel)
             }
         }.start()
     }
 
-    private fun sendFcmNotification(token: String, senderName: String, alertId: String) {
-        val dataPayload = hashMapOf(
-            "title" to "🚨 استغاثة طارئة من $senderName",
-            "body" to "الرجاء المساعدة، تم فتح بلاغ طوارئ نشط الآن!",
-            "SOS_ALERT_ID" to alertId,
-            "senderName" to senderName,
-            "click_action" to "EMERGENCY_NOTIFICATION"
-        )
+    private fun fetchLocationAndStartSos(batteryLevel: Int) {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
-        val notificationPayload = hashMapOf(
-            "title" to "🚨 استغاثة طارئة من $senderName",
-            "body" to "الرجاء المساعدة، تم فتح بلاغ طوارئ نشط الآن!"
-        )
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                val finalLat = location?.latitude ?: 30.0444
+                val finalLon = location?.longitude ?: 31.2357
 
-        val notificationData = hashMapOf(
-            "token" to token,
-            "to" to token,
-            "priority" to "high",
-            "notification" to notificationPayload,
-            "data" to dataPayload
-        )
+                if (location != null) LocationRepository.updateLocation(finalLat, finalLon)
 
-        db.collection("notifications_queue").add(notificationData)
+
+                val message = "🚨 استغاثة طارئة من SafeRoute!\nأحتاج للمساعدة، موقعي هو:\nخط عرض: $finalLat\nخط طول: $finalLon"
+
+                val contacts = viewModel.getCurrentContacts()
+                val smsManager = SmsManager.getDefault()
+
+                contacts.forEach { contact ->
+                    if (contact.phone.isNotEmpty()) {
+                        try {
+                            val parts = smsManager.divideMessage(message)
+                            smsManager.sendMultipartTextMessage(contact.phone, null, parts, null, null)
+                            Log.d("SOS_SMS", "تم إرسال الموقع إلى: ${contact.phone}")
+                        } catch (e: Exception) {
+                            Log.e("SOS_SMS_ERROR", "فشل الإرسال إلى ${contact.phone}", e)
+                        }
+                    }
+                }
+
+                viewModel.startSos(finalLat, finalLon, passedSosAlertId, { alertId ->
+                    findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to alertId))
+                }, batteryLevel) { errorMessage ->
+                    binding.progressBar.visibility = View.GONE
+                    binding.btnSos.visibility = View.VISIBLE
+                    Toast.makeText(context, "خطأ: $errorMessage", Toast.LENGTH_LONG).show()
+                }
+            }
+        } else {
+            val message = "🚨 استغاثة طارئة من SafeRoute! أحتاج للمساعدة، لا أستطيع مشاركة الموقع حالياً."
+            val smsManager = SmsManager.getDefault()
+            viewModel.getCurrentContacts().forEach {
+                try {
+                    smsManager.sendTextMessage(it.phone, null, message, null, null)
+                } catch (e: Exception) {
+                    Log.e("SOS_SMS_ERROR", "فشل إرسال رسالة الطوارئ", e)
+                }
+            }
+
+            viewModel.startSos(30.0444, 31.2357, passedSosAlertId, { alertId ->
+                findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to alertId))
+            }, batteryLevel) { errorMessage ->
+                binding.progressBar.visibility = View.GONE
+                binding.btnSos.visibility = View.VISIBLE
+                Toast.makeText(context, "خطأ: $errorMessage", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
-    @Synchronized
-    private fun cancelSosCountdown() {
-        if (countDownTimer != null || isTimerRunning) {
-            countDownTimer?.cancel()
-            countDownTimer = null
-            isTimerRunning = false
-        }
+    private fun cancelCountdown() {
+        countDownTimer?.cancel()
+        isTimerRunning = false
+        binding.tvCountdown.visibility = View.GONE
+        binding.btnSos.visibility = View.VISIBLE
+        binding.progressBar.visibility = View.GONE
 
 
         if (!passedSosAlertId.isNullOrEmpty()) {
-            db.collection("emergency_logs").document(passedSosAlertId!!)
-                .update("status", "canceled")
-        }
-
-        if (_binding != null) {
-            binding.tvCountdown.text = "5"
-            binding.btnCancelSos.visibility = View.GONE
-            binding.progressBar.visibility = View.GONE
-        }
-
-        Toast.makeText(requireContext(), "تم إلغاء الاستغاثة بنجاح", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun navigateToHistoryFragment() {
-        try {
-            findNavController().navigate(R.id.emergencyNotificationFragment)
-        } catch (e: Exception) {
+            viewModel.cancelSOS(passedSosAlertId!!)
+            Toast.makeText(context, "تم إلغاء الاستغاثة", Toast.LENGTH_SHORT).show()
+            findNavController().popBackStack()
+        } else {
+            Toast.makeText(context, "تم إلغاء العد التنازلي", Toast.LENGTH_SHORT).show()
         }
     }
+
+
 
     override fun onDestroyView() {
         super.onDestroyView()
+        countDownTimer?.cancel()
+        countDownTimer = null
         _binding = null
     }
 }
