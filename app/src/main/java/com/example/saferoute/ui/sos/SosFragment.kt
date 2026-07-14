@@ -1,48 +1,30 @@
 package com.example.saferoute.ui.sos
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.BatteryManager
+import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.telephony.SmsManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.saferoute.R
-import com.example.saferoute.data.local.AppDatabase
-import com.example.saferoute.data.remote.FirestoreService
-import com.example.saferoute.data.repository.EmergencyRepository
 import com.example.saferoute.data.repository.LocationRepository
-import com.example.saferoute.data.repository.SosRepository
 import com.example.saferoute.databinding.FragmentSosBinding
 import com.example.saferoute.utils.PermissionManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import android.content.Context
-import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import com.example.saferoute.data.repository.LocationRepository
-import com.google.android.gms.location.LocationServices
-
-import dagger.hilt.android.AndroidEntryPoint
-
-
-@AndroidEntryPoint
-
-import android.Manifest
-import android.telephony.SmsManager
-import android.util.Log
-import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -114,11 +96,6 @@ class SosFragment : Fragment() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         fetchCurrentLocation()
 
-        val dbRoom = AppDatabase.getDatabase(requireContext())
-        val firestoreService = FirestoreService(db)
-        val emergencyRepository = EmergencyRepository(dbRoom.emergencyDao(), firestoreService)
-        sosRepository = SosRepository(emergencyRepository)
-
         setupRecycler()
 
         observeViewModel()
@@ -127,21 +104,23 @@ class SosFragment : Fragment() {
 
         viewModel.loadEmergencyContacts()
 
+        // بدء العد التنازلي تلقائياً عند الدخول للشاشة
+        checkPermissions()
 
         binding.btnSos.setOnClickListener {
-
             if (!isTimerRunning) {
-
                 checkPermissions()
-
             }
+        }
 
+        // إمكانية الضغط المطول لتفعيل الاستغاثة فوراً
+        binding.btnSos.setOnLongClickListener {
+            triggerSosImmediately()
+            true
         }
 
         binding.btnCancelSos.setOnClickListener {
-
             cancelCountdown()
-
         }
 
         binding.btnOpenLogs.setOnClickListener {
@@ -170,10 +149,10 @@ class SosFragment : Fragment() {
             adapter.updateList(it)
 
         }
-            viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
-                binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-                binding.btnSos.isEnabled = !isLoading
-            }
+        viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
+            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.btnSos.isEnabled = !isLoading
+        }
 
         viewModel.error.observe(viewLifecycleOwner) {
 
@@ -189,22 +168,19 @@ class SosFragment : Fragment() {
 
         }
 
-        viewModel.navigateToAlert.observe(viewLifecycleOwner) {
+        viewModel.navigateToAlert.observe(viewLifecycleOwner) { alertId ->
+            alertId ?: return@observe
 
-            it ?: return@observe
+            val bundle = Bundle().apply {
+                putString("SOS_ALERT_ID", alertId)
+            }
 
             findNavController().navigate(
-
                 R.id.emergencyNotificationFragment,
-
-                bundleOf(
-                    "SOS_ALERT_ID" to it
-                )
-
+                bundle
             )
 
             viewModel.clearNavigation()
-
         }
 
     }
@@ -265,11 +241,12 @@ class SosFragment : Fragment() {
         }
 
     }
+
     private fun startSosCountdown() {
         if (isTimerRunning) return
 
         isTimerRunning = true
-        binding.btnSos.visibility = View.GONE
+        binding.btnSos.visibility = View.VISIBLE
         binding.tvCountdown.visibility = View.VISIBLE
         binding.tvCountdown.text = "5"
 
@@ -281,30 +258,42 @@ class SosFragment : Fragment() {
 
             override fun onFinish() {
                 isTimerRunning = false
-                binding.tvCountdown.visibility = View.GONE
-                binding.btnSos.visibility = View.GONE
-                binding.progressBar.visibility = View.VISIBLE
-
-                if (!isRealLocationReady && _binding != null) {
-                    Toast.makeText(
-                        requireContext(),
-                        "⚠️ لسه مقدرناش نحدد موقعك بدقة، البلاغ هيتبعت بدون إحداثيات دقيقة!",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-
-                val batteryManager = requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-                val currentBatteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-
-                fetchLocationAndStartSos(currentBatteryLevel)
+                triggerSosImmediately()
             }
         }.start()
+    }
+
+    private fun triggerSosImmediately() {
+        countDownTimer?.cancel()
+        isTimerRunning = false
+        binding.tvCountdown.visibility = View.GONE
+        binding.btnSos.visibility = View.GONE
+        binding.progressBar.visibility = View.VISIBLE
+
+        if (!isRealLocationReady && _binding != null) {
+            Toast.makeText(
+                requireContext(),
+                "⚠️ لسه مقدرناش نحدد موقعك بدقة، البلاغ هيتبعت بدون إحداثيات دقيقة!",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+
+        val batteryManager =
+            requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val currentBatteryLevel =
+            batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+
+        fetchLocationAndStartSos(currentBatteryLevel)
     }
 
     private fun fetchLocationAndStartSos(batteryLevel: Int) {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
 
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 val finalLat = location?.latitude ?: 30.0444
                 val finalLon = location?.longitude ?: 31.2357
@@ -312,16 +301,28 @@ class SosFragment : Fragment() {
                 if (location != null) LocationRepository.updateLocation(finalLat, finalLon)
 
 
-                val message = "🚨 استغاثة طارئة من SafeRoute!\nأحتاج للمساعدة، موقعي هو:\nخط عرض: $finalLat\nخط طول: $finalLon"
+                val message =
+                    "🚨 استغاثة طارئة من SafeRoute!\nأحتاج للمساعدة، موقعي هو:\nخط عرض: $finalLat\nخط طول: $finalLon"
 
                 val contacts = viewModel.getCurrentContacts()
-                val smsManager = SmsManager.getDefault()
+                val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    requireContext().getSystemService(SmsManager::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    SmsManager.getDefault()
+                }
 
                 contacts.forEach { contact ->
                     if (contact.phone.isNotEmpty()) {
                         try {
-                            val parts = smsManager.divideMessage(message)
-                            smsManager.sendMultipartTextMessage(contact.phone, null, parts, null, null)
+                            val parts = smsManager?.divideMessage(message)
+                            smsManager?.sendMultipartTextMessage(
+                                contact.phone,
+                                null,
+                                parts,
+                                null,
+                                null
+                            )
                             Log.d("SOS_SMS", "تم إرسال الموقع إلى: ${contact.phone}")
                         } catch (e: Exception) {
                             Log.e("SOS_SMS_ERROR", "فشل الإرسال إلى ${contact.phone}", e)
@@ -330,7 +331,13 @@ class SosFragment : Fragment() {
                 }
 
                 viewModel.startSos(finalLat, finalLon, passedSosAlertId, { alertId ->
-                    findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to alertId))
+                    val bundle = Bundle().apply {
+                        putString("SOS_ALERT_ID", alertId)
+                    }
+                    findNavController().navigate(
+                        R.id.emergencyNotificationFragment,
+                        bundle
+                    )
                 }, batteryLevel) { errorMessage ->
                     binding.progressBar.visibility = View.GONE
                     binding.btnSos.visibility = View.VISIBLE
@@ -338,18 +345,30 @@ class SosFragment : Fragment() {
                 }
             }
         } else {
-            val message = "🚨 استغاثة طارئة من SafeRoute! أحتاج للمساعدة، لا أستطيع مشاركة الموقع حالياً."
-            val smsManager = SmsManager.getDefault()
+            val message =
+                "🚨 استغاثة طارئة من SafeRoute! أحتاج للمساعدة، لا أستطيع مشاركة الموقع حالياً."
+            val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                requireContext().getSystemService(SmsManager::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                SmsManager.getDefault()
+            }
             viewModel.getCurrentContacts().forEach {
                 try {
-                    smsManager.sendTextMessage(it.phone, null, message, null, null)
+                    smsManager?.sendTextMessage(it.phone, null, message, null, null)
                 } catch (e: Exception) {
                     Log.e("SOS_SMS_ERROR", "فشل إرسال رسالة الطوارئ", e)
                 }
             }
 
             viewModel.startSos(30.0444, 31.2357, passedSosAlertId, { alertId ->
-                findNavController().navigate(R.id.emergencyNotificationFragment, bundleOf("SOS_ALERT_ID" to alertId))
+                val bundle = Bundle().apply {
+                    putString("SOS_ALERT_ID", alertId)
+                }
+                findNavController().navigate(
+                    R.id.emergencyNotificationFragment,
+                    bundle
+                )
             }, batteryLevel) { errorMessage ->
                 binding.progressBar.visibility = View.GONE
                 binding.btnSos.visibility = View.VISIBLE
@@ -369,12 +388,11 @@ class SosFragment : Fragment() {
         if (!passedSosAlertId.isNullOrEmpty()) {
             viewModel.cancelSOS(passedSosAlertId!!)
             Toast.makeText(context, "تم إلغاء الاستغاثة", Toast.LENGTH_SHORT).show()
-            findNavController().popBackStack()
         } else {
             Toast.makeText(context, "تم إلغاء العد التنازلي", Toast.LENGTH_SHORT).show()
         }
+        findNavController().popBackStack()
     }
-
 
 
     override fun onDestroyView() {

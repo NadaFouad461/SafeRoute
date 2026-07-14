@@ -3,15 +3,10 @@ package com.example.saferoute.ui.start
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import androidx.recyclerview.widget.RecyclerView
 import com.example.saferoute.R
 
-class OnboardingAdapter(
-    private val onSosClick: () -> Unit,
-    private val onLocationClick: () -> Unit,
-    private val onFinalGetStartedClick: () -> Unit
-) : RecyclerView.Adapter<OnboardingAdapter.OnboardingViewHolder>() {
+class OnboardingAdapter : RecyclerView.Adapter<OnboardingAdapter.OnboardingViewHolder>() {
 
     private val layouts = arrayOf(
         R.layout.item_onboarding_sos,
@@ -25,23 +20,6 @@ class OnboardingAdapter(
     }
 
     override fun onBindViewHolder(holder: OnboardingViewHolder, position: Int) {
-        when (position) {
-            0 -> {
-
-                val btnGetStarted = holder.itemView.findViewById<Button>(R.id.btnGetStarted)
-                btnGetStarted?.setOnClickListener { onSosClick() }
-            }
-            1 -> {
-
-                val btnContinue = holder.itemView.findViewById<Button>(R.id.btnContinue)
-                btnContinue?.setOnClickListener { onLocationClick() }
-            }
-            2 -> {
-
-                val btnFinalGetStarted = holder.itemView.findViewById<Button>(R.id.btnFinalGetStarted)
-                btnFinalGetStarted?.setOnClickListener { onFinalGetStartedClick() }
-            }
-        }
     }
 
     override fun getItemViewType(position: Int): Int = layouts[position]

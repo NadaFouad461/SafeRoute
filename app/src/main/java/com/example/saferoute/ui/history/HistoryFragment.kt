@@ -14,7 +14,6 @@ import com.example.saferoute.data.local.EmergencyLog
 import com.example.saferoute.databinding.FragmentHistoryBinding
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class HistoryFragment : Fragment(R.layout.fragment_history) {
@@ -43,7 +42,7 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
                 val bundle = Bundle().apply {
                     putString("SOS_ALERT_ID", firestoreDocId)
                 }
-                findNavController().navigate(R.id.emergencyNotificationFragment, bundle)
+                findNavController().navigate(R.id.action_historyFragment_to_emergencyNotificationFragment2, bundle)
             } else {
                 Toast.makeText(requireContext(), "لا يوجد معرف لهذا البلاغ", Toast.LENGTH_SHORT)
                     .show()
@@ -117,7 +116,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         }
 
         viewModel.listenToEmergencyLogs()
-        setupBottomNavigation()
     }
 
     private fun calculateSafeDays(logsList: List<com.example.saferoute.data.local.EmergencyLog>) {
@@ -133,38 +131,6 @@ class HistoryFragment : Fragment(R.layout.fragment_history) {
         binding.tvSafeDaysCount.text = safeDays.toString()
     }
 
-    private fun setupBottomNavigation() {
-        binding.bottomNavigationHistory.selectedItemId = R.id.nav_history
-        binding.bottomNavigationHistory.setOnItemSelectedListener { item ->
-            if (item.itemId == R.id.nav_history) return@setOnItemSelectedListener true
-            try {
-                when (item.itemId) {
-                    R.id.nav_home -> {
-                        findNavController().navigate(R.id.homeFragment); true
-                    }
-
-                    R.id.nav_map -> {
-                        findNavController().navigate(R.id.mapFragment); true
-                    }
-
-                    R.id.nav_contacts -> {
-                        findNavController().navigate(R.id.contactsListFragment); true
-                    }
-
-                    R.id.nav_profile -> {
-                        findNavController().navigate(R.id.profileFragment2); true
-                    }
-
-                    else -> false
-                }
-            } catch (e: Exception) {
-                context?.let { ctx ->
-                    Toast.makeText(ctx, "مسار التنقل غير مدعوم حالياً", Toast.LENGTH_SHORT).show()
-                }
-                false
-            }
-        }
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()

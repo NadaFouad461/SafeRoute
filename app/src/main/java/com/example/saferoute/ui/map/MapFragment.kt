@@ -113,7 +113,7 @@ class MapFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setupBottomNavigation()
+
         updateEmergencyContactsCount()
 
         binding.shareLocationBtnCard.setOnClickListener {
@@ -262,38 +262,6 @@ class MapFragment : Fragment() {
         requireContext().stopService(intent)
     }
 
-    private fun setupBottomNavigation() {
-        binding.bottomNavigationView.selectedItemId = R.id.nav_map
-        binding.bottomNavigationView.setOnItemSelectedListener { item ->
-            if (item.itemId == R.id.nav_map) return@setOnItemSelectedListener true
-            try {
-                when (item.itemId) {
-                    R.id.nav_home -> {
-                        findNavController().navigate(R.id.homeFragment); true
-                    }
-
-                    R.id.nav_history -> {
-                        findNavController().navigate(R.id.action_mapFragment_to_historyFragment); true
-                    }
-
-                    R.id.nav_contacts -> {
-                        findNavController().navigate(R.id.contactsListFragment); true
-                    }
-
-                    R.id.nav_profile -> {
-                        findNavController().navigate(R.id.profileFragment2); true
-                    }
-
-                    else -> false
-                }
-            } catch (e: Exception) {
-                context?.let { ctx ->
-                    Toast.makeText(ctx, "مسار التنقل غير مدعوم حالياً", Toast.LENGTH_SHORT).show()
-                }
-                false
-            }
-        }
-    }
 
     private fun updateEmergencyContactsCount() {
         val contactsCount = 3

@@ -22,7 +22,6 @@ import com.example.saferoute.utils.PermissionManager
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.example.saferoute.utils.PermissionManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
@@ -42,14 +41,25 @@ class SosBackgroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        
+        // البدء كخدمة أمامية فوراً لتجنب الـ Crash
+        startForegroundService()
 
         val appDb = AppDatabase.getDatabase(applicationContext)
         val firestoreService = FirestoreService(db)
         emergencyRepository = EmergencyRepository(appDb.emergencyDao(), firestoreService)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    private fun startForegroundService() {
         val notification = createNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(1002, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } else {
+            startForeground(1002, notification)
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
 
         if (intent?.action == "TRIGGER_SOS_ACTION") {

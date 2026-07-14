@@ -59,21 +59,13 @@
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation_history"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="#FFFFFF"
-        app:elevation="8dp"
-        app:menu="@menu/bottom_nav_menu" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvHistory"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/statsContainer"
-        android:layout_above="@id/bottom_navigation_history"
+        android:layout_alignParentBottom="true"
         android:layout_marginTop="12dp" />
 
 </RelativeLayout>

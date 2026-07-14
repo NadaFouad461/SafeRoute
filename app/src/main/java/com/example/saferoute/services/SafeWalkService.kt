@@ -30,6 +30,18 @@ class SafeWalkService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        
+        // البدء فوراً كخدمة أمامية
+        val notification = createNotification("جاري تأمين مسارك...")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -42,10 +54,6 @@ class SafeWalkService : Service() {
     private fun startSafeWalk(minutes: Int) {
         isWalkActive.value = true
         val timeInMillis = minutes * 60 * 1000L
-
-
-        val notification = createNotification("جاري تأمين مسارك...")
-        startForeground(NOTIFICATION_ID, notification)
 
 
         countDownTimer = object : CountDownTimer(timeInMillis, 1000) {

@@ -46,11 +46,13 @@ class LocationTrackingService : Service() {
     override fun onCreate() {
         super.onCreate()
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+        
+        // استدعاء startForeground فوراً في onCreate لتجنب الـ Crash في أندرويد 12+
+        createNotificationChannel()
+        startForegroundServiceWithNotification()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        createNotificationChannel()
-        startForegroundServiceWithNotification()
         startTracking()
         return START_STICKY
     }

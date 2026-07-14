@@ -39,7 +39,8 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
 
 
             if (name.isEmpty() || phone.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
-                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
@@ -49,12 +50,17 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
             }
 
             if (pass.length < 6) {
-                Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    requireContext(),
+                    "Password must be at least 6 characters",
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
             if (pass != confirmPass) {
-                Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT)
+                    .show()
                 return@setOnClickListener
             }
 
@@ -81,14 +87,22 @@ class SignUpFragment : Fragment(R.layout.fragment_sign_up) {
                                     .addOnSuccessListener {
                                         binding.signupBtn.isEnabled = true
                                         context?.let { ctx ->
-                                            Toast.makeText(ctx, "Account created! 🎉", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                ctx,
+                                                "Account created! 🎉",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                         }
-                                        findNavController().navigate(R.id.action_signUpFragment_to_loginFragment)
+                                        findNavController().navigate(R.id.action_signUpFragment_to_homeFragment)
                                     }
                                     .addOnFailureListener { e ->
                                         binding.signupBtn.isEnabled = true
                                         context?.let { ctx ->
-                                            Toast.makeText(ctx, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                ctx,
+                                                "Failed: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                         }
                                     }
                             }

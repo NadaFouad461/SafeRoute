@@ -11,14 +11,12 @@ import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationCompat.BigTextStyle
-import androidx.core.app.NotificationCompat.Builder
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import com.example.saferoute.R
-import com.example.saferoute.R.drawable
-import com.example.saferoute.R.id
 import com.example.saferoute.databinding.ActivityMainBinding
 import com.example.saferoute.services.FallDetectionService
 import com.google.firebase.auth.FirebaseAuth
@@ -37,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
+
     @Inject
     lateinit var sharedPrefs: SharedPreferences
 
@@ -54,6 +53,9 @@ class MainActivity : AppCompatActivity() {
         startListeningForSOSTriggers()
         checkAndStartSensor()
 
+        setupNavigation()
+        setupEmergencyFab()
+
 
         if (!isTokenUpdated) {
             updateFcmTokenInFirestore()
@@ -61,6 +63,7 @@ class MainActivity : AppCompatActivity() {
 
 
         val sosAlertId = intent.getStringExtra("SOS_ALERT_ID")
+            ?: intent.getStringExtra("INCOMING_SOS_ID")
         if (!sosAlertId.isNullOrEmpty()) {
             val bundle = Bundle().apply {
                 putString("SOS_ALERT_ID", sosAlertId)
@@ -69,15 +72,71 @@ class MainActivity : AppCompatActivity() {
 
             binding.root.post {
                 val navHostFragment =
-                    supportFragmentManager.findFragmentById(id.nav_host_fragment) as? NavHostFragment
+                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
                 val navController = navHostFragment?.navController
-                navController?.navigate(id.emergencyNotificationFragment, bundle)
+                navController?.navigate(R.id.emergencyNotificationFragment, bundle)
             }
         }
 
         handleIncomingNotification(intent)
 
         logSignature()
+    }
+
+    private fun setupNavigation() {
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        binding.bottomNavigationView.setOnItemSelectedListener { item ->
+            // تحسين التنقل لضمان العودة للهوم بشكل سليم وتجنب تعليق الـ Backstack
+            val navOptions = androidx.navigation.NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setRestoreState(true)
+                .setPopUpTo(R.id.homeFragment, inclusive = false, saveState = true)
+                .build()
+
+            when (item.itemId) {
+                R.id.homeFragment, R.id.mapFragment, R.id.historyFragment, R.id.profileFragment2 -> {
+                    if (navController.currentDestination?.id != item.itemId) {
+                        navController.navigate(item.itemId, null, navOptions)
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.homeFragment, R.id.mapFragment, R.id.historyFragment, R.id.profileFragment2 -> {
+                    binding.bottomAppBar.visibility = View.VISIBLE
+                    binding.fabEmergency.visibility = View.VISIBLE
+                    binding.bottomNavigationView.menu.findItem(destination.id)?.isChecked = true
+                }
+
+                else -> {
+                    binding.bottomAppBar.visibility = View.GONE
+                    binding.fabEmergency.visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    private fun setupEmergencyFab() {
+        binding.fabEmergency.setOnClickListener {
+            handleSosTrigger()
+        }
+    }
+
+    private fun handleSosTrigger() {
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        if (navController.currentDestination?.id != R.id.sosFragment) {
+            navController.navigate(R.id.sosFragment)
+        }
     }
 
     private fun checkAndStartSensor() {
@@ -136,6 +195,7 @@ class MainActivity : AppCompatActivity() {
         setIntent(intent)
 
         val sosId = intent.getStringExtra("SOS_ALERT_ID")
+            ?: intent.getStringExtra("INCOMING_SOS_ID")
         Log.d("NAV_DEBUG", "🚀 onNewIntent - SOS_ID: $sosId")
 
         if (!sosId.isNullOrEmpty()) {
@@ -146,8 +206,8 @@ class MainActivity : AppCompatActivity() {
 
             binding.root.post {
                 val navHostFragment =
-                    supportFragmentManager.findFragmentById(id.nav_host_fragment) as? NavHostFragment
-                navHostFragment?.navController?.navigate(id.emergencyNotificationFragment, bundle)
+                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+                navHostFragment?.navController?.navigate(R.id.emergencyNotificationFragment, bundle)
             }
         }
     }
@@ -264,16 +324,16 @@ class MainActivity : AppCompatActivity() {
         val notificationManager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        val notificationBuilder = Builder(this, CHANNEL_ID)
-            .setSmallIcon(drawable.ic_launcher_foreground)
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
-           // .setFullScreenIntent(pendingIntent, true)
+            // .setFullScreenIntent(pendingIntent, true)
             .setAutoCancel(true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setStyle(BigTextStyle().bigText(body))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
 
         notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
@@ -309,6 +369,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 @Suppress("DEPRECATION")
                 val info = packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+
                 @Suppress("DEPRECATION")
                 val signatures = info.signatures
                 signatures?.forEach { signature ->

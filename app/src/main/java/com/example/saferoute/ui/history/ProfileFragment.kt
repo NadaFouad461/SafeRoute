@@ -113,31 +113,6 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
         binding.btnLogoutClick.setOnClickListener(logoutAction)
         binding.btnExitApp.setOnClickListener(logoutAction)
-
-        val navContainer =
-            binding.bottomNavigationContainer.getChildAt(0) as? android.widget.LinearLayout
-
-        navContainer?.let { layout ->
-
-            layout.getChildAt(0)?.setOnClickListener {
-                findNavController().navigate(R.id.homeFragment)
-            }
-
-
-            layout.getChildAt(1)?.setOnClickListener {
-                findNavController().navigate(R.id.mapFragment)
-            }
-
-
-            layout.getChildAt(2)?.setOnClickListener {
-                findNavController().navigate(R.id.action_profileFragment2_to_historyFragment)
-            }
-
-
-            layout.getChildAt(3)?.setOnClickListener {
-
-            }
-        }
     }
 
     private fun setupSwitchListeners() {

@@ -51,7 +51,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         fetchUserDataAndGreet()
 
+        binding.sosBtnCard.setOnClickListener {
+            handleSosTrigger()
+        }
 
+
+        binding.actionSafeWalk.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_safeWalkFragment)
+        }
+
+        binding.actionFakeCall.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_fakeCallFragment)
+        }
         binding.actionContacts.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
         }
@@ -59,25 +70,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
         }
 
-        binding.actionLiveLocation.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
-        }
-
-
-        binding.fabEmergency.setOnClickListener {
-            handleSosTrigger()
-        }
-        binding.actionSafeWalk.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_safeWalkFragment)
-        }
-
-
-        binding.sosBtnCard.setOnClickListener {
-            handleSosTrigger()
-        }
-        binding.actionFakeCall.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_fakeCallFragment)
-        }
 
 
         binding.sosBtnCard.setOnLongClickListener {
@@ -85,45 +77,23 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             true
         }
 
-        binding.gpsStatusTv.text = if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            "📍 GPS: ON"
+        val isGpsOn = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        binding.gpsStatusTv.text = if (isGpsOn) "GPS: ON" else "GPS: OFF"
+
+        val gpsIcon = if (isGpsOn) {
+            ContextCompat.getDrawable(requireContext(), R.drawable.ic_gps_on)
         } else {
-            "📍 GPS: OFF"
+            ContextCompat.getDrawable(requireContext(), R.drawable.ic_gps_off)
         }
+        binding.gpsStatusTv.setCompoundDrawablesWithIntrinsicBounds(gpsIcon, null, null, null)
+
         binding.batteryStatusTv.text = "🔋 $currentBatteryLevel%"
 
 
-        binding.bottomNavigationView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> true
-
-                R.id.nav_map -> {
-                    findNavController().navigate(R.id.action_homeFragment_to_mapFragment)
-                    true
-                }
-
-                R.id.nav_contacts -> {
-                    findNavController().navigate(R.id.action_homeFragment_to_contactsListFragment)
-                    true
-                }
-
-                R.id.nav_history -> {
-                    findNavController().navigate(R.id.action_homeFragment_to_historyFragment)
-                    true
-                }
-
-                R.id.nav_profile -> {
-                    findNavController().navigate(R.id.action_homeFragment_to_profileFragment2)
-                    true
-                }
-
-                else -> false
-            }
-        }
     }
 
 
@@ -134,18 +104,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 requireContext(),
                 "🚨 Sending Instant Emergency Alert...",
                 Toast.LENGTH_SHORT
-            )
-                .show()
-
+            ).show()
 
             val batteryManager =
                 requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
             val currentBatteryLevel =
                 batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
 
-
             fetchLocationAndTriggerSOS(currentUid, currentUserName, currentBatteryLevel)
-            findNavController().navigate(R.id.action_homeFragment_to_sosFragment)
         } else {
             Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show()
         }
@@ -274,7 +240,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         if (_binding == null || !isAdded) return
 
 
-        val sharedPrefs = requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
+        val sharedPrefs =
+            requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
         val isDismissedBefore = sharedPrefs.getBoolean("dismissed_$sosAlertId", false)
         if (isDismissedBefore) return
 

@@ -23,7 +23,7 @@ class SplashFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         viewLifecycleOwner.lifecycleScope.launch {
-            delay(2000)
+            delay(1500)
             routeUser()
         }
         return inflater.inflate(R.layout.fragment_splash, container, false)

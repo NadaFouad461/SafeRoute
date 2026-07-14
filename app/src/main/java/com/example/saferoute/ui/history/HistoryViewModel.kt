@@ -8,17 +8,10 @@ import com.example.saferoute.data.local.EmergencyLog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
-@HiltViewModel
-class HistoryViewModel @Inject constructor() : ViewModel() {
-
-    private val db = FirebaseFirestore.getInstance()
-    private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val db: FirebaseFirestore,
@@ -56,7 +49,6 @@ class HistoryViewModel @Inject constructor(
                         continue
                     }
 
-                    val sharedWith = doc.get("sharedWith") as? List<*> ?: emptyList<Any>()
                     val isFromMe = userIdInDoc == currentUserId
                     val isForMe =
                         sharedWith.contains(currentUserId) || doc.id == incomingSosId
@@ -68,10 +60,17 @@ class HistoryViewModel @Inject constructor(
 
 
                         val customStatus = when {
-                            status.contains("Resolved", ignoreCase = true) || status == "safe" -> {
+                            status.contains(
+                                "Resolved",
+                                ignoreCase = true
+                            ) || status == "safe" -> {
                                 if (isFromMe) "Resolved" else "✅ $userName Is Safe Now"
                             }
-                            status.contains("Dispatched", ignoreCase = true) || status == "triggered" -> {
+
+                            status.contains(
+                                "Dispatched",
+                                ignoreCase = true
+                            ) || status == "triggered" -> {
                                 if (isFromMe) "Emergency Dispatched" else "⚠️ $userName Needs Help!"
                             }
 

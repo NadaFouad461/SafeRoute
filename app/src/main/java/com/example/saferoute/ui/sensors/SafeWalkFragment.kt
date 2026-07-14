@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -36,6 +37,13 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
 
     private lateinit var myMarker: Marker
     private var firstLocationReceived = true
+    val currentBatteryLevel: Int
+        get() {
+            val batteryManager =
+                requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        }
+
 
     // بيستقبل تحديثات الموقع اللايف اللي بتتبعت من LocationTrackingService
     private val locationReceiver = object : BroadcastReceiver() {
@@ -52,10 +60,11 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
         _binding = FragmentSafeWalkBinding.bind(view)
 
         setupMiniMap()
+        binding.tvBattery.text = "🔋 $currentBatteryLevel%"
 
         if (!SafeWalkService.isWalkActive.value) {
             val serviceIntent = Intent(requireContext(), SafeWalkService::class.java).apply {
-                putExtra("DURATION_MINUTES", 1)
+                putExtra("DURATION_MINUTES", 20)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 requireContext().startForegroundService(serviceIntent)
@@ -89,7 +98,12 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
         binding.miniMap.setTileSource(TileSourceFactory.MAPNIK)
         binding.miniMap.setMultiTouchControls(true)
         binding.miniMap.controller.setZoom(17.0)
-        binding.miniMap.controller.setCenter(GeoPoint(26.8206, 30.8025)) // مركز افتراضي لحد ما نجيب موقع حقيقي
+        binding.miniMap.controller.setCenter(
+            GeoPoint(
+                26.8206,
+                30.8025
+            )
+        ) // مركز افتراضي لحد ما نجيب موقع حقيقي
 
         LocationRepository.getLastKnownLocation()?.let { point ->
             updateMiniMap(point)

@@ -133,7 +133,15 @@ class FallDetectionService : Service() {
             .setContentText("يتم الآن مراقبة حركتك لحمايتك...")
             .setSmallIcon(android.R.drawable.ic_dialog_info).setOngoing(true).build()
 
-        startForeground(1, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                1,
+                notification,
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
+            )
+        } else {
+            startForeground(1, notification)
+        }
     }
 
     override fun onBind(p0: Intent?): IBinder? = null

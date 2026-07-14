@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Selected State: Pill Shape -->
+    <item android:state_selected="true">
+        <layer-list>
+            <item android:gravity="center">
+                <shape android:shape="rectangle">
+                    <corners android:radius="10dp" />
+                    <solid android:color="#74C3EE" />
+                    <size android:width="22dp" android:height="8dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Unselected State: Circle -->
+    <item>
+        <layer-list>
+            <item android:gravity="center">
+                <shape android:shape="oval">
+                    <solid android:color="#D3D3D3" />
+                    <size android:width="8dp" android:height="8dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

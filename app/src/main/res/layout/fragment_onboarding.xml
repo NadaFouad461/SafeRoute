@@ -1,34 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_skip"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="Skip"
+        android:textAllCaps="false"
+        android:textColor="#999999"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/indicatorLayout" />
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/indicatorLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_skip" />
 
     <LinearLayout
         android:id="@+id/indicatorLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_alignParentBottom="true"
         android:gravity="center"
-        android:paddingBottom="24dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/button_onboarding"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayoutIndicator"
             android:layout_width="wrap_content"
-            android:layout_height="10dp"
-            app:tabBackground="@android:color/darker_gray"
-            app:tabIndicatorColor="#74C3EE"
-            app:tabIndicatorHeight="4dp"
-            app:tabMaxWidth="10dp"
-            app:tabGravity="center"/>
+            android:layout_height="24dp"
+            android:background="@android:color/transparent"
+            app:tabBackground="@drawable/onboarding_indicator_dot"
+            app:tabGravity="center"
+            app:tabIndicatorHeight="0dp"
+            app:tabMaxWidth="24dp"
+            app:tabMinWidth="24dp"
+            app:tabPaddingEnd="0dp"
+            app:tabPaddingStart="0dp"
+            app:tabRippleColor="@null" />
     </LinearLayout>
 
-</RelativeLayout>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/button_onboarding"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_back"
+            android:layout_width="130dp"
+            android:layout_height="54dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="8dp"
+            android:text="Back"
+            android:textAllCaps="false"
+            android:textColor="#42A5F5"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="@android:color/white"
+            app:cornerRadius="27dp"
+            app:icon="@drawable/backward"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="#000000"
+            app:layout_constraintBottom_toTopOf="@id/onboarding_txt"
+            app:layout_constraintEnd_toStartOf="@id/btn_next"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="#42A5F5"
+            app:strokeWidth="2dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_next"
+            android:layout_width="0dp"
+            android:layout_height="54dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="20dp"
+            android:text="Next"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="#74C3EE"
+            app:cornerRadius="27dp"
+            app:elevation="4dp"
+            app:icon="@drawable/forward"
+            app:iconGravity="textEnd"
+            app:iconPadding="8dp"
+            app:layout_constraintBottom_toTopOf="@id/onboarding_txt"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btn_back"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/onboarding_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Setup takes less than 2 minutes"
+            android:textColor="#999999"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btn_next" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

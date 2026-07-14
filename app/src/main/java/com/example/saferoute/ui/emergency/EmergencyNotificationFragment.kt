@@ -27,9 +27,7 @@ import org.osmdroid.views.overlay.Marker
 import java.util.Locale
 import kotlin.concurrent.thread
 
-
 @AndroidEntryPoint
-
 class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notification) {
 
     private var _binding: FragmentEmergencyNotificationBinding? = null
@@ -39,13 +37,9 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
     private val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     private var sosListener: ListenerRegistration? = null
 
-
     private var senderPhone: String = ""
     private var latitude: Double = 30.0444
     private var longitude: Double = 31.2357
-    private var notificationMarker: org.osmdroid.views.overlay.Marker? = null
-    private var firstLocationReceived = true
-
     private var notificationMarker: Marker? = null
     private var firstLocationReceived = true
 
@@ -56,24 +50,21 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         setupMiniMap()
 
         val sosAlertId = arguments?.getString("SOS_ALERT_ID")
+            ?: arguments?.getString("sosAlertId")
+            ?: arguments?.getString("incomingSosId")
+            ?: arguments?.getString("INCOMING_SOS_ID")
 
         if (!sosAlertId.isNullOrEmpty()) {
             listenToCurrentSOSAlert(sosAlertId)
         } else {
-            Toast.makeText(requireContext(), "لم يتم العثور على تفاصيل البلاغ", Toast.LENGTH_SHORT)
-                .show()
+            Toast.makeText(requireContext(), "لم يتم العثور على تفاصيل البلاغ", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnDismiss.setOnClickListener { findNavController().popBackStack() }
 
         binding.btnCallUser.setOnClickListener {
-
             if (senderPhone.isEmpty()) {
-                Toast.makeText(
-                    requireContext(),
-                    "جاري تحميل رقم الهاتف، يرجى الانتظار...",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(requireContext(), "جاري تحميل رقم الهاتف، يرجى الانتظار...", Toast.LENGTH_SHORT).show()
             } else {
                 val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$senderPhone"))
                 startActivity(intent)
@@ -81,62 +72,30 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         }
 
         binding.btnNavigate.setOnClickListener {
-
             if (latitude != 0.0 && longitude != 0.0) {
-                // بدل ما نفتح خرائط جوجل، بنفتح خريطة التطبيق بتاعتنا (MapFragment)
-                // ونبعتلها الإحداثيات عشان تحط عليها ماركر مكان البلاغ.
                 val locationBundle = bundleOf(
                     "latitude" to latitude,
-                    "longitude" to longitude
+                    "longitude" to longitude,
+                    "lat" to latitude,
+                    "lon" to longitude
                 )
-                findNavController().navigate(R.id.mapFragment, locationBundle)
-                val mapIntent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("google.navigation:q=$latitude,$longitude")
-                )
-                mapIntent.setPackage("com.google.android.apps.maps")
-                if (mapIntent.resolveActivity(requireContext().packageManager) != null) {
-                    startActivity(mapIntent)
-                } else {
-                    startActivity(
-                        Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")
-                        )
-                    )
-                }
-                val locationBundle = bundleOf(
-                    "latitude" to latitude,
-                    "longitude" to longitude
-                )
+                
                 findNavController().navigate(R.id.mapFragment, locationBundle)
             } else {
-                Toast.makeText(
-                    requireContext(),
-                    "بيانات الموقع قيد التحميل...",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(requireContext(), "بيانات الموقع قيد التحميل...", Toast.LENGTH_SHORT).show()
             }
         }
 
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    findNavController().popBackStack()
-                }
-            })
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                findNavController().popBackStack()
+            }
+        })
     }
 
-    /**
-     * بتشغّل الخريطة المصغّرة (osmdroid) اللي بتعرض مكان الشخص اللي بعت الـ SOS.
-     */
     private fun setupMiniMap() {
         Configuration.getInstance().userAgentValue = requireContext().packageName
-        Configuration.getInstance().load(
-            requireContext(),
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-        )
+        Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
 
         binding.notificationMap.setTileSource(TileSourceFactory.MAPNIK)
         binding.notificationMap.setMultiTouchControls(false)
@@ -194,9 +153,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         sosListener = db.collection("emergency_logs")
             .document(alertId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null || snapshot == null || !snapshot.exists()) {
-                    return@addSnapshotListener
-                }
+                if (error != null || snapshot == null || !snapshot.exists()) return@addSnapshotListener
 
                 val rawStatus = snapshot.getString("status") ?: "Dispatched"
                 val actualStatus = rawStatus.split("|").getOrNull(0) ?: "Dispatched"
@@ -205,57 +162,30 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                 longitude = snapshot.getDouble("longitude") ?: 31.2357
                 updateNotificationMap(latitude, longitude)
 
-                updateNotificationMap(latitude, longitude)
-
-
                 val senderUid = snapshot.getString("userId") ?: ""
-
-
                 val battery = snapshot.getLong("batteryLevel")?.toInt() ?: 100
                 binding.tvLiveInfo.text = "📍 Live Tracking  •  🔋 $battery% Battery"
 
-
                 val accountName = snapshot.getString("userName") ?: "مستخدم الطوارئ"
                 _binding?.tvSenderName?.text = accountName
-
 
                 if (senderUid.isNotEmpty()) {
                     fetchSenderContactInfo(senderUid, accountName)
                 }
 
                 if (actualStatus.contains("Resolved", ignoreCase = true)) {
-                    binding.cardAlertIconContainer.setCardBackgroundColor(
-                        ColorStateList.valueOf(
-                            Color.parseColor("#DCFCE7")
-                        )
-                    )
+                    binding.cardAlertIconContainer.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#DCFCE7")))
                     binding.tvDetailAlertIcon.text = "✅"
-
-                    binding.cardDetailStatusBadge.setCardBackgroundColor(
-                        ColorStateList.valueOf(
-                            Color.parseColor("#10B981")
-                        )
-                    )
+                    binding.cardDetailStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#10B981")))
                     binding.tvDetailStatusText.text = "Resolved / Safe"
-
                     binding.tvDetailTitle.text = "$accountName أصبحت آمنة الآن 🎉"
                     binding.tvDetailTitle.setTextColor(Color.parseColor("#10B981"))
                     binding.btnNavigate.visibility = View.GONE
                 } else {
-                    binding.cardAlertIconContainer.setCardBackgroundColor(
-                        ColorStateList.valueOf(
-                            Color.parseColor("#FEE2E2")
-                        )
-                    )
+                    binding.cardAlertIconContainer.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FEE2E2")))
                     binding.tvDetailAlertIcon.text = "🚨"
-
-                    binding.cardDetailStatusBadge.setCardBackgroundColor(
-                        ColorStateList.valueOf(
-                            Color.parseColor("#991B1B")
-                        )
-                    )
+                    binding.cardDetailStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#991B1B")))
                     binding.tvDetailStatusText.text = "Emergency Alert"
-
                     binding.tvDetailTitle.text = "إشارة استغاثة نشطة"
                     binding.tvDetailTitle.setTextColor(Color.parseColor("#1E293B"))
                     binding.btnNavigate.visibility = View.VISIBLE
@@ -263,46 +193,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
             }
     }
 
-    private fun setupMiniMap() {
-        org.osmdroid.config.Configuration.getInstance().userAgentValue = requireContext().packageName
-        binding.notificationMap.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK)
-        binding.notificationMap.setMultiTouchControls(false)
-        binding.notificationMap.controller.setZoom(16.0)
-    }
-    override fun onResume() {
-        super.onResume()
-        binding.notificationMap.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        binding.notificationMap.onPause()
-    }
-    private fun updateNotificationMap(lat: Double, lon: Double) {
-        if (_binding == null) return
-        val point = org.osmdroid.util.GeoPoint(lat, lon)
-
-        if (notificationMarker == null) {
-            notificationMarker = org.osmdroid.views.overlay.Marker(binding.notificationMap).apply {
-                setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM)
-                title = "📍 مكان الاستغاثة"
-                icon = androidx.core.content.ContextCompat.getDrawable(requireContext(), R.drawable.ic_map_marker)
-            }
-            binding.notificationMap.overlays.add(notificationMarker)
-        }
-        notificationMarker?.position = point
-
-        if (firstLocationReceived) {
-            binding.notificationMap.controller.setZoom(16.0)
-            firstLocationReceived = false
-        }
-        binding.notificationMap.controller.animateTo(point)
-        binding.notificationMap.invalidate()
-    }
-
-
     private fun fetchSenderContactInfo(senderUid: String, accountName: String) {
-
         db.collection("users").document(senderUid).get()
             .addOnSuccessListener { userDoc ->
                 if (_binding == null || !isAdded) return@addOnSuccessListener
@@ -310,24 +201,17 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                     senderPhone = userDoc.getString("phone") ?: ""
 
                     if (senderPhone.isNotEmpty() && currentUserId.isNotEmpty()) {
-
-                        db.collection("users")
-                            .document(currentUserId)
-                            .collection("contacts")
-                            .whereEqualTo("phone", senderPhone)
-                            .get()
+                        db.collection("users").document(currentUserId).collection("contacts")
+                            .whereEqualTo("phone", senderPhone).get()
                             .addOnSuccessListener { contactsSnapshot ->
                                 if (_binding == null || !isAdded) return@addOnSuccessListener
                                 if (!contactsSnapshot.isEmpty) {
                                     val contactDoc = contactsSnapshot.documents[0]
                                     val relationship = contactDoc.getString("relationship") ?: ""
                                     val savedName = contactDoc.getString("name") ?: accountName
-
-
                                     _binding?.tvSenderName?.text = "$savedName ($relationship)"
                                     _binding?.tvFallDescription?.text = "ℹ️ بلاغ استغاثة نشط وموثق من صلة القرابة الممسوحة كـ ($relationship) بالحساب: $accountName"
                                 } else {
-
                                     _binding?.tvFallDescription?.text = "ℹ️ بلاغ استغاثة نشط وموثق للحساب المسجل باسم: $accountName"
                                 }
                             }
