@@ -1,277 +1,300 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="#FFFFFF">
+    android:background="#FFFFFF"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp"
-        android:gravity="center_horizontal">
+        android:background="#FFFFFF"
+        android:paddingTop="24dp"
+        app:elevation="0dp">
 
-        <!-- 🎯 تعديل: إضافة ID لحاوية الأيقونة لتغيير لونها برمجياً -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardAlertIconContainer"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="36dp"
-            app:cardBackgroundColor="#FEE2E2"
-            app:strokeWidth="0dp">
-            <!-- 🎯 تعديل: إضافة ID لنفس التكست لتبديل الإيموجي -->
-            <TextView
-                android:id="@+id/tvDetailAlertIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🚨"
-                android:textSize="28sp"
-                android:layout_gravity="center"/>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- 🎯 تعديل: إضافة ID لحاوية شارة الحالة لتغيير خلفيتها -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardDetailStatusBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="#991B1B"
-            app:strokeWidth="0dp">
-            <!-- 🎯 تعديل: إضافة ID لتكست الحالة المكتوب -->
-            <TextView
-                android:id="@+id/tvDetailStatusText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Emergency Alert"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"/>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- 🎯 تعديل: إضافة ID للعنوان الرئيسي للتحكم في النص واللون -->
-        <TextView
-            android:id="@+id/tvDetailTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SOS Signal Received"
-            android:textColor="#1E293B"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_marginTop="8dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="EMERGENCY CONTACT"
-            android:textColor="#64748B"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:layout_gravity="start"
-            android:layout_marginTop="24dp"
-            android:letterSpacing="0.05"/>
-
-        <com.google.android.material.card.MaterialCardView
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="16dp"
-            app:cardBackgroundColor="#F8FAFC"
-            app:strokeColor="#E2E8F0"
-            app:strokeWidth="1dp"
-            app:cardElevation="0dp">
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@android:drawable/ic_media_previous"
+            app:navigationIconTint="#1E293B" />
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp">
+    </com.google.android.material.appbar.AppBarLayout>
 
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/ivSenderAvatar"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:src="@android:drawable/ic_menu_gallery"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent"
-                    android:scaleType="centerCrop"/>
-
-                <TextView
-                    android:id="@+id/tvSenderName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/ivSenderAvatar"
-                    android:layout_marginStart="14dp"
-                    tools:text="Sara Johnson"
-                    android:textColor="#1E293B"
-                    android:textSize="16sp"
-                    android:textStyle="bold"/>
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardRelation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/tvSenderName"
-                    android:layout_marginStart="8dp"
-                    android:layout_alignTop="@id/tvSenderName"
-                    android:layout_alignBottom="@id/tvSenderName"
-                    app:cardCornerRadius="6dp"
-                    app:cardBackgroundColor="#F1F5F9"
-                    app:strokeWidth="0dp">
-                    <TextView
-                        android:id="@+id/tvRelation"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="Daughter"
-                        android:textColor="#475569"
-                        android:textSize="10sp"
-                        android:textStyle="bold"
-                        android:paddingHorizontal="6dp"
-                        android:layout_gravity="center"/>
-                </com.google.android.material.card.MaterialCardView>
-
-                <TextView
-                    android:id="@+id/tvLiveInfo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/tvSenderName"
-                    android:layout_toEndOf="@id/ivSenderAvatar"
-                    android:layout_marginStart="14dp"
-                    android:layout_marginTop="4dp"
-                    tools:text="📍 0.8 miles away  •  🔋 44% Battery"
-                    android:textColor="#64748B"
-                    android:textSize="12sp"/>
-            </RelativeLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="LIVE LOCATION PREVIEW"
-            android:textColor="#64748B"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:layout_gravity="start"
-            android:layout_marginTop="20dp"
-            android:letterSpacing="0.05"/>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:cardCornerRadius="16dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:strokeColor="#E2E8F0"
-            app:strokeWidth="1dp"
-            app:cardElevation="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <org.osmdroid.views.MapView
-                    android:id="@+id/notificationMap"
-                    android:layout_width="match_parent"
-                    android:layout_height="140dp" />
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:padding="14dp"
-                    android:background="#F8FAFC">
-                    <TextView
-                        android:id="@+id/tvLocationTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        tools:text="1248 Oakwood Avenue, Parkside"
-                        android:textColor="#1E293B"
-                        android:textStyle="bold"
-                        android:textSize="13sp"/>
-                    <TextView
-                        android:id="@+id/tvLocationSubtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvLocationTitle"
-                        tools:text="Last detected 42 seconds ago  |  Strong GPS Signal"
-                        android:textColor="#94A3B8"
-                        android:textSize="11sp"
-                        android:layout_marginTop="2dp"/>
-                </RelativeLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="#F8FAFC"
-            app:strokeColor="#E2E8F0"
-            app:strokeWidth="1dp"
-            app:cardElevation="0dp">
-            <TextView
-                android:id="@+id/tvFallDescription"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="ℹ️ Sara's device detected an unusual high-impact event (Possible Fall)."
-                android:textColor="#475569"
-                android:textSize="12sp"
-                android:padding="12dp"
-                android:lineSpacingMultiplier="1.2"/>
-        </com.google.android.material.card.MaterialCardView>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:minHeight="32dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNavigate"
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:text="↗️  Open Map &amp; Navigate"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            app:backgroundTint="#74C3EE"
-            app:cornerRadius="14dp"/>
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDismiss"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="54dp"
-                android:layout_weight="1"
-                android:text="Dismiss"
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAlertIconContainer"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginTop="4dp"
+                app:cardBackgroundColor="#FEE2E2"
+                app:cardCornerRadius="36dp"
+                app:strokeWidth="0dp">
+
+                <TextView
+                    android:id="@+id/tvDetailAlertIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="🚨"
+                    android:textSize="28sp" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDetailStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="#991B1B"
+                app:cardCornerRadius="12dp"
+                app:strokeWidth="0dp">
+
+                <TextView
+                    android:id="@+id/tvDetailStatusText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:text="Emergency Alert"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvDetailTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="SOS Signal Received"
+                android:textColor="#1E293B"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginTop="24dp"
+                android:letterSpacing="0.05"
+                android:text="EMERGENCY CONTACT"
                 android:textColor="#64748B"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="#F8FAFC"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
                 app:strokeColor="#E2E8F0"
-                app:cornerRadius="14dp"/>
+                app:strokeWidth="1dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/ivSenderAvatar"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:scaleType="centerCrop"
+                        android:src="@android:drawable/ic_menu_gallery"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent" />
+
+                    <TextView
+                        android:id="@+id/tvSenderName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_toEndOf="@id/ivSenderAvatar"
+                        android:textColor="#1E293B"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Sara Johnson" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardRelation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignTop="@id/tvSenderName"
+                        android:layout_alignBottom="@id/tvSenderName"
+                        android:layout_marginStart="8dp"
+                        android:layout_toEndOf="@id/tvSenderName"
+                        app:cardBackgroundColor="#F1F5F9"
+                        app:cardCornerRadius="6dp"
+                        app:strokeWidth="0dp">
+
+                        <TextView
+                            android:id="@+id/tvRelation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:paddingHorizontal="6dp"
+                            android:textColor="#475569"
+                            android:textSize="10sp"
+                            android:textStyle="bold"
+                            tools:text="Daughter" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <TextView
+                        android:id="@+id/tvLiveInfo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/tvSenderName"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_toEndOf="@id/ivSenderAvatar"
+                        android:textColor="#64748B"
+                        android:textSize="12sp"
+                        tools:text="📍 0.8 miles away  •  🔋 44% Battery" />
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginTop="20dp"
+                android:letterSpacing="0.05"
+                android:text="LIVE LOCATION PREVIEW"
+                android:textColor="#64748B"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E2E8F0"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <org.osmdroid.views.MapView
+                        android:id="@+id/notificationMap"
+                        android:layout_width="match_parent"
+                        android:layout_height="140dp" />
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="#F8FAFC"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvLocationTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="#1E293B"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            tools:text="1248 Oakwood Avenue, Parkside" />
+
+                        <TextView
+                            android:id="@+id/tvLocationSubtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/tvLocationTitle"
+                            android:layout_marginTop="2dp"
+                            android:textColor="#94A3B8"
+                            android:textSize="11sp"
+                            tools:text="Last detected 42 seconds ago  |  Strong GPS Signal" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="#F8FAFC"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#E2E8F0"
+                app:strokeWidth="1dp">
+
+                <TextView
+                    android:id="@+id/tvFallDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingMultiplier="1.2"
+                    android:padding="12dp"
+                    android:textColor="#475569"
+                    android:textSize="12sp"
+                    tools:text="ℹ️ Sara's device detected an unusual high-impact event (Possible Fall)." />
+            </com.google.android.material.card.MaterialCardView>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:minHeight="32dp" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCallUser"
-                android:layout_width="54dp"
+                android:id="@+id/btnNavigate"
+                android:layout_width="match_parent"
                 android:layout_height="54dp"
-                android:layout_marginStart="8dp"
-                app:icon="@android:drawable/stat_sys_phone_call"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:backgroundTint="#FEF2F2"
-                app:iconTint="#EF4444"
-                app:strokeColor="#FEE2E2"
-                app:strokeWidth="1dp"
-                app:cornerRadius="14dp"/>
-        </LinearLayout>
+                android:text="↗️  Open Map &amp; Navigate"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                app:backgroundTint="#74C3EE"
+                app:cornerRadius="14dp" />
 
-    </LinearLayout>
-</ScrollView>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDismiss"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_weight="1"
+                    android:text="Dismiss"
+                    android:textColor="#64748B"
+                    app:cornerRadius="14dp"
+                    app:strokeColor="#E2E8F0" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCallUser"
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:layout_marginStart="8dp"
+                    app:backgroundTint="#FEF2F2"
+                    app:cornerRadius="14dp"
+                    app:icon="@android:drawable/stat_sys_phone_call"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconTint="#EF4444"
+                    app:strokeColor="#FEE2E2"
+                    app:strokeWidth="1dp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

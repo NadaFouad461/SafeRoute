@@ -98,7 +98,7 @@
         android:label="AddContactFragment" />
     <fragment
         android:id="@+id/contactsListFragment"
-        android:name="com.example.saferoute.ui.contacts.ContactsListFragment"
+        android:name="com.example.saferoute.ui.emergency.ContactsListFragment"
         android:label="ContactsListFragment">
         <action
             android:id="@+id/action_contactsListFragment_to_addContactFragment"
@@ -183,7 +183,12 @@
         android:id="@+id/safeWalkFragment"
         android:name="com.example.saferoute.ui.sensors.SafeWalkFragment"
         android:label="fragment_safe_walk"
-        tools:layout="@layout/fragment_safe_walk" />
+        tools:layout="@layout/fragment_safe_walk">
+        <argument
+            android:name="duration"
+            android:defaultValue="20"
+            app:argType="integer" />
+    </fragment>
     <fragment
         android:id="@+id/fakeCallFragment"
         android:name="com.example.saferoute.ui.fakeCall.FakeCallFragment"

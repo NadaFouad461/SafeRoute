@@ -1,0 +1,12 @@
+- [x] Remove `app:title` from `fragment_home.xml`
+- [x] Remove `app:title` from `fragment_history.xml`
+- [x] Remove `app:title` from `fragment_profile.xml`
+- [x] Remove `app:title` from `fragment_edit_profile.xml`
+- [x] Remove `app:title` from `fragment_fake_call.xml`
+- [x] Remove `app:title` from `fragment_emergency_notification.xml`
+- [x] Remove `app:title` from `fragment_add_contact.xml`
+- [x] Clean up `fragment_contacts_list.xml`: remove manual title, add navigation icon
+- [x] Clean up `fragment_safe_walk.xml`: remove manual title, add standard back button
+- [x] Implement back button logic in `ContactsListFragment.kt`
+- [x] Implement back button logic in `SafeWalkFragment.kt`
+- [x] Verify UI consistency (Safe Area style)

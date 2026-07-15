@@ -22,18 +22,90 @@ import com.example.saferoute.services.FakeCallService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.jvm.java
 
+import android.util.TypedValue
+import android.view.LayoutInflater
+import android.widget.LinearLayout
+import com.example.saferoute.models.ContactItem
+import com.google.android.material.chip.Chip
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+
 @AndroidEntryPoint
 class FakeCallFragment : Fragment(R.layout.fragment_fake_call) {
 
     private var _binding: FragmentFakeCallBinding? = null
     private val binding get() = _binding!!
 
+    private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentFakeCallBinding.bind(view)
 
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
 
         setupSimulationButton()
+        setupTextWatcher()
+        setupPresetChips()
+        loadEmergencyContacts()
+    }
+
+    private fun setupTextWatcher() {
+        binding.etCallerName.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                updatePreview(s.toString())
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+
+    private fun updatePreview(name: String) {
+        val displayName = if (name.isEmpty()) "Unknown" else name
+        binding.tvPreviewName.text = displayName
+        binding.tvPreviewAvatar.text = if (displayName.isNotEmpty()) displayName[0].toString().uppercase() else "📞"
+    }
+
+    private fun setupPresetChips() {
+        binding.chipMom.setOnClickListener { binding.etCallerName.setText("Mom") }
+        binding.chipBoss.setOnClickListener { binding.etCallerName.setText("Boss") }
+        binding.chipDelivery.setOnClickListener { binding.etCallerName.setText("Pizza Delivery") }
+    }
+
+    private fun loadEmergencyContacts() {
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("users").document(uid).collection("contacts")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    val contact = document.toObject(ContactItem::class.java)
+                    addContactChip(contact)
+                }
+            }
+    }
+
+    private fun addContactChip(contact: ContactItem) {
+        val chip = Chip(requireContext()).apply {
+            text = "👤 ${contact.name}"
+            chipBackgroundColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+            chipStrokeColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#E2E8F0"))
+            chipStrokeWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1f, resources.displayMetrics)
+            setOnClickListener {
+                binding.etCallerName.setText(contact.name)
+            }
+        }
+        
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        params.setMargins(0, 0, 24, 0) // Spacing between chips
+        chip.layoutParams = params
+        
+        binding.chipGroup.addView(chip)
     }
 
     private fun setupSimulationButton() {

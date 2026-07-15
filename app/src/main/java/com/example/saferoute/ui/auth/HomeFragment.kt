@@ -14,6 +14,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import android.view.LayoutInflater
+import android.widget.EditText
+import com.example.saferoute.services.SafeWalkService
 import com.example.saferoute.R
 import com.example.saferoute.data.repository.LocationRepository
 import com.example.saferoute.databinding.FragmentHomeBinding
@@ -57,7 +60,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
         binding.actionSafeWalk.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_safeWalkFragment)
+            if (SafeWalkService.isWalkActive.value) {
+                findNavController().navigate(R.id.action_homeFragment_to_safeWalkFragment)
+            } else {
+                showSafeWalkDurationDialog()
+            }
         }
 
         binding.actionFakeCall.setOnClickListener {
@@ -96,6 +103,40 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     }
 
+
+    private fun showSafeWalkDurationDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trip_duration, null)
+        val toggleGroup = dialogView.findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.durationToggleGroup)
+        val customDurationEt = dialogView.findViewById<EditText>(R.id.etManualDuration)
+        val btnStart = dialogView.findViewById<View>(R.id.btnStartWalk)
+
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        btnStart.setOnClickListener {
+            val duration = if (customDurationEt.text.isNotEmpty()) {
+                customDurationEt.text.toString().toIntOrNull() ?: 20
+            } else {
+                when (toggleGroup.checkedButtonId) {
+                    R.id.btnSmallTrip -> 5
+                    R.id.btnMidTrip -> 15
+                    R.id.btnLongTrip -> 60
+                    else -> 15
+                }
+            }
+
+            val bundle = Bundle().apply {
+                putInt("duration", duration)
+            }
+            findNavController().navigate(R.id.action_homeFragment_to_safeWalkFragment, bundle)
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
 
     private fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid

@@ -53,7 +53,7 @@ class AddContactFragment : Fragment(R.layout.fragment_add_contact) {
             }
         }
 
-        binding.backBtn.setOnClickListener {
+        binding.toolbar.setNavigationOnClickListener {
             findNavController().navigateUp()
         }
 

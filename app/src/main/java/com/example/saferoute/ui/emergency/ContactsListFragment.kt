@@ -1,4 +1,4 @@
-package com.example.saferoute.ui.contacts
+package com.example.saferoute.ui.emergency
 
 import android.os.Bundle
 import android.view.View
@@ -19,7 +19,6 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
     private var _binding: FragmentContactsListBinding? = null
     private val binding get() = _binding!!
 
-    private val emergencyContactsList = mutableListOf<ContactItem>()
     private lateinit var contactsAdapter: ContactsAdapter
 
     private val db = FirebaseFirestore.getInstance()
@@ -32,6 +31,10 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
         setupRecyclerView()
         loadContacts()
 
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
+
         binding.fabAddContact.setOnClickListener {
             findNavController().navigate(R.id.action_contactsListFragment_to_addContactFragment)
         }
@@ -39,14 +42,11 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
         binding.filterBtn.setOnClickListener {
             Toast.makeText(requireContext(), "Filtering contacts...", Toast.LENGTH_SHORT).show()
         }
-
-        setupBottomNavigation()
     }
 
     private fun setupRecyclerView() {
 
         contactsAdapter = ContactsAdapter(
-            emergencyContactsList,
             onEditClick = { contact ->
 
                 val bundle = Bundle().apply {
@@ -80,9 +80,8 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             .collection("contacts")
             .get()
             .addOnSuccessListener { result ->
-                emergencyContactsList.clear()
-                for (doc in result) {
-                    val contact = ContactItem(
+                val contacts = result.map { doc ->
+                    ContactItem(
                         id = doc.id,
                         name = doc.getString("name") ?: "",
                         phone = doc.getString("phone") ?: "",
@@ -90,10 +89,9 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                         isPriority = doc.getBoolean("isPriority") ?: false,
                         fcmToken = doc.getString("fcmToken") ?: ""
                     )
-                    emergencyContactsList.add(contact)
                 }
-                contactsAdapter.notifyDataSetChanged()
-                updateContactsCount()
+                contactsAdapter.submitList(contacts)
+                updateUIState(contacts.size)
             }
             .addOnFailureListener {
                 context?.let { ctx ->
@@ -115,9 +113,10 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                     Toast.makeText(ctx, "${contact.name} deleted successfully", Toast.LENGTH_SHORT)
                         .show()
                 }
-                emergencyContactsList.remove(contact)
-                contactsAdapter.notifyDataSetChanged()
-                updateContactsCount()
+                val currentList = contactsAdapter.currentList.toMutableList()
+                currentList.remove(contact)
+                contactsAdapter.submitList(currentList)
+                updateUIState(currentList.size)
             }
             .addOnFailureListener { e ->
                 context?.let { ctx ->
@@ -127,40 +126,10 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             }
     }
 
-    private fun updateContactsCount() {
-        val count = emergencyContactsList.size
+    private fun updateUIState(count: Int) {
         binding.contactsCountTv.text = "$count Contacts active"
-    }
-
-    private fun setupBottomNavigation() {
-        binding.bottomNavigationView.selectedItemId = R.id.nav_contacts
-
-        binding.bottomNavigationView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    findNavController().navigate(R.id.homeFragment)
-                    true
-                }
-
-                R.id.nav_map -> {
-                    findNavController().navigate(R.id.mapFragment)
-                    true
-                }
-
-                R.id.nav_contacts -> true
-                R.id.nav_history -> {
-                    findNavController().navigate(R.id.historyFragment)
-                    true
-                }
-
-                R.id.nav_profile -> {
-                    findNavController().navigate(R.id.profileFragment2)
-                    true
-                }
-
-                else -> false
-            }
-        }
+        binding.emptyStateLayout.visibility = if (count == 0) View.VISIBLE else View.GONE
+        binding.emergencyContactsRv.visibility = if (count == 0) View.GONE else View.VISIBLE
     }
 
     override fun onDestroyView() {

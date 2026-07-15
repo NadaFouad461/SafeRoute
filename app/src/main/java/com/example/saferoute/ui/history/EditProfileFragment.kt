@@ -24,6 +24,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEditProfileBinding.bind(view)
 
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
+
         val currentUid = viewModel.getCurrentUserId()
         if (currentUid == null) {
             Toast.makeText(requireContext(), "Error: User not found", Toast.LENGTH_SHORT).show()

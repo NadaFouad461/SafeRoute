@@ -1,123 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.tools.com/tools"
+    xmlns:tools2="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8FAFC">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F8FAFC"
+        android:paddingTop="24dp"
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@android:drawable/ic_media_previous"
+            app:navigationIconTint="#1E293B">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingStart="0dp"
+                android:paddingEnd="16dp">
+
+                <ImageView
+                    android:id="@+id/filterBtn"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:src="@android:drawable/ic_menu_manage"
+                    android:visibility="invisible"
+                    app:tint="#64748B"
+                    tools2:visibility="invisible" />
+            </RelativeLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_marginBottom="65dp">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Emergency Contacts"
-                android:textColor="#1E293B"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:layout_centerVertical="true"/>
-            <ImageView
-                android:id="@+id/filterBtn"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_manage"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                app:tint="#64748B"/>
-        </RelativeLayout>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/statusCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="12dp"
+            android:layout_marginTop="8dp"
+            app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="14dp"
-            app:cardBackgroundColor="#FFFFFF"
-            app:strokeWidth="1dp"
+            app:cardElevation="0dp"
+            app:layout_constraintTop_toTopOf="parent"
             app:strokeColor="#E2E8F0"
-            app:cardElevation="0dp">
+            app:strokeWidth="1dp">
+
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp">
+
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="SECURITY NETWORK"
                         android:textColor="#94A3B8"
                         android:textSize="10sp"
-                        android:textStyle="bold"/>
+                        android:textStyle="bold" />
+
                     <TextView
                         android:id="@+id/contactsCountTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0 Contacts active"
+                        android:layout_marginTop="2dp"
                         android:textColor="#1E293B"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:layout_marginTop="2dp"/>
+                        tools:text="0 Contacts active" />
                 </LinearLayout>
+
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@android:drawable/ic_dialog_info"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    app:tint="#74C3EE"/>
+                    android:src="@android:drawable/ic_dialog_info"
+                    app:tint="@color/baby_blue" />
             </RelativeLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            android:id="@+id/labelYourContacts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
             android:text="Your Contacts"
             android:textColor="#1E293B"
             android:textSize="15sp"
             android:textStyle="bold"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="8dp"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/statusCard" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/emergencyContactsRv"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="16dp"
-            android:clipToPadding="false"/>
-    </LinearLayout>
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:clipToPadding="false"
+            android:paddingBottom="100dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/labelYourContacts"
+            tools:listitem="@layout/item_contact" />
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottomNavigationView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="#FFFFFF"
-        app:elevation="8dp"
-        app:menu="@menu/bottom_nav_menu" />
+        <LinearLayout
+            android:id="@+id/emptyStateLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/labelYourContacts"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:alpha="0.5"
+                android:src="@android:drawable/ic_menu_agenda"
+                app:tint="#94A3B8" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="No contacts yet"
+                android:textColor="#64748B"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add people you trust for emergencies"
+                android:textColor="#94A3B8"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddContact"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="100dp"
+        android:contentDescription="Add Contact"
         android:src="@android:drawable/ic_input_add"
-        app:tint="#FFFFFF"
-        app:backgroundTint="#74C3EE"
-        app:fabSize="normal"
-        app:layout_anchor="@id/bottomNavigationView"
-        app:layout_anchorGravity="center_horizontal|top"
-        android:layout_marginBottom="32dp"
-        app:borderWidth="0dp"
-        app:elevation="10dp"/>
+        app:backgroundTint="@color/baby_blue"
+        app:tint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

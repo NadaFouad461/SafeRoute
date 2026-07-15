@@ -1,0 +1,6 @@
+- [x] Create `activity_fake_incoming_call.xml` layout
+- [x] Create `FakeIncomingCallActivity.kt`
+- [x] Update `AndroidManifest.xml` to register the new activity
+- [x] Update `FakeCallService.kt` to trigger the new activity
+- [x] Update `FakeCallFragment.kt` to fetch contacts from Firestore and use dynamic chips
+- [ ] Verify the feature

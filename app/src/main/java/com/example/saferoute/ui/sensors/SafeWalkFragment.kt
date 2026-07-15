@@ -59,12 +59,17 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentSafeWalkBinding.bind(view)
 
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
+
         setupMiniMap()
         binding.tvBattery.text = "🔋 $currentBatteryLevel%"
 
         if (!SafeWalkService.isWalkActive.value) {
+            val duration = arguments?.getInt("duration") ?: 20
             val serviceIntent = Intent(requireContext(), SafeWalkService::class.java).apply {
-                putExtra("DURATION_MINUTES", 20)
+                putExtra("DURATION_MINUTES", duration)
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 requireContext().startForegroundService(serviceIntent)
@@ -83,11 +88,6 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
         setupButtons()
     }
 
-    /**
-     * بتشغّل الخريطة المصغّرة (osmdroid) وتخليها تتابع موقع المستخدم لحظة بلحظة.
-     * بتعرض آخر موقع محفوظ فورًا (لو موجود) عشان الخريطة متفضلش فاضية،
-     * وبعدين بتستقبل تحديثات حية من LocationTrackingService.
-     */
     private fun setupMiniMap() {
         Configuration.getInstance().userAgentValue = requireContext().packageName
         Configuration.getInstance().load(

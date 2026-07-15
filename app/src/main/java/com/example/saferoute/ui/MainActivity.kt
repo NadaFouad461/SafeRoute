@@ -109,9 +109,10 @@ class MainActivity : AppCompatActivity() {
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.homeFragment, R.id.mapFragment, R.id.historyFragment, R.id.profileFragment2 -> {
+                R.id.homeFragment, R.id.mapFragment, R.id.historyFragment, R.id.profileFragment2, R.id.contactsListFragment -> {
                     binding.bottomAppBar.visibility = View.VISIBLE
                     binding.fabEmergency.visibility = View.VISIBLE
+                    // Only try to find the menu item if it exists in the menu
                     binding.bottomNavigationView.menu.findItem(destination.id)?.isChecked = true
                 }
 

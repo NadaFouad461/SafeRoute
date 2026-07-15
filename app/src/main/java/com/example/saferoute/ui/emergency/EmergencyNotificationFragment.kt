@@ -47,6 +47,10 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentEmergencyNotificationBinding.bind(view)
 
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
+
         setupMiniMap()
 
         val sosAlertId = arguments?.getString("SOS_ALERT_ID")
