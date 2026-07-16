@@ -1,7 +1,7 @@
 const admin = require("firebase-admin");
-const serviceAccount = require("./serviceAccountKey.json"); // 🔥 استدعاء ملف المفتاح الجديد
+const serviceAccount = require("./serviceAccountKey.json");
 
-// تفعيل الاتصال المباشر بقاعدة البيانات باستخدام مفتاح الأمان الخاص بمشروعكِ
+
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
@@ -11,7 +11,7 @@ const messaging = admin.messaging();
 
 console.log("🎯 السيرفر المحلي لـ SafeRoute بدأ العمل ويراقب الطوارئ الآن بدون أخطاء...");
 
-// باقي كود الاستماع كما هو بدون أي تغيير
+
 db.collection("notifications_queue").onSnapshot((snapshot) => {
     snapshot.docChanges().forEach(async (change) => {
         if (change.type === "added") {

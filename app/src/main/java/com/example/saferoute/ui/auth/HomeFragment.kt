@@ -18,6 +18,7 @@ import android.view.LayoutInflater
 import android.widget.EditText
 import com.example.saferoute.services.SafeWalkService
 import com.example.saferoute.R
+import com.example.saferoute.data.repository.EmergencyRepository
 import com.example.saferoute.data.repository.LocationRepository
 import com.example.saferoute.databinding.FragmentHomeBinding
 import com.google.android.gms.location.LocationServices
@@ -25,6 +26,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home) {
@@ -35,6 +37,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             return batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         }
 
+    @Inject
+    lateinit var emergencyRepository: EmergencyRepository
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
@@ -43,6 +47,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private var currentUserName: String = "SafeRoute User"
     private var currentUserPhone: String = ""
+    private lateinit var homeAdapter: HomeAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -141,18 +146,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun handleSosTrigger() {
         val currentUid = auth.currentUser?.uid
         if (currentUid != null) {
-            Toast.makeText(
-                requireContext(),
-                "🚨 Sending Instant Emergency Alert...",
-                Toast.LENGTH_SHORT
-            ).show()
+            val bundle = Bundle().apply {
+                putString("sosAlertId", null)
+                putInt("batteryLevel", currentBatteryLevel)
+            }
 
-            val batteryManager =
-                requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-            val currentBatteryLevel =
-                batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-
-            fetchLocationAndTriggerSOS(currentUid, currentUserName, currentBatteryLevel)
+            try {
+                findNavController().navigate(R.id.action_homeFragment_to_sosFragment, bundle)
+            } catch (e: Exception) {
+                findNavController().navigate(R.id.sosFragment, bundle)
+            }
         } else {
             Toast.makeText(context, "User not logged in!", Toast.LENGTH_SHORT).show()
         }
@@ -216,17 +219,40 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun setupRecentActivityRecyclerView() {
-        val activityLogList = listOf(
-            HomeItem("1", "🚨 SOS Alert Triggered (SMS Sent)", "Just now", "sos"),
-            HomeItem("2", "📞 Fake Call Utility Executed", "15 mins ago", "fake_call"),
-            HomeItem("3", "👟 Safe Walk Navigation Completed", "2 hours ago", "safe_walk"),
-            HomeItem("4", "📞 Fake Call Scheduled & Received", "Yesterday", "fake_call"),
-            HomeItem("5", "🚨 Fall Detection SOS Auto-Triggered", "3 days ago", "sos")
+
+        homeAdapter = HomeAdapter(mutableListOf())
+
+        binding.recentActivityRv.layoutManager =
+            LinearLayoutManager(requireContext())
+
+        binding.recentActivityRv.adapter = homeAdapter
+
+        loadRecentActivities()
+    }
+    private fun loadRecentActivities() {
+
+        val currentUid = auth.currentUser?.uid ?: return
+
+        emergencyRepository.getRecentEmergencies(
+            currentUid,
+            onSuccess = { list ->
+
+                if (_binding != null && isAdded) {
+                    homeAdapter.updateList(list)
+                }
+
+            },
+            onFailure = {
+
+                Toast.makeText(
+                    requireContext(),
+                    it,
+                    Toast.LENGTH_SHORT
+                ).show()
+
+            }
         )
 
-        binding.recentActivityRv.layoutManager = LinearLayoutManager(context)
-
-        binding.recentActivityRv.adapter = HomeAdapter(activityLogList)
     }
 
     private fun fetchUserDataAndGreet() {
@@ -270,43 +296,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
                             if (girlUserId == currentUserId) continue
 
-                            showEmergencyDialog(sosAlertId)
                         }
                     }
                 }
             }
-    }
-
-    private fun showEmergencyDialog(sosAlertId: String) {
-        if (_binding == null || !isAdded) return
-
-
-        val sharedPrefs =
-            requireContext().getSharedPreferences("saferoute_prefs", Context.MODE_PRIVATE)
-        val isDismissedBefore = sharedPrefs.getBoolean("dismissed_$sosAlertId", false)
-        if (isDismissedBefore) return
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("🚨 بلاغ استغاثة طارئ SOS!")
-            .setMessage("هناك خطر يواجه أحد جهات اتصالك المقربة الآن! اضغطي للانتقال للسجل ومتابعة الحالة.")
-            .setCancelable(false)
-            .setPositiveButton("الانتقال للسجل (History)") { _, _ ->
-                val bundle = Bundle().apply {
-                    putString("incomingSosId", sosAlertId)
-                    putBoolean("isFromSomeoneElse", true)
-                }
-
-                val navController = findNavController()
-                if (navController.currentDestination?.id == R.id.homeFragment) {
-                    navController.navigate(R.id.action_homeFragment_to_historyFragment, bundle)
-                }
-            }
-            .setNegativeButton("إغلاق") { dialog, _ ->
-
-                sharedPrefs.edit().putBoolean("dismissed_$sosAlertId", true).apply()
-                dialog.dismiss()
-            }
-            .show()
     }
 
 

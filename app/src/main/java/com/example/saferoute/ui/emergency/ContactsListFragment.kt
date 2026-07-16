@@ -80,6 +80,22 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             .collection("contacts")
             .get()
             .addOnSuccessListener { result ->
+                if (_binding != null && isAdded) {
+                    emergencyContactsList.clear()
+                    for (doc in result) {
+                        val contact = ContactItem(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            phone = doc.getString("phone") ?: "",
+                            relationship = doc.getString("relationship") ?: "",
+                            isPriority = doc.getBoolean("isPriority") ?: false,
+                            fcmToken = doc.getString("fcmToken") ?: ""
+                        )
+                        emergencyContactsList.add(contact)
+                    }
+                    contactsAdapter.notifyDataSetChanged()
+                    updateContactsCount()
+                }
                 val contacts = result.map { doc ->
                     ContactItem(
                         id = doc.id,
@@ -94,8 +110,9 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                 updateUIState(contacts.size)
             }
             .addOnFailureListener {
-                context?.let { ctx ->
-                    Toast.makeText(ctx, "Failed to load contacts", Toast.LENGTH_SHORT).show()
+                // التحقق أيضاً هنا
+                if (_binding != null && isAdded) {
+                    Toast.makeText(context, "Failed to load contacts", Toast.LENGTH_SHORT).show()
                 }
             }
     }
@@ -117,15 +134,56 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
                 currentList.remove(contact)
                 contactsAdapter.submitList(currentList)
                 updateUIState(currentList.size)
+                if (_binding != null && isAdded) {
+                    Toast.makeText(requireContext(), "${contact.name} deleted successfully", Toast.LENGTH_SHORT).show()
+                    emergencyContactsList.remove(contact)
+                    contactsAdapter.notifyDataSetChanged()
+                    updateContactsCount()
+                }
             }
             .addOnFailureListener { e ->
-                context?.let { ctx ->
-                    Toast.makeText(ctx, "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT)
-                        .show()
+                if (_binding != null && isAdded) {
+                    Toast.makeText(requireContext(), "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
     }
 
+    private fun updateContactsCount() {
+        if (_binding != null && isAdded) {
+            val count = emergencyContactsList.size
+            binding.contactsCountTv.text = "$count Contacts active"
+        }
+    }
+
+    private fun setupBottomNavigation() {
+        binding.bottomNavigationView.selectedItemId = R.id.nav_contacts
+
+        binding.bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    findNavController().navigate(R.id.homeFragment)
+                    true
+                }
+
+                R.id.nav_map -> {
+                    findNavController().navigate(R.id.mapFragment)
+                    true
+                }
+
+                R.id.nav_contacts -> true
+                R.id.nav_history -> {
+                    findNavController().navigate(R.id.historyFragment)
+                    true
+                }
+
+                R.id.nav_profile -> {
+                    findNavController().navigate(R.id.profileFragment2)
+                    true
+                }
+
+                else -> false
+            }
+        }
     private fun updateUIState(count: Int) {
         binding.contactsCountTv.text = "$count Contacts active"
         binding.emptyStateLayout.visibility = if (count == 0) View.VISIBLE else View.GONE
