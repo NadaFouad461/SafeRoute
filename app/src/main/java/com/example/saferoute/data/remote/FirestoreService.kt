@@ -2,9 +2,12 @@ package com.example.saferoute.data.remote
 
 import android.util.Log
 import com.example.saferoute.models.ContactItem
+import com.example.saferoute.ui.auth.HomeItem
 import com.google.firebase.firestore.FirebaseFirestore
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Query
 
 @Singleton
 class FirestoreService @Inject constructor(
@@ -226,6 +229,73 @@ class FirestoreService @Inject constructor(
 
         db.collection("notifications_queue")
             .add(notification)
+
+    }
+    fun getRecentEmergencies(
+
+        userId: String,
+        onSuccess: (List<HomeItem>) -> Unit,
+        onFailure: (String) -> Unit
+
+    ) {
+
+        db.collection("emergency_logs")
+            .whereEqualTo("userId", userId)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(5)
+            .get()
+            .addOnSuccessListener { result ->
+
+                val recentList = mutableListOf<HomeItem>()
+
+                result.documents.forEach { doc ->
+
+                    val status = doc.getString("status") ?: "triggered"
+
+                    val type =
+                        if (status.equals("Resolved", ignoreCase = true)) {
+                            "resolved"
+                        } else {
+                            "sos"
+                        }
+
+                    val timestamp = doc.getTimestamp("timestamp")
+
+                    val timeText =
+                        if (timestamp != null) {
+                            android.text.format.DateFormat.format(
+                                "dd/MM/yyyy HH:mm",
+                                timestamp.toDate()
+                            ).toString()
+                        } else {
+                            "Unknown"
+                        }
+
+                    recentList.add(
+
+                        HomeItem(
+
+                            id = doc.id,
+
+                            title = "🚨 $type Alert",
+
+                            timestamp = timeText,
+
+                            type = type.lowercase()
+
+                        )
+
+                    )
+                }
+
+                onSuccess(recentList)
+
+            }
+            .addOnFailureListener {
+
+                onFailure(it.message ?: "Failed to load recent activities")
+
+            }
 
     }
 

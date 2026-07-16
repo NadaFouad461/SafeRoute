@@ -80,24 +80,27 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             .collection("contacts")
             .get()
             .addOnSuccessListener { result ->
-                emergencyContactsList.clear()
-                for (doc in result) {
-                    val contact = ContactItem(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "",
-                        phone = doc.getString("phone") ?: "",
-                        relationship = doc.getString("relationship") ?: "",
-                        isPriority = doc.getBoolean("isPriority") ?: false,
-                        fcmToken = doc.getString("fcmToken") ?: ""
-                    )
-                    emergencyContactsList.add(contact)
+                if (_binding != null && isAdded) {
+                    emergencyContactsList.clear()
+                    for (doc in result) {
+                        val contact = ContactItem(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            phone = doc.getString("phone") ?: "",
+                            relationship = doc.getString("relationship") ?: "",
+                            isPriority = doc.getBoolean("isPriority") ?: false,
+                            fcmToken = doc.getString("fcmToken") ?: ""
+                        )
+                        emergencyContactsList.add(contact)
+                    }
+                    contactsAdapter.notifyDataSetChanged()
+                    updateContactsCount()
                 }
-                contactsAdapter.notifyDataSetChanged()
-                updateContactsCount()
             }
             .addOnFailureListener {
-                context?.let { ctx ->
-                    Toast.makeText(ctx, "Failed to load contacts", Toast.LENGTH_SHORT).show()
+                // التحقق أيضاً هنا
+                if (_binding != null && isAdded) {
+                    Toast.makeText(context, "Failed to load contacts", Toast.LENGTH_SHORT).show()
                 }
             }
     }
@@ -111,25 +114,25 @@ class ContactsListFragment : Fragment(R.layout.fragment_contacts_list) {
             .document(contact.id)
             .delete()
             .addOnSuccessListener {
-                context?.let { ctx ->
-                    Toast.makeText(ctx, "${contact.name} deleted successfully", Toast.LENGTH_SHORT)
-                        .show()
+                if (_binding != null && isAdded) {
+                    Toast.makeText(requireContext(), "${contact.name} deleted successfully", Toast.LENGTH_SHORT).show()
+                    emergencyContactsList.remove(contact)
+                    contactsAdapter.notifyDataSetChanged()
+                    updateContactsCount()
                 }
-                emergencyContactsList.remove(contact)
-                contactsAdapter.notifyDataSetChanged()
-                updateContactsCount()
             }
             .addOnFailureListener { e ->
-                context?.let { ctx ->
-                    Toast.makeText(ctx, "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT)
-                        .show()
+                if (_binding != null && isAdded) {
+                    Toast.makeText(requireContext(), "Error deleting contact: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
     }
 
     private fun updateContactsCount() {
-        val count = emergencyContactsList.size
-        binding.contactsCountTv.text = "$count Contacts active"
+        if (_binding != null && isAdded) {
+            val count = emergencyContactsList.size
+            binding.contactsCountTv.text = "$count Contacts active"
+        }
     }
 
     private fun setupBottomNavigation() {

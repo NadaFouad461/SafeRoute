@@ -3,6 +3,7 @@ package com.example.saferoute.data.repository
 import com.example.saferoute.data.EmergencyDao
 import com.example.saferoute.data.remote.FirestoreService
 import com.example.saferoute.models.ContactItem
+import com.example.saferoute.ui.auth.HomeItem
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -101,6 +102,23 @@ class EmergencyRepository @Inject constructor(
         firestoreService.getUserData(
             userId,
             onResult
+        )
+
+    }
+    fun getRecentEmergencies(
+
+        userId: String,
+        onSuccess: (List<HomeItem>) -> Unit,
+        onFailure: (String) -> Unit
+
+    ) {
+
+        firestoreService.getRecentEmergencies(
+
+            userId,
+            onSuccess,
+            onFailure
+
         )
 
     }

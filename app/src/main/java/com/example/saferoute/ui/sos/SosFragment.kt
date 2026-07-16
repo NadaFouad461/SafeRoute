@@ -60,13 +60,10 @@ class SosFragment : Fragment() {
 
             } else {
 
-                Toast.makeText(
-                    requireContext(),
-                    "يجب إعطاء الصلاحيات أولاً",
-                    Toast.LENGTH_LONG
-                ).show()
-
-                findNavController().popBackStack()
+                if (isAdded && view != null) {
+                    Toast.makeText(requireContext(), "يجب إعطاء الصلاحيات أولاً", Toast.LENGTH_LONG).show()
+                    findNavController().popBackStack()
+                }
 
             }
 
@@ -145,44 +142,38 @@ class SosFragment : Fragment() {
     private fun observeViewModel() {
 
         viewModel.contacts.observe(viewLifecycleOwner) {
-
             adapter.updateList(it)
-
         }
+
         viewModel.loading.observe(viewLifecycleOwner) { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-            binding.btnSos.isEnabled = !isLoading
+            // التحقق من وجود Binding قبل الوصول للواجهة
+            if (_binding != null) {
+                binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+                binding.btnSos.isEnabled = !isLoading
+            }
         }
 
         viewModel.error.observe(viewLifecycleOwner) {
-
-            if (it.isNotEmpty()) {
-
-                Toast.makeText(
-                    requireContext(),
-                    it,
-                    Toast.LENGTH_SHORT
-                ).show()
-
+            if (it.isNotEmpty() && isAdded) { // التأكد أن الفراجمنت لا يزال موجوداً
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
             }
-
         }
 
         viewModel.navigateToAlert.observe(viewLifecycleOwner) { alertId ->
             alertId ?: return@observe
 
-            val bundle = Bundle().apply {
-                putString("SOS_ALERT_ID", alertId)
+            // التعديل الجوهري هنا لمنع الانهيار
+            if (isAdded && view != null) {
+                val bundle = Bundle().apply {
+                    putString("SOS_ALERT_ID", alertId)
+                }
+                findNavController().navigate(
+                    R.id.emergencyNotificationFragment,
+                    bundle
+                )
+                viewModel.clearNavigation()
             }
-
-            findNavController().navigate(
-                R.id.emergencyNotificationFragment,
-                bundle
-            )
-
-            viewModel.clearNavigation()
         }
-
     }
 
     /**
@@ -295,14 +286,12 @@ class SosFragment : Fragment() {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                val finalLat = location?.latitude ?: 30.0444
+                val finalLat = location?.latitude ?: 35.0444
                 val finalLon = location?.longitude ?: 31.2357
 
                 if (location != null) LocationRepository.updateLocation(finalLat, finalLon)
 
-
-                val message =
-                    "🚨 استغاثة طارئة من SafeRoute!\nأحتاج للمساعدة، موقعي هو:\nخط عرض: $finalLat\nخط طول: $finalLon"
+                val message = "🚨 استغاثة طارئة من SafeRoute!\nأحتاج للمساعدة، موقعي هو:\nخط عرض: $finalLat\nخط طول: $finalLon"
 
                 val contacts = viewModel.getCurrentContacts()
                 val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -316,14 +305,7 @@ class SosFragment : Fragment() {
                     if (contact.phone.isNotEmpty()) {
                         try {
                             val parts = smsManager?.divideMessage(message)
-                            smsManager?.sendMultipartTextMessage(
-                                contact.phone,
-                                null,
-                                parts,
-                                null,
-                                null
-                            )
-                            Log.d("SOS_SMS", "تم إرسال الموقع إلى: ${contact.phone}")
+                            smsManager?.sendMultipartTextMessage(contact.phone, null, parts, null, null)
                         } catch (e: Exception) {
                             Log.e("SOS_SMS_ERROR", "فشل الإرسال إلى ${contact.phone}", e)
                         }
@@ -331,22 +313,22 @@ class SosFragment : Fragment() {
                 }
 
                 viewModel.startSos(finalLat, finalLon, passedSosAlertId, { alertId ->
-                    val bundle = Bundle().apply {
-                        putString("SOS_ALERT_ID", alertId)
+                    // تعديل هنا: التأكد من سلامة الشاشة
+                    if (isAdded && view != null) {
+                        val bundle = Bundle().apply { putString("SOS_ALERT_ID", alertId) }
+                        findNavController().navigate(R.id.emergencyNotificationFragment, bundle)
                     }
-                    findNavController().navigate(
-                        R.id.emergencyNotificationFragment,
-                        bundle
-                    )
                 }, batteryLevel) { errorMessage ->
-                    binding.progressBar.visibility = View.GONE
-                    binding.btnSos.visibility = View.VISIBLE
-                    Toast.makeText(context, "خطأ: $errorMessage", Toast.LENGTH_LONG).show()
+                    // تعديل هنا: التأكد من سلامة الشاشة
+                    if (isAdded && view != null) {
+                        binding.progressBar.visibility = View.GONE
+                        binding.btnSos.visibility = View.VISIBLE
+                        Toast.makeText(context, "خطأ: $errorMessage", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         } else {
-            val message =
-                "🚨 استغاثة طارئة من SafeRoute! أحتاج للمساعدة، لا أستطيع مشاركة الموقع حالياً."
+            val message = "🚨 استغاثة طارئة من SafeRoute! أحتاج للمساعدة، لا أستطيع مشاركة الموقع حالياً."
             val smsManager = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 requireContext().getSystemService(SmsManager::class.java)
             } else {
@@ -361,18 +343,17 @@ class SosFragment : Fragment() {
                 }
             }
 
-            viewModel.startSos(30.0444, 31.2357, passedSosAlertId, { alertId ->
-                val bundle = Bundle().apply {
-                    putString("SOS_ALERT_ID", alertId)
+            viewModel.startSos(32.0444, 35.2357, passedSosAlertId, { alertId ->
+                if (isAdded && view != null) {
+                    val bundle = Bundle().apply { putString("SOS_ALERT_ID", alertId) }
+                    findNavController().navigate(R.id.emergencyNotificationFragment, bundle)
                 }
-                findNavController().navigate(
-                    R.id.emergencyNotificationFragment,
-                    bundle
-                )
             }, batteryLevel) { errorMessage ->
-                binding.progressBar.visibility = View.GONE
-                binding.btnSos.visibility = View.VISIBLE
-                Toast.makeText(context, "خطأ: $errorMessage", Toast.LENGTH_LONG).show()
+                if (isAdded && view != null) {
+                    binding.progressBar.visibility = View.GONE
+                    binding.btnSos.visibility = View.VISIBLE
+                    Toast.makeText(context, "خطأ: $errorMessage", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
