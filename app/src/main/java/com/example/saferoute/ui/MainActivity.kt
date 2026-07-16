@@ -88,32 +88,15 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        binding.bottomNavigationView.setOnItemSelectedListener { item ->
-            // تحسين التنقل لضمان العودة للهوم بشكل سليم وتجنب تعليق الـ Backstack
-            val navOptions = androidx.navigation.NavOptions.Builder()
-                .setLaunchSingleTop(true)
-                .setRestoreState(true)
-                .setPopUpTo(R.id.homeFragment, inclusive = false, saveState = true)
-                .build()
+        // 1. السطر السحري اللي بيحل كل مشاكل الـ Bottom Navigation
+        binding.bottomNavigationView.setupWithNavController(navController)
 
-            when (item.itemId) {
-                R.id.homeFragment, R.id.mapFragment, R.id.historyFragment, R.id.profileFragment2 -> {
-                    if (navController.currentDestination?.id != item.itemId) {
-                        navController.navigate(item.itemId, null, navOptions)
-                    }
-                    true
-                }
-                else -> false
-            }
-        }
-
+        // 2. التحكم في إخفاء وإظهار البار السفلي والزرار العائم
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.homeFragment, R.id.mapFragment, R.id.historyFragment, R.id.profileFragment2, R.id.contactsListFragment -> {
                     binding.bottomAppBar.visibility = View.VISIBLE
                     binding.fabEmergency.visibility = View.VISIBLE
-                    // Only try to find the menu item if it exists in the menu
-                    binding.bottomNavigationView.menu.findItem(destination.id)?.isChecked = true
                 }
 
                 else -> {

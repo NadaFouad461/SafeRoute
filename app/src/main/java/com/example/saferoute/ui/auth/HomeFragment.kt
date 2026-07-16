@@ -7,20 +7,19 @@ import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import android.view.LayoutInflater
-import android.widget.EditText
-import com.example.saferoute.services.SafeWalkService
 import com.example.saferoute.R
 import com.example.saferoute.data.repository.EmergencyRepository
 import com.example.saferoute.data.repository.LocationRepository
 import com.example.saferoute.databinding.FragmentHomeBinding
+import com.example.saferoute.services.SafeWalkService
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
@@ -104,20 +103,25 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.gpsStatusTv.setCompoundDrawablesWithIntrinsicBounds(gpsIcon, null, null, null)
 
         binding.batteryStatusTv.text = "🔋 $currentBatteryLevel%"
-
+        binding.historyTv.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_historyFragment)
+        }
 
     }
 
 
     private fun showSafeWalkDurationDialog() {
-        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trip_duration, null)
-        val toggleGroup = dialogView.findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.durationToggleGroup)
+        val dialogView =
+            LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trip_duration, null)
+        val toggleGroup =
+            dialogView.findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.durationToggleGroup)
         val customDurationEt = dialogView.findViewById<EditText>(R.id.etManualDuration)
         val btnStart = dialogView.findViewById<View>(R.id.btnStartWalk)
 
-        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
-            .setView(dialogView)
-            .create()
+        val dialog =
+            androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+                .setView(dialogView)
+                .create()
 
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
@@ -229,6 +233,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         loadRecentActivities()
     }
+
     private fun loadRecentActivities() {
 
         val currentUid = auth.currentUser?.uid ?: return

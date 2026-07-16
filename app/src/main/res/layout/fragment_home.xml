@@ -471,10 +471,11 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/history_Tv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:text="History"
+                    android:text="View All"
                     android:textColor="#74C3EE"
                     android:textSize="13sp"
                     android:textStyle="bold" />
