@@ -41,7 +41,7 @@ class SosBackgroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        
+
         // البدء كخدمة أمامية فوراً لتجنب الـ Crash
         startForegroundService()
 
@@ -61,14 +61,23 @@ class SosBackgroundService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
+        val userId = intent?.getStringExtra("USER_ID") ?: FirebaseAuth.getInstance().currentUser?.uid
 
-        if (intent?.action == "TRIGGER_SOS_ACTION") {
-            val userId =
-                intent.getStringExtra("USER_ID") ?: FirebaseAuth.getInstance().currentUser?.uid
-            if (userId != null) {
-                fetchContactsAndTrigger(userId)
-            } else {
-                Log.e("SosService", "لم يتم العثور على User ID")
+        when (intent?.action) {
+            "TRIGGER_SOS_ACTION" -> {
+                if (userId != null) {
+                    fetchContactsAndTrigger(userId)
+                } else {
+                    Log.e("SosService", "لم يتم العثور على User ID")
+                }
+            }
+            "TRIGGER_DANGER_ZONE_ACTION" -> {
+                val zoneDescription = intent.getStringExtra("ZONE_DESCRIPTION") ?: "منطقة خطر"
+                if (userId != null) {
+                    fetchContactsAndTriggerZoneAlert(userId, zoneDescription)
+                } else {
+                    Log.e("SosService", "لم يتم العثور على User ID")
+                }
             }
         }
 
@@ -85,6 +94,67 @@ class SosBackgroundService : Service() {
                 } else {
                     Log.e("SosService", "لا يوجد جهات اتصال مسجلة!")
                 }
+            }
+    }
+
+    private fun fetchContactsAndTriggerZoneAlert(userId: String, zoneDescription: String) {
+        db.collection("users").document(userId).collection("contacts")
+            .get()
+            .addOnSuccessListener { documents ->
+                val numbers = documents.mapNotNull { it.getString("phone") }
+                if (numbers.isNotEmpty()) {
+                    runDangerZoneAlertSequence(userId, numbers, zoneDescription)
+                } else {
+                    Log.e("SosService", "لا يوجد جهات اتصال مسجلة! (تنبيه منطقة خطر)")
+                }
+            }
+    }
+
+
+    @android.annotation.SuppressLint("MissingPermission")
+    private fun runDangerZoneAlertSequence(userId: String, numbers: List<String>, zoneDescription: String) {
+
+        if (!PermissionManager.hasAllPermissions(this)) {
+            Log.e("SosService", "لا توجد صلاحيات كافية لإرسال تنبيه منطقة الخطر")
+            return
+        }
+
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        val locationRequest = CurrentLocationRequest.Builder()
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .build()
+
+        fusedLocationClient.getCurrentLocation(locationRequest, null)
+            .addOnSuccessListener { location ->
+                val message = if (location != null) {
+                    val mapsUrl =
+                        "https://maps.google.com/?q=${location.latitude},${location.longitude}"
+                    "⚠️ تنبيه SafeRoute: دخل صديقك منطقة عالية الخطورة ($zoneDescription).\nموقعه الحالي: $mapsUrl"
+                } else {
+                    "⚠️ تنبيه SafeRoute: دخل صديقك منطقة عالية الخطورة ($zoneDescription) (تعذر تحديد الموقع بدقة الآن)."
+                }
+
+                // إرسال صامت فقط - بدون فتح تطبيق الرسائل
+                sendSmsToContacts(numbers, message)
+
+                saveToHistory(
+                    userId,
+                    location?.latitude ?: 0.0,
+                    location?.longitude ?: 0.0,
+                    numbers,
+                    type = "DANGER_ZONE",
+                    status = "Danger Zone Alert: $zoneDescription"
+                )
+            }
+            .addOnFailureListener {
+                val message =
+                    "⚠️ تنبيه SafeRoute: دخل صديقك منطقة عالية الخطورة ($zoneDescription) (الـ GPS لا يستجيب)."
+                sendSmsToContacts(numbers, message)
+                saveToHistory(
+                    userId, 0.0, 0.0, numbers,
+                    type = "DANGER_ZONE",
+                    status = "Danger Zone Alert: $zoneDescription"
+                )
             }
     }
 
@@ -155,7 +225,6 @@ class SosBackgroundService : Service() {
 
     private fun openSmsApp(numbers: List<String>, message: String) {
         try {
-            // تجميع الأرقام (الفواصل تختلف باختلاف نسخة الأندرويد، نستخدم الفاصلة المنقوطة كمعيار)
             val separator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) "," else ";"
             val allNumbers = numbers.joinToString(separator)
 
@@ -171,7 +240,14 @@ class SosBackgroundService : Service() {
         }
     }
 
-    private fun saveToHistory(userId: String, lat: Double, lng: Double, numbers: List<String>) {
+    private fun saveToHistory(
+        userId: String,
+        lat: Double,
+        lng: Double,
+        numbers: List<String>,
+        type: String = "SOS",
+        status: String = "Emergency Dispatched"
+    ) {
         db.collection("users").document(userId).get().addOnSuccessListener { doc ->
             val userName = doc.getString("name") ?: "مستخدم SafeRoute"
 
@@ -182,8 +258,8 @@ class SosBackgroundService : Service() {
             val emergencyData = hashMapOf(
                 "userId" to userId,
                 "userName" to userName,
-                "status" to "Emergency Dispatched",
-                "type" to "SOS",
+                "status" to status,
+                "type" to type,
                 "latitude" to lat,
                 "longitude" to lng,
                 "batteryLevel" to battery,
@@ -198,16 +274,16 @@ class SosBackgroundService : Service() {
             // 2. الحفظ المحلي في (Room) فقط! بدون رفع نسخة تانية للفايربيز
             val log = EmergencyLog(
                 userId = userId,
-                type = "SOS",
+                type = type,
                 latitude = lat,
                 longitude = lng,
                 timestamp = System.currentTimeMillis(),
-                status = "Emergency Dispatched",
+                status = status,
                 batteryLevel = battery
             )
             serviceScope.launch {
                 val appDb = AppDatabase.getDatabase(applicationContext)
-                appDb.emergencyDao().insertLog(log) // 👈 التعديل هنا
+                appDb.emergencyDao().insertLog(log)
             }
         }
     }

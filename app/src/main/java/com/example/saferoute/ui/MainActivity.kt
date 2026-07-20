@@ -25,7 +25,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query.Direction
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
-import org.osmdroid.config.Configuration
 import java.security.MessageDigest
 import javax.inject.Inject
 
@@ -46,8 +45,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        Configuration.getInstance().userAgentValue = packageName
 
         createNotificationChannel()
         startListeningForSOSTriggers()

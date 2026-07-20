@@ -10,7 +10,7 @@ import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
+
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -24,8 +24,7 @@ import com.example.saferoute.services.LocationTrackingService
 import com.example.saferoute.services.SafeWalkService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import com.example.saferoute.util.StadiaTileSource
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
 
@@ -89,13 +88,7 @@ class SafeWalkFragment : Fragment(R.layout.fragment_safe_walk) {
     }
 
     private fun setupMiniMap() {
-        Configuration.getInstance().userAgentValue = requireContext().packageName
-        Configuration.getInstance().load(
-            requireContext(),
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-        )
-
-        binding.miniMap.setTileSource(TileSourceFactory.MAPNIK)
+        binding.miniMap.setTileSource(StadiaTileSource.INSTANCE)
         binding.miniMap.setMultiTouchControls(true)
         binding.miniMap.controller.setZoom(17.0)
         binding.miniMap.controller.setCenter(

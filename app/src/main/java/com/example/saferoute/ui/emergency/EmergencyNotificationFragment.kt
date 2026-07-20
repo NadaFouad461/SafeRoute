@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.view.View
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -20,8 +19,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import dagger.hilt.android.AndroidEntryPoint
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import com.example.saferoute.util.StadiaTileSource
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
 import java.util.Locale
@@ -83,7 +81,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
                     "lat" to latitude,
                     "lon" to longitude
                 )
-                
+
                 findNavController().navigate(R.id.mapFragment, locationBundle)
             } else {
                 Toast.makeText(requireContext(), "بيانات الموقع قيد التحميل...", Toast.LENGTH_SHORT).show()
@@ -98,10 +96,7 @@ class EmergencyNotificationFragment : Fragment(R.layout.fragment_emergency_notif
     }
 
     private fun setupMiniMap() {
-        Configuration.getInstance().userAgentValue = requireContext().packageName
-        Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()))
-
-        binding.notificationMap.setTileSource(TileSourceFactory.MAPNIK)
+        binding.notificationMap.setTileSource(StadiaTileSource.INSTANCE)
         binding.notificationMap.setMultiTouchControls(false)
         binding.notificationMap.controller.setZoom(16.0)
         binding.notificationMap.controller.setCenter(GeoPoint(latitude, longitude))
